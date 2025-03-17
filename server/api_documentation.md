@@ -24,3 +24,9 @@
 3. 更新/删除操作需要POST方法
 4. 日期格式：YYYY-MM-DD（日接口）/YYYYMMDD（周接口）
 5. 测试前请确保服务器已配置正确数据库连接
+
+
+
+http://localhost/DailyReview/server/UserInfoAPI.php?action=get_departments
+http://localhost/DailyReview/server/UserInfoAPI.php?action=get_users&department_id=2
+http://localhost/DailyReview/server/UserInfoAPI.php?action=update_user&partner_name=xxx&department_id=xxx&position=xxx&is_active=x

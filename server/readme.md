@@ -78,3 +78,10 @@ CREATE TABLE users (
 ##### 3.1.2 插入daily_tasks表中的数据，上传字段包括date(DATE-mysql)、executor_id、task_content、is_new_task、progress、time_spent，如果上传的time_spent小于等于0，该条记录不入库
 ##### 3.1.3 更新daily_tasks表中的数据，通过id来更新数据，可以更新 task_content、is_new_task、progress、time_spent，如果上传的time_spent
 ##### 3.1.4 删除daily_tasks表中的数据，通过id来删除数据
+
+
+## 4. 用户信息UserInfoAPI.php
+### 4.1 查询users表中的数据，通过前端上传的部门ID，查询users表中该部门的伙伴信息(is_active=1)
+### 4.2 插入users表中的数据，上传字段包括partner_name、mode、department_id、position 新增的用户is_active 默认我true 
+### 4.3 更新users表中的数据，通过id来更新数据，可以更新 partner_name、mode、department_id、position和is_active(0或1)
+### 4.4 查询部门信息departments表中的数据，查询departments表中所有的部门信息
