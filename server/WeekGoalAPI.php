@@ -24,9 +24,8 @@ try {
             $mondayDate = $_REQUEST['mondayDate'];
             $departmentId = $_REQUEST['department_id'];
             
-            $stmt = $conn->prepare("SELECT wg.*, u.partner_name, d.department_name 
+            $stmt = $conn->prepare("SELECT wg.*,d.department_name 
                 FROM weekly_goals wg
-                INNER JOIN users u ON wg.executor_id = u.id
                 INNER JOIN departments d ON wg.department_id = d.id
                 WHERE mondayDate = ? AND wg.department_id = ?  ORDER BY priority DESC");
             $stmt->execute([$mondayDate, $departmentId]);
@@ -42,10 +41,19 @@ try {
             $placeholders = [];
             $values = [];
             
+
+            $executor = "";
+            $executorId = "";
             foreach ($allowedFields as $field) {
                 if (isset($_REQUEST[$field])) {
                     $fields[] = $field;
                     $placeholders[] = '?';
+                    if ($field === 'executor') {
+                        $executor = $_REQUEST[$field];
+                    }
+                    if ($field === 'executor_id') {
+                        $executorId = $_REQUEST[$field];
+                    }
                     $values[] = $_REQUEST[$field];
                 }
             }
@@ -70,8 +78,38 @@ try {
             $stmt = $conn->prepare("INSERT INTO weekly_goals (" 
                 . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ");");
             
+            $conn->beginTransaction();
             $stmt->execute($values);
-            echo json_encode(['id' => $conn->lastInsertId()]);
+            $weeklyGoalId = $conn->lastInsertId();
+            // 拆分执行人信息
+            if ( $executor != '' && $executorId != '' ) {
+            
+                $executorIds = explode('/',$executorId);
+                $executors = explode('/', $executor);
+                
+                if (count($executorIds) !== count($executors)) {
+                    throw new Exception('executor_id和executor参数长度不一致');
+                }
+
+                // 准备daily_goals插入
+                $dailyFields = array_merge($fields, ['weekly_goals_id']);
+                $dailyPlaceholders = array_merge($placeholders, ['?']);
+                $dailyValues = array_merge($values, ['']);
+
+                $dailyStmt = $conn->prepare("INSERT INTO daily_goals (" 
+                    . implode(', ', $dailyFields) . ") VALUES (" . implode(', ', $dailyPlaceholders) . ");");
+
+                foreach ($executorIds as $index => $executorId) {
+                    $dailyValues[array_search('executor_id', $dailyFields)] = $executorId;
+                    $dailyValues[array_search('executor', $dailyFields)] = $executors[$index];
+                    $dailyValues[array_search('weekly_goals_id', $dailyFields)] = $weeklyGoalId;
+                    
+                    $dailyStmt->execute($dailyValues);
+                }
+            }
+
+            $conn->commit();
+            echo json_encode(['id' => $weeklyGoalId]);
             break;
 
         case 'update':
@@ -81,10 +119,17 @@ try {
             $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal','mondayDate','priority','status'];
             $updates = [];
             $params = [];
-
+            $executor = "";
+            $executorId = "";
             foreach ($allowedFields as $field) {
                 if (isset($_REQUEST[$field])) {
                     $updates[] = "$field = ?";
+                    if ($field === 'executor') {
+                        $executor = $_REQUEST[$field];
+                    }
+                    if ($field === 'executor_id') {
+                        $executorId = $_REQUEST[$field];
+                    }
                     $params[] = $_REQUEST[$field];
                 }
             }
@@ -96,8 +141,72 @@ try {
             $params[] = $id; // 最后添加where条件参数
             $sql = "UPDATE weekly_goals SET " . implode(', ', $updates) . " WHERE id = ?";
             
-            $stmt = $conn->prepare($sql);
-            $stmt->execute($params);
+            $conn->beginTransaction();
+            try {
+                $stmt = $conn->prepare($sql);
+                $stmt->execute($params);
+                
+                // 获取更新后的周目标数据
+                $stmt = $conn->prepare("SELECT * FROM weekly_goals WHERE id = ?");
+                $stmt->execute([$id]);
+                $weeklyGoal = $stmt->fetch(PDO::FETCH_ASSOC);
+                if (!$weeklyGoal) {
+                    throw new Exception('周目标不存在');
+                }
+                
+                // 处理执行人信息
+                if ($executor !== '' && $executorId !== '') {
+                    $executorIds = explode('/', $executorId);
+                    $executors = explode('/', $executor);
+                    
+                    if (count($executorIds) !== count($executors)) {
+                        throw new Exception('executor_id和executor参数长度不一致');
+                    }
+                    
+                    // 插入daily_goals记录
+                    foreach ($executorIds as $index => $eid) {
+                        // 检查是否已存在
+                        $checkStmt = $conn->prepare("SELECT id FROM daily_goals WHERE weekly_goals_id = ? AND executor_id = ?");
+                        $checkStmt->execute([$id, $eid]);
+                        if (!$checkStmt->fetch()) {
+                            // 构建插入字段和值
+                            $insertFields = [
+                                'department_id',
+                                'executor',
+                                'executor_id',
+                                'weekly_goal',
+                                'is_new_goal',
+                                'mondayDate',
+                                'priority',
+                                'status',
+                                'weekly_goals_id',
+                                'createdate'
+                            ];
+                            $insertValues = [
+                                $weeklyGoal['department_id'],
+                                $executors[$index],
+                                $eid,
+                                $weeklyGoal['weekly_goal'],
+                                $weeklyGoal['is_new_goal'],
+                                $weeklyGoal['mondayDate'],
+                                $weeklyGoal['priority'],
+                                $weeklyGoal['status'],
+                                $id,
+                                date('Ymd')
+                            ];
+                            $placeholders = implode(', ', array_fill(0, count($insertValues), '?'));
+                            $insertStmt = $conn->prepare("INSERT INTO daily_goals (" . implode(', ', $insertFields) . ") VALUES ($placeholders)");
+                            $insertStmt->execute($insertValues);
+                        }
+                    }
+                }
+                
+                $conn->commit();
+            } catch (Exception $e) {
+                $conn->rollBack();
+                throw $e;
+            }
+            
             echo json_encode(['updated' => $stmt->rowCount()]);
             break;
 

@@ -55,7 +55,7 @@
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="40%">
       <el-form :model="form" label-width="100px">
         <el-form-item label="执行人" required>
-          <el-select v-model="form.executor_id" placeholder="请选择执行人" filterable>
+          <el-select v-model="form.executor_id" multiple placeholder="请选择执行人" filterable>
             <el-option
               v-for="user in users"
               :key="user.id"
@@ -113,6 +113,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import http from '@/utils/http'
+import { ElMessage } from 'element-plus'
 
 const goals = ref([])
 const mondayDate = ref(getCurrentMonday())
@@ -120,7 +121,7 @@ const dialogVisible = ref(false)
 const dialogType = ref('add')
 const form = ref({
   id: null,
-  executor: '',
+  executor_id: [],
   weekly_goal: '',
   is_new_goal: 0,
   priority: 5,
@@ -215,7 +216,15 @@ const showDialog = (mode, row) => {
   dialogType.value = mode
   dialogTitle.value = mode === 'add' ? '新增周目标' : '修改周目标'
   if (dialogType.value === 'edit') {
-    form.value = { ...row }
+    const executorNames = row.executor.split('/');
+    const executorIds = executorNames
+      .map(name => users.value.find(u => u.partner_name === name)?.id)
+      .filter(id => id !== undefined);
+    
+    form.value = { 
+      ...row,
+      executor_id: executorIds.length > 0 ? executorIds : [row.executor_id]
+    }
   } else {
     form.value = {
       id: null,
@@ -232,10 +241,16 @@ const showDialog = (mode, row) => {
 // 提交表单
 const submitForm = async () => {
   try {
+    const submitData = {
+      ...form.value,
+      executor_id: form.value.executor_id.join('/'),
+      executor: form.value.executor_id.map(id => users.value.find(u => u.id === id)?.partner_name).join('/'),
+      department_id: localStorage.getItem('department_id_cache') || 2
+    };
     await http.get('WeekGoalAPI.php', {
       params: {
         action: dialogType.value === 'add' ? 'create' : 'update',
-        ...form.value
+        ...submitData
       }
     })
     dialogVisible.value = false
@@ -288,10 +303,12 @@ const initUsers = () => {
     
     if(users.value.length === 0) {
       ElMessage.error('用户数据未加载，请刷新页面')
+      setTimeout(() => location.reload(), 2000) // 2秒后自动刷新
     }
   } catch (e) {
     console.error('用户数据解析失败:', e)
     users.value = []
+    ElMessage.error('用户数据异常，请刷新页面')
   }
 }
 </script>
