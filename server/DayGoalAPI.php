@@ -55,6 +55,29 @@ try {
             echo json_encode(['deleted' => $stmt->rowCount()]);
             break;
 
+        case 'get_target':
+            $date = $_GET['date'] ?? date('Ymd');
+            $stmt = $conn->prepare("SELECT * FROM today_target WHERE report_date = ?");
+            $stmt->execute([$date]);
+            echo json_encode($stmt->fetch(PDO::FETCH_ASSOC) ?: []);
+            break;
+
+        case 'save_target':
+            if($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['error' => '仅支持POST方法']);
+                break;
+            }
+            $date = $_POST['report_date'] ?? date('Ymd');
+            $content = $_POST['content'] ?? '';
+            
+            $stmt = $conn->prepare("INSERT INTO today_target (report_date, content, message) 
+                VALUES (?, ?, '') 
+                ON DUPLICATE KEY UPDATE content = VALUES(content)");
+            $stmt->execute([$date, $content]);
+            echo json_encode(['affected_rows' => $stmt->rowCount()]);
+            break;
+
         default:
             http_response_code(400);
             echo json_encode(['error' => '无效的操作类型']);

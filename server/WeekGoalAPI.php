@@ -27,9 +27,87 @@ try {
             $stmt = $conn->prepare("SELECT wg.*,d.department_name 
                 FROM weekly_goals wg
                 INNER JOIN departments d ON wg.department_id = d.id
-                WHERE mondayDate = ? AND wg.department_id = ?  ORDER BY priority DESC");
+                WHERE mondayDate = ? AND wg.department_id = ?  ORDER BY executor,priority DESC");
             $stmt->execute([$mondayDate, $departmentId]);
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'batch_create':
+            $postData = $_POST;//json_decode(file_get_contents('php://input'), true);
+            if (!is_array($postData)) {
+                throw new Exception('无效的批量数据格式');
+            }
+
+            $conn->beginTransaction();
+            try {
+                $results = [];
+                foreach ($postData as $item) {
+                    $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal', 'mondayDate','priority','status'];
+                    $fields = [];
+                    $placeholders = [];
+                    $values = [];
+                    $executor = "";
+                    $executorId = "";
+
+                    foreach ($allowedFields as $field) {
+                        if (isset($item[$field])) {
+                            $fields[] = $field;
+                            $placeholders[] = '?';
+                            if ($field === 'executor') {
+                                $executor = $item[$field];
+                            }
+                            if ($field === 'executor_id') {
+                                $executorId = $item[$field];
+                            }
+                            $values[] = $item[$field];
+                        }
+                    }
+
+                    if (!in_array('mondayDate', $fields) || !is_numeric($item['mondayDate'])) {
+                        throw new Exception('mondayDate是必填且必须是有效日期格式');
+                    }
+
+                    if (!in_array('is_new_goal', $fields)) {
+                        $fields[] = 'is_new_goal';
+                        $placeholders[] = '?';
+                        $values[] = 0;
+                    }
+
+                    $fields[] = 'createdate';
+                    $placeholders[] = '?';
+                    $values[] = date('Ymd');
+
+                    $stmt = $conn->prepare("INSERT INTO weekly_goals (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ");");
+                    $stmt->execute($values);
+                    $weeklyGoalId = $conn->lastInsertId();
+
+                    if ($executor != '' && $executorId != '') {
+                        $executorIds = explode('/', $executorId);
+                        $executors = explode('/', $executor);
+
+                        if (count($executorIds) !== count($executors)) {
+                            throw new Exception('executor_id和executor参数长度不一致');
+                        }
+
+                        $dailyStmt = $conn->prepare("INSERT INTO daily_goals (" . implode(', ', array_merge($fields, ['weekly_goals_id'])) . ") VALUES (" . implode(', ', array_merge($placeholders, ['?'])) . ");");
+
+                        foreach ($executorIds as $index => $executorId) {
+                            $dailyValues = array_merge($values, [$weeklyGoalId]);
+                            $dailyValues[array_search('executor_id', $fields)] = $executorId;
+                            $dailyValues[array_search('executor', $fields)] = $executors[$index];
+                            
+                            $dailyStmt->execute($dailyValues);
+                        }
+                    }
+
+                    $results[] = $weeklyGoalId;
+                }
+                $conn->commit();
+                echo json_encode($results);
+            } catch (Exception $e) {
+                $conn->rollBack();
+                throw $e;
+            }
             break;
 
         case 'create':
@@ -232,6 +310,9 @@ try {
             $stmt->execute([$id]);
             echo json_encode(['deleted' => $stmt->rowCount()]);
             break;
+
+                case 'batch_create':
+            // 已在上方处理
 
         default:
             http_response_code(400);
