@@ -20,7 +20,7 @@
 
     <el-table :data="goals" style="width: 100%" :row-class-name="rowClassName">
       <el-table-column prop="weekly_goal" label="周目标" min-width="220"  header-align="center"/>
-      <el-table-column prop="executor" label="姓名" width="120" align="center" header-align="center" />
+      <el-table-column prop="executor" label="姓名" width="200" align="center" header-align="center" />
       <el-table-column label="优先级" width="120" align="center" header-align="center">
         <template #default="{ row }">
           {{ 
@@ -320,5 +320,24 @@ const initUsers = () => {
 
 .green-row {
   background-color: #A9D08D !important;
+}
+
+:deep(.el-dialog) {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+:deep(.el-dialog__header) {
+  padding: 20px 20px 10px;
+  border-radius: 10px 10px 0 0;
+}
+
+:deep(.el-dialog__body) {
+  padding: 15px 20px;
+}
+
+:deep(.el-dialog__footer) {
+  padding: 10px 20px 20px;
+  border-radius: 0 0 10px 10px;
 }
 </style>
