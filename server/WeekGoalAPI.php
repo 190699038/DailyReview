@@ -1,7 +1,10 @@
 <?php
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Content-Type: application/json');
+
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -15,45 +18,86 @@ $action = $_REQUEST['action'] ?? '';
 try {
     switch ($action) {
         case 'get':
-            $mondayDate = date('Ymd', strtotime('monday this week'));
+            if (!isset($_REQUEST['department_id']) || !is_numeric($_REQUEST['department_id'])) {
+                throw new Exception('department_id参数必传且必须为数字');
+            }
+            $mondayDate = $_REQUEST['mondayDate'];
+            $departmentId = $_REQUEST['department_id'];
+            
             $stmt = $conn->prepare("SELECT wg.*, u.partner_name, d.department_name 
                 FROM weekly_goals wg
                 INNER JOIN users u ON wg.executor_id = u.id
                 INNER JOIN departments d ON wg.department_id = d.id
-                WHERE mondayDate = ?");
-            $stmt->execute([$mondayDate]);
+                WHERE mondayDate = ? AND wg.department_id = ?  ORDER BY priority DESC");
+            $stmt->execute([$mondayDate, $departmentId]);
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             break;
 
         case 'create':
-            $executor_id = $_POST['executor_id'];
-            $weekly_goal = $_POST['weekly_goal'];
-            $mondayDate = $_POST['mondayDate'];
-            echo $executor_id;
-            // 获取用户信息
-            $userStmt = $conn->prepare("SELECT partner_name, department_id FROM users WHERE id = ?");
-            $userStmt->execute([$executor_id]);
-            $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+            // 允许创建的字段白名单
+            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal', 'mondayDate','priority','status'];
+            
+            // 动态收集参数并验证必填字段
+            $fields = [];
+            $placeholders = [];
+            $values = [];
+            
+            foreach ($allowedFields as $field) {
+                if (isset($_REQUEST[$field])) {
+                    $fields[] = $field;
+                    $placeholders[] = '?';
+                    $values[] = $_REQUEST[$field];
+                }
+            }
 
-            $stmt = $conn->prepare("INSERT INTO weekly_goals (department_id, executor, executor_id, weekly_goal, createdate, mondayDate) 
-                VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([
-                $user['department_id'],
-                $user['partner_name'],
-                $executor_id,
-                $weekly_goal,
-                date('Ymd'),
-                $mondayDate
-            ]);
+            // 验证必填字段
+            if (!in_array('mondayDate', $fields) || !is_numeric($_REQUEST['mondayDate'])) {
+                throw new Exception('mondayDate是必填且必须是有效日期格式');
+            }
+
+            // 设置默认值
+            if (!in_array('is_new_goal', $fields)) {
+                $fields[] = 'is_new_goal';
+                $placeholders[] = '?';
+                $values[] = 0; // 默认false
+            }
+            
+            // 添加自动生成的创建日期
+            $fields[] = 'createdate';
+            $placeholders[] = '?';
+            $values[] = date('Ymd');
+
+            $stmt = $conn->prepare("INSERT INTO weekly_goals (" 
+                . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ");");
+            
+            $stmt->execute($values);
             echo json_encode(['id' => $conn->lastInsertId()]);
             break;
 
-                case 'update':
+        case 'update':
             $id = $_REQUEST['id'];
-            $weekly_goal = $_REQUEST['weekly_goal'];
             
-            $stmt = $conn->prepare("UPDATE weekly_goals SET weekly_goal = ? WHERE id = ?");
-            $stmt->execute([$weekly_goal, $id]);
+            // 允许更新的字段列表
+            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal','mondayDate','priority','status'];
+            $updates = [];
+            $params = [];
+
+            foreach ($allowedFields as $field) {
+                if (isset($_REQUEST[$field])) {
+                    $updates[] = "$field = ?";
+                    $params[] = $_REQUEST[$field];
+                }
+            }
+
+            if (empty($updates)) {
+                throw new Exception('至少需要一个更新字段');
+            }
+
+            $params[] = $id; // 最后添加where条件参数
+            $sql = "UPDATE weekly_goals SET " . implode(', ', $updates) . " WHERE id = ?";
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->execute($params);
             echo json_encode(['updated' => $stmt->rowCount()]);
             break;
 

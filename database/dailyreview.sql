@@ -23,18 +23,7 @@ SET time_zone = "+00:00";
 
 -- --------------------------------------------------------
 
---
--- 表的结构 `daily_goals`
---
 
-CREATE TABLE `daily_goals` (
-  `id` int(11) NOT NULL,
-  `date` date NOT NULL,
-  `executor_id` int(11) NOT NULL,
-  `goal_content` text NOT NULL,
-  `status` text DEFAULT '研发中',
-  `is_new_goal` tinyint(1) DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -189,10 +178,29 @@ CREATE TABLE `weekly_goals` (
   `executor` varchar(50) NOT NULL,
   `executor_id` int(11) NOT NULL,
   `weekly_goal` text NOT NULL,
+  'priority' int(5) DEFAULT 5 comment '优先级',
   `is_new_goal` tinyint(1) DEFAULT 0,
   `createdate` int(11) NOT NULL,
   `mondayDate` int(11) NOT NULL COMMENT '周一日期,通过这个判断出是否本周的周任务'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- 表的结构 `daily_goals`
+--
+
+CREATE TABLE `daily_goals` (
+  `id` int(11) NOT NULL,
+  `weekly_goals_id` int(11) NOT NULL,
+  `department_id` int(11) NOT NULL,
+  `executor` varchar(50) NOT NULL,
+  `executor_id` int(11) NOT NULL,
+  `weekly_goal` text NOT NULL,
+  `priority` int(5) DEFAULT 5 comment '优先级',
+  `is_new_goal` tinyint(1) DEFAULT 0,
+  `createdate` int(11) NOT NULL,
+  `mondayDate` int(11) NOT NULL COMMENT '周一日期,通过这个判断出是否本周的周任务'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 --
 -- 转储表的索引

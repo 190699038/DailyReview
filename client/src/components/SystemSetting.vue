@@ -3,7 +3,7 @@
     <h2>部门设置</h2>
     <el-form :model="form" label-width="120px" class="center-form">
       <el-form-item label="部门选择" class="form-item-left">
-        <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange" style="max-width: 300px">
+        <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange" style="max-width: 100px">
           <el-option
             v-for="dept in departments"
             :key="dept.id"

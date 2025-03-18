@@ -31,3 +31,28 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 #### 2.3.1 修改操作，点击修改，弹出一个模态框，模态框中显示用户信息，用户信息可以修改，修改后点击保存，保存后，刷新页面
 #### 2.3.2 API接口  http://localhost/DailyReview/server/UserInfoAPI.php?action=add_user&partner_name=xxx&department_id=xxx&position=xxx&mode=xxx&is_active=1
 #### 2.3.3 添加成功后，自动执行 2.1.2 接口
+
+
+
+# 二. 周目标管理 -WeekGoal.vue
+## 1. 周目标获取和展示
+### 1.1  周目标获取接口和格式
+#### 1.1.1 周目标获取接口 /DailyReview/server/WeekGoalAPI.php?action=get&mondayDate=20250317(星期一日期)&department_id=部门ID(department_id 从localStorege中获取，key值为department_id_cache,获取不到默认值为2)
+#### 1.1.2 周目标获取接口返回格式 JSON数据，单条数据格式为:
+>{"id":1001,"department_id":2,"executor":"陈苏熙","executor_id":15,"weekly_goal":"完成订单模块的接口性能优化","is_new_goal":1,"createdate":20250317,"mondayDate":20250317,"partner_name":"陈苏熙","department_name":"游戏技术"}
+### 1.2 周目标展示,表格展示，样式参考SystemSetting.vue中的表单 
+#### 1.2.1 表头和字段解释: 姓名:executor 周目标:weekly_goal  部门 department_name 本周内新增需求-is_new_goal=1 创建日期-createdate 操作:修改,删除, 特别注意:当is_new_goal=1时，本列数据为#FFF3CE ，否则为正常颜色
+## 2. 周目标添加和修改和删除
+### 2.1 周目标添加和修改, 点击添加按钮，弹出一个模态框
+### 2.2 字段为 department-部门, executor-执行人 , weekly_goal-周目标, is_new_goal-下拉框, mondayDate-周一日期(下拉框 本周一日期、上周一日期、下周一日期)
+### 2.3 保存按钮, 点击保存按钮，保存周目标（department_id和executor_id默认必须上传的）
+> 新增:DailyReview/server/WeekGoalAPI.php?action=create&mondayDate=20250317&department_id=2&department_name=游戏技术&executor=陈苏熙&executor_id=15&weekly_goal=完成订单模块的接口性能优化&is_new_goal=0
+> 更新:DailyReview/server/WeekGoalAPI.php?action=create&mondayDate=20250317&department_id=2&department_name=游戏技术&executor=陈苏熙&executor_id=15&weekly_goal=完成订单模块的接口性能优化&is_new_goal=0&id=1
+> 删除:DailyReview/server/WeekGoalAPI.php?action=delete&id=1
+
+
+
+
+
+
+
