@@ -5,21 +5,28 @@
     <el-button type="success" @click="handleImport">导入Excel</el-button>
     
     <el-select
-      v-model="mondayDate"
-      @change="loadData"
-      placeholder="选择周范围"
-      style="margin-left: 1px;max-width: 200px"
-    >
+        v-model="mondayDate"
+        @change="loadData"
+        placeholder="选择周范围"
+        style="max-width: 200px;margin-left: 10px;margin-right: 10px;"
+      >
       <el-option
         width="200"
         v-for="option in mondayOptions"
         :key="option.value"
         :label="option.label"
         :value="option.value"
+        
       />
-    </el-select>
+      </el-select>
+      <el-input
+        v-model="searchText"
+        placeholder="搜索目标或执行人"
+        clearable
+        style="max-width: 300px"
+      />
 
-    <el-table :data="goals" style="width: 100%" :row-class-name="rowClassName">
+    <el-table :data="filteredGoals" style="width: 100%" :row-class-name="rowClassName">
       <el-table-column prop="weekly_goal" label="周目标" min-width="220"  header-align="center"/>
       <el-table-column prop="executor" label="姓名" width="200" align="center" header-align="center" />
       <el-table-column label="优先级" width="120" align="center" header-align="center">
@@ -146,11 +153,22 @@
 import { ref, onMounted } from 'vue'
 import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
+import { computed } from 'vue'
 import * as XLSX from 'xlsx'
 import { parseExcelFile } from '@/utils/excelParser'
+const searchText = ref('')
 const goals = ref([])
 const mondayDate = ref(getCurrentMonday())
 const dialogVisible = ref(false)
+
+const filteredGoals = computed(() => {
+  if (!searchText.value) return goals.value
+  const searchLower = searchText.value.toLowerCase()
+  return goals.value.filter(item => 
+    (item.weekly_goal?.toLowerCase().includes(searchLower) ||
+    item.executor?.toLowerCase().includes(searchLower))
+  )
+})
 const dialogType = ref('add')
 const importDialogVisible = ref(false);
 const importData = ref([]);
