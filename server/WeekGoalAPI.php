@@ -158,6 +158,22 @@ try {
                 if ($executor !== '' && $executorId !== '') {
                     $executorIds = explode('/', $executorId);
                     $executors = explode('/', $executor);
+
+                    // 获取当前已关联的执行人ID
+                    $checkStmt = $conn->prepare("SELECT executor_id FROM daily_goals WHERE weekly_goals_id = ?");
+                    $checkStmt->execute([$id]);
+                    $existingIds = $checkStmt->fetchAll(PDO::FETCH_COLUMN);
+
+                    // 删除不存在于新列表的旧执行人
+                    $idsToDelete = array_diff($existingIds, $executorIds);
+                    if (!empty($idsToDelete)) {
+                        $placeholders = rtrim(str_repeat('?,', count($idsToDelete)), ',');
+                        $deleteStmt = $conn->prepare("DELETE FROM daily_goals 
+                            WHERE weekly_goals_id = ? 
+                            AND executor_id IN ($placeholders)");
+                        $deleteParams = array_merge([$id], $idsToDelete);
+                        $deleteStmt->execute($deleteParams);
+                    }
                     
                     if (count($executorIds) !== count($executors)) {
                         throw new Exception('executor_id和executor参数长度不一致');
