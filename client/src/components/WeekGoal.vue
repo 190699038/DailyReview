@@ -27,6 +27,7 @@
       />
 
     <el-table :data="filteredGoals" style="width: 100%" :row-class-name="rowClassName">
+      <el-table-column prop="id" label="序号" min-width="50"  header-align="center"/>
       <el-table-column prop="weekly_goal" label="周目标" min-width="220"  header-align="center"/>
       <el-table-column prop="executor" label="姓名" width="200" align="center" header-align="center" />
       <el-table-column label="优先级" width="120" align="center" header-align="center">
@@ -383,14 +384,15 @@ const uploadAll = async () => {
     const departmentId = localStorage.getItem('department_id_cache') || 2;
     
     const transformedData = importData.value.map((item, index) => {
-      // // 精确匹配执行人
-      const matchedUsers = users.value.filter(u => 
-        item.executor.split('/').some(name => name.trim() === u.partner_name)
-      );
-      
-      // if (!matchedUsers.length) {
-      //   throw new Error(`第${index + 1}行：未找到匹配的执行人【${item.executor}】`);
-      // }
+      // 精确匹配执行人
+      const executorNames = item.executor.split('/').map(name => name.trim());
+      const matchedUsers = executorNames.map(name => {
+        const user = users.value.find(u => u.partner_name === name);
+        if (!user) {
+          throw new Error(`第${index + 1}行执行人'${name}'不存在`);
+        }
+        return user;
+      });
 
       let selectedWeek = importForm.value.selectedWeek;
       if (selectedWeek === '') {
@@ -434,7 +436,7 @@ const selectFile = async (e) => {
   try {
     const file = e.target.files[0];
     
-    const parsedData = await parseExcelFile(file);
+    const parsedData = await parseExcelFile(file,'weekly');
     importData.value = parsedData.map(item => ({
       id: item.id,
       priority: item.priority,

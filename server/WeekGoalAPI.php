@@ -306,9 +306,27 @@ try {
 
         case 'delete':
             $id = $_REQUEST['id'];
-            $stmt = $conn->prepare("DELETE FROM weekly_goals WHERE id = ?");
-            $stmt->execute([$id]);
-            echo json_encode(['deleted' => $stmt->rowCount()]);
+            $conn->beginTransaction();
+            try {
+                // 删除关联日目标
+                $dailyStmt = $conn->prepare("DELETE FROM daily_goals WHERE weekly_goals_id = ?");
+                $dailyStmt->execute([$id]);
+                $dailyDeleted = $dailyStmt->rowCount();
+
+                // 删除周目标
+                $weeklyStmt = $conn->prepare("DELETE FROM weekly_goals WHERE id = ?");
+                $weeklyStmt->execute([$id]);
+                $weeklyDeleted = $weeklyStmt->rowCount();
+
+                $conn->commit();
+                echo json_encode([
+                    'deleted' => $weeklyDeleted,
+                    'related_daily_deleted' => $dailyDeleted
+                ]);
+            } catch(Exception $e) {
+                $conn->rollBack();
+                throw $e;
+            }
             break;
 
                 case 'batch_create':

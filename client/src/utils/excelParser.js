@@ -1,7 +1,7 @@
 import { id } from 'element-plus/es/locales.mjs';
 import { read, utils } from 'xlsx';
 
-export const parseExcelFile = (file) => {
+export const parseExcelFile = (file,type) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -13,11 +13,23 @@ export const parseExcelFile = (file) => {
 
     //   console.log(jsonData);
       // 跳过标题行和第二行
+      const isDaily = type === 'daily';
+      
       const rows = jsonData.slice(1).map(row => ({
         id: row[0],
-        priority: convertPriority(row[1]),
-        content: row[2],
-        executor: row[3]
+        ...(isDaily ? {
+          executor: row[1],
+          progress: row[3],
+          time_spent: row[4],
+          date: formatDate(row[5]),
+          day_goal: row[6],
+          task_content: row[7],
+          executor_id: getExecutor_id(row[1])
+        } : {
+          priority: convertPriority(row[1]),
+          content: row[2],
+          executor: row[3]
+        })
       }));
 
       resolve(rows);
@@ -41,6 +53,37 @@ const priorityMap = {
 };
 
 const convertPriority = (value) => {
+  return priorityMap[value.trim()] || 5;
+};
 
-  return priorityMap[value.trim()] || 5; // 默认返回B-
+const statusMap = {
+  '未开始': 0,
+  '进行中': 1,
+  '测试中': 2,
+  '已完成': 3,
+  '已暂停': 4
+};
+
+const convertStatus = (value) => {
+  return statusMap[value.trim()] || 0;
+};
+
+
+const getExecutor_id = (value) => {
+  const cache = localStorage.getItem('departments_user_cache')
+  let users = cache ? JSON.parse(cache) : []
+
+  for (let i = 0; i < users.length; i++) {
+    if (users[i].partner_name === value) {
+      return users[i].id
+    }
+  }
+  return 0;
+};
+
+const formatDate = (date) => {
+  // if (!date) return '';
+  // const d = new Date(date);
+  // return d.toISOString().slice(0,10).replace(/-/g, '');
+  return date;
 };

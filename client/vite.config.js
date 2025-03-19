@@ -14,9 +14,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/DailyReview/server': {
-        target: 'http://localhost',
+        target: 'http://127.0.0.1/DailyReview/server',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/DailyReview\/server/, '/DailyReview/server/')
+        rewrite: (path) => path.replace(/^\/server/, '')
       }
     }
   }

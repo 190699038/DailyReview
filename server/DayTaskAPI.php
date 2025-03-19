@@ -4,13 +4,17 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Content-Type: application/json');
 require __DIR__ . '/db_connect.php';
-
+// 处理预检请求（OPTIONS 方法）
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    header("HTTP/1.1 200 OK");
+    exit();
+}
 $action = $_REQUEST['action'] ?? '';
 
 try {
     switch ($action) {
         case 'get':
-            $date = $_GET['date'] ?? date('Y-m-d');
+            $date = $_GET['date'] ?? date('Ymd');
             $stmt = $conn->prepare("SELECT * FROM daily_tasks WHERE date = ?");
             $stmt->execute([$date]);
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));

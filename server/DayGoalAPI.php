@@ -1,4 +1,7 @@
 <?php
+
+use function PHPSTORM_META\type;
+
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -7,17 +10,56 @@ require __DIR__ . '/db_connect.php';
 
 $action = $_REQUEST['action'] ?? '';
 
+
+
 try {
     switch ($action) {
+        case 'getUserGoalAndTasks':
+            $last_date = $_POST['last_date'] ?? '';
+            $monday_date = $_POST['monday_date'] ?? '';
+            $user_ids = $_POST['user_ids'] ?? [];
+      
+            if(empty($last_date) || empty($monday_date) || empty($user_ids)) {
+                http_response_code(400);
+                echo json_encode(['error' => '缺少必要参数']);
+                break;
+            }
+
+            // echo(gettype($executor_ids));
+            $executor_ids = explode(',', $user_ids);
+            $result = [];
+            foreach($executor_ids as $executor_id) {
+                // 查询每日任务
+                $task_stmt = $conn->prepare("SELECT * FROM daily_tasks WHERE date = ? AND executor_id = ?");
+                $task_stmt->execute([$last_date, $executor_id]);
+                $dailyTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // 查询周目标
+                $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ?");
+                $goal_stmt->execute([$monday_date, $executor_id]);
+                $dailyGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                $result[] = [
+                    'executor_id' => $executor_id,
+                    'dailyTasks' => $dailyTasks,
+                    'dailyGoals' => $dailyGoals
+                ];
+            }
+
+            echo json_encode(['data' => $result]);
+            break;
+
+
+
         case 'get':
-            $date = $_GET['date'] ?? date('Y-m-d');
-            $stmt = $conn->prepare("SELECT * FROM daily_goals WHERE date = ?");
+            $date = $_REQUEST['date'] ?? date('Ymd');
+            $stmt = $conn->prepare("SELECT * FROM daily_goals WHERE createdate = ?");
             $stmt->execute([$date]);
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             break;
 
         case 'create':
-            if($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 http_response_code(405);
                 echo json_encode(['error' => '仅支持POST方法']);
                 break;
@@ -25,7 +67,7 @@ try {
             $date = $_REQUEST['date'];
             $executor_id = $_REQUEST['executor_id'];
             $goal_content = $_REQUEST['goal_content'];
-            
+
             $stmt = $conn->prepare("INSERT INTO daily_goals (date, executor_id, goal_content) VALUES (?, ?, ?)");
             $stmt->execute([$date, $executor_id, $goal_content]);
             echo json_encode(['id' => $conn->lastInsertId()]);
@@ -42,7 +84,7 @@ try {
             $id = $_POST['id'];
             $goal_content = $_POST['goal_content'];
             $executor_id = $_POST['executor_id'];
-            
+
             $stmt = $conn->prepare("UPDATE daily_goals SET goal_content = ?, executor_id = ? WHERE id = ?");
             $stmt->execute([$goal_content, $executor_id, $id]);
             echo json_encode(['updated' => $stmt->rowCount()]);
@@ -56,33 +98,77 @@ try {
             break;
 
         case 'get_target':
-            $date = $_GET['date'] ?? date('Ymd');
+            $date =  $_REQUEST['report_date'] ?? date('Ymd');
+            // echo($date );
             $stmt = $conn->prepare("SELECT * FROM today_target WHERE report_date = ?");
             $stmt->execute([$date]);
             echo json_encode($stmt->fetch(PDO::FETCH_ASSOC) ?: []);
             break;
 
         case 'save_target':
-            if($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 http_response_code(405);
                 echo json_encode(['error' => '仅支持POST方法']);
                 break;
             }
             $date = $_POST['report_date'] ?? date('Ymd');
             $content = $_POST['content'] ?? '';
-            
+
             $stmt = $conn->prepare("INSERT INTO today_target (report_date, content, message) 
                 VALUES (?, ?, '') 
                 ON DUPLICATE KEY UPDATE content = VALUES(content)");
             $stmt->execute([$date, $content]);
             echo json_encode(['affected_rows' => $stmt->rowCount()]);
             break;
+        case 'batch_create':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['error' => '仅支持POST方法']);
+                break;
+            }
+
+            $input =  $_POST;//json_decode(file_get_contents('php://input'), true);
+
+            if (!is_array($input)) {
+                http_response_code(400);
+                echo json_encode(['error' => '无效的JSON数据']);
+                break;
+            }
+
+            try {
+                $conn->beginTransaction();
+
+                $stmt = $conn->prepare("INSERT INTO daily_tasks 
+                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal, createdate)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+
+                foreach ($input as $item) {
+                    $stmt->execute([
+                        $item['date'],
+                        $item['day_goal'],
+                        $item['executor_id'],
+                        $item['task_content'],
+                        $item['progress'] ?? 0,
+                        $time_spent,
+                        $item['is_new_goal'] ?? 0,
+                        date('Ymd')
+                    ]);
+                }
+
+                $conn->commit();
+                echo json_encode(['inserted' => count($input)]);
+            } catch (Exception $e) {
+                $conn->rollBack();
+                http_response_code(400);
+                echo json_encode(['error' => $e->getMessage()]);
+            }
+            break;
 
         default:
             http_response_code(400);
             echo json_encode(['error' => '无效的操作类型']);
     }
-} catch(PDOException $e) {
+} catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['error' => '数据库操作失败: ' . $e->getMessage()]);
 }
