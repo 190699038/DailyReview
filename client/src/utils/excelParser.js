@@ -15,7 +15,9 @@ export const parseExcelFile = (file,type) => {
       // 跳过标题行和第二行
       const isDaily = type === 'daily';
       
-      const rows = jsonData.slice(1).map(row => ({
+      const rows = jsonData.slice(1)
+  .filter(row => row.some(cell => cell))
+  .map(row => ({ 
         id: row[0],
         ...(isDaily ? {
           executor: row[1],

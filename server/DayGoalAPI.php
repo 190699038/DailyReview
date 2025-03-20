@@ -137,20 +137,34 @@ try {
 
             try {
                 $conn->beginTransaction();
-
+    
                 $stmt = $conn->prepare("INSERT INTO daily_tasks 
-                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal, createdate)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate)
+                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?)");
 
                 foreach ($input as $item) {
+                    //模糊查询周目标是否在目标的标准，查询daily_goals表中的字段weekly_goal like '%$item['day_goal']',返回daily_goals中的表id值
+                    // $goalCheckStmt = $conn->prepare("SELECT id FROM daily_goals WHERE executor_id = ? and weekly_goal LIKE ?");
+                    // $goalCheckStmt->execute([$item['executor_id'],"%{$item['day_goal']}%"]);
+                    // $goal = $goalCheckStmt->fetch(PDO::FETCH_ASSOC);
+                    $daily_goals_id = 0;
+                    // if ($goal) {
+                    //     $$daily_goals_id = $goal['id'];
+                    // }
+
+                    echo('SELECT id FROM daily_goals WHERE executor_id = executor_id = '.$item['executor_id'].'  and weekly_goal LIKE %'.$item['day_goal'].'%');
+
+
+                    // var_dump($item);
                     $stmt->execute([
                         $item['date'],
                         $item['day_goal'],
                         $item['executor_id'],
                         $item['task_content'],
                         $item['progress'] ?? 0,
-                        $time_spent,
+                        $item['time_spent'] ?? 0,
                         $item['is_new_goal'] ?? 0,
+                        $daily_goals_id,
                         date('Ymd')
                     ]);
                 }

@@ -64,7 +64,42 @@ try {
             $stmt->execute([$id]);
             echo json_encode(['deleted' => $stmt->rowCount()]);
             break;
+        case 'getUserGoalAndTasks':
+                $date_str = $_POST['dates'] ?? '';
+                $monday_date = $_POST['monday_date'] ?? '';
+                $executor_id = $_POST['executor_id'] ?? '';
 
+                if(empty($executor_id) || empty($monday_date) || empty($date_str)) {
+                    http_response_code(400);
+                    echo json_encode(['error' => '缺少必要参数']);
+                    break;
+                }
+
+                $date_array = explode(',', $date_str);
+                $result = [];
+                foreach($date_array as $date) {
+                    if( !empty($date)){
+                        // 查询每日任务
+                        $task_stmt = $conn->prepare("SELECT * FROM daily_tasks WHERE date = ? AND executor_id = ?");
+                        $task_stmt->execute([$date, $executor_id]);
+                        $dailyTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                        // 查询周目标
+                        $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ? AND createdate <= ?");
+                        $goal_stmt->execute([$monday_date, $executor_id,$date]);
+                        $dailyGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                        $result[] = [
+                            'date' => $date,
+                            'dailyTasks' => $dailyTasks,
+                            'dailyGoals' => $dailyGoals
+                        ];
+                    }
+                   
+                }
+    
+                echo json_encode(['data' => $result]);
+                break;
         default:
             http_response_code(400);
             echo json_encode(['error' => '无效的操作类型']);
