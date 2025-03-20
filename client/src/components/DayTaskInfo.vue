@@ -10,27 +10,33 @@
       <h2>{{ day.date }}  {{ day.label }} </h2>
 
       <div class="content-container-top">
-          <el-table :data="dailyGoals.value" border style="width: 100%">
-            <el-table-column prop="weekly_goals_id" label="序号" width="120" />
-            <el-table-column prop="executor" label="执行人" />
-            <el-table-column prop="weekly_goal" label="目标" />
-            <el-table-column label="priority" width="120" align="center" header-align="center"></el-table-column>
+          <el-table :data="dailyGoals || []" border style="width: 100%" :row-class-name="rowClassName">
+            <el-table-column prop="weekly_goals_id" label="序号" width="90" />
+            <el-table-column prop="executor" label="执行人"  width="90" align="center" header-align="center"/>
             
+            <el-table-column label="优先级" width="80" align="center" header-align="center">
+              <template #default="{row}">{{ {10:'A+',9:'A',8:'A-',7:'B+',6:'B',5:'B-',4:'C+',3:'C',2:'C-'}[row.priority] }}</template>
+            </el-table-column>
+            
+            <el-table-column prop="weekly_goal" label="目标" header-align="center"/>
+            
+            <el-table-column label="状态" width="120" align="center" header-align="center">
+              <template #default="{row}">
+                {{ {1:'进行中',2:'测试中',3:'已上线',4:'已暂停',0:'未开始'}[row.status] || '未知状态' }}
+              </template>
+            </el-table-column>
           </el-table>
         </div>
 
 
         <div class="content-container">
-          <el-table :data="taskData" border style="width: 100%">
-            <el-table-column prop="time" label="时间" width="120" />
-            <el-table-column prop="content" label="任务内容" />
-            <el-table-column prop="progress" label="进度" width="120">
-              <template #default="{ row }">
-                <el-tag :type="row.progress">
-                  {{ row.progress }}%
-                </el-tag>
-              </template>
-            </el-table-column>
+          <el-table :key="tableKey" :data="dailyTasks || []" border style="width: 100%" :row-class-name="rowClassName">
+            <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
+            <el-table-column prop="day_goal" label="目标" header-align="center"/>
+            <el-table-column prop="task_content" label="拆解任务" header-align="center"/>
+            <el-table-column prop="time_spent" label="耗时(小时)"  width="100" align="center" header-align="center"/>
+            <el-table-column prop="progress" label="进度"  width="90" align="center" header-align="center"/>
+
           </el-table>
         </div>
       </el-tab-pane>
@@ -47,8 +53,9 @@ import { parseExcelFile } from '@/utils/excelParser'
 const currentDate = ref({});
 const tasks = ref({});
 const obj = ref({})
-const dailyGoals = ref({});
-const dailyTasks = ref({});
+const dailyGoals = ref([]);
+const dailyTasks = ref([]);
+const tableKey = ref(0);
 
 const props = defineProps({
   visible: Boolean,
@@ -60,6 +67,21 @@ const emit = defineEmits(['update:visible'])
 const activeTab = ref('')
 const taskData = ref([])
 const index = ref(0)
+
+const rowClassName = ({ row }) => {
+  let style = ''
+  if (row.status === 3) {
+    style = 'green-row'
+  }else{
+    if(row.is_new_goal === 1){
+      style = 'highlight-row'
+    }
+  }
+  return style
+}
+
+
+
 // 加载任务数据
 const loadTaskData = async (executor_id,monday_date) => {
   console.log("loadTaskData called with executor_id:", executor_id);
@@ -102,10 +124,11 @@ defineExpose({ loadTaskData }); // 关键！暴露方法给父组件
 
 const drawTable = () => {
   taskData.value = [];
-  const dailyGoal = tasks.value?.data?.[obj.tabIndex]?.dailyGoals || [];
-    const dailyTask = tasks.value?.data?.[obj.tabIndex]?.dailyTasks || [];
+  const dailyGoal = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyGoals) ? tasks.value.data[obj.tabIndex].dailyGoals : [];
+    const dailyTask = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyTasks) ? tasks.value.data[obj.tabIndex].dailyTasks : [];
     dailyGoals.value = dailyGoal;
-    dailyTasks.value = dailyTask;
+    dailyTasks.value = [...dailyTask];
+    tableKey.value += 1;
     console.log(dailyGoal)
     console.log(dailyTask)
 }
@@ -201,6 +224,13 @@ initActiveTab()
   padding: 20px;
   background: #f8f8f8;
   border-radius: 8px;
+}
+.highlight-row {
+  background-color: #FFF3CE !important;
+}
+
+.green-row {
+  background-color: #A9D08D !important;
 }
 
 .el-tag {

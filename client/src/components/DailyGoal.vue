@@ -38,7 +38,7 @@
                   <div class="section-title">周目标</div>
                   <div class="scroll-content">
                     <template v-for="goal in user.dailyGoals" :key="goal.id">
-                      <div class="goal-item" :style="{ backgroundColor: goal.is_new_goal === 1 ? '#C7BB37' : '' }">{{ goal.weekly_goal }}</div>
+                      <div class="goal-item" :style="{ backgroundColor: goal.is_new_goal === 1 ? '#FFF3CE' : '' }">{{ goal.weekly_goal }}</div>
                     </template>
                   </div>
                 </div>
