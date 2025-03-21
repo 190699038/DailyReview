@@ -22,7 +22,7 @@
         </div>
         <!-- <div style="width: 100%;height: 95%;"> -->
         <el-row :gutter="16" style="margin-top:10px;height: 600px;">
-          <el-col v-for="(user, index) in allTasks.data || []" :key="index" :xs="24" :sm="12" :md="12" :lg="16" :xl="6"
+          <el-col v-for="(user, index) in allTasks.data || []" :key="index" :xs="24" :sm="12" :md="12" :lg="16" :xl="12"
             style="margin-bottom:16px;">
             <el-card width="50%" height="600px" :style="{
                  backgroundColor: colorMap[user.id] || colors[index % colors.length],
@@ -203,6 +203,9 @@ const getUserGoalAndTasks = async () => {
     const cache = localStorage.getItem('departments_user_cache');
     let users = cache ? JSON.parse(cache) : [];
     const userIds = users.map(u => u.id);
+    if(userIds.length == 0){
+      return 
+    }
 
     const formData = new URLSearchParams();
     formData.append('action', 'getUserGoalAndTasks');

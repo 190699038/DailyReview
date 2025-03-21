@@ -1,11 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory,createWebHashHistory  } from 'vue-router'
 import MainLayout from '@/components/MainLayout.vue'
 import WeekGoal from '@/components/WeekGoal.vue'
 import DailyGoal from '@/components/DailyGoal.vue'
 import SystemSetting from '@/components/SystemSetting.vue'
 
 export default createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/',
