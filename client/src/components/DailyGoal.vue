@@ -22,15 +22,15 @@
         </div>
         <!-- <div style="width: 100%;height: 95%;"> -->
         <el-row :gutter="16" style="margin-top:10px;height: 600px;">
-          <el-col v-for="(user, index) in allTasks.data" :key="index" :xs="24" :sm="12" :md="12" :lg="16" :xl="6"
+          <el-col v-for="(user, index) in allTasks.data || []" :key="index" :xs="24" :sm="12" :md="12" :lg="16" :xl="6"
             style="margin-bottom:16px;">
             <el-card width="50%" height="600px" :style="{
                  backgroundColor: colorMap[user.id] || colors[index % colors.length],
-                borderRadius: '8px'}" shadow="hover" @click="showUserDetail(user)">
+                borderRadius: '8px'}" shadow="hover" @click="showUserDetail(user)" v-if="user.dailyGoals.length > 0">
               <div class="card-container">
                 <!-- 顶部执行人 -->
                 <div class="card-header">
-                  <el-tag effect="dark">{{ user.dailyGoals[0].executor }}</el-tag>
+                  <el-tag effect="dark">{{ user.dailyGoals&&user.dailyGoals.length>0&&user.dailyGoals[0].executor ? user.dailyGoals[0].executor:'' }}</el-tag>
                 </div>
 
                 <!-- 周目标区域 -->
@@ -47,12 +47,14 @@
                 <div class="task-area">
                   <div class="section-title">今日任务</div>
                   <div class="scroll-content">
-                    <template v-for="task in user.dailyTasks" :key="task.id">
-                      <div class="task-item"
-                        :style="{ backgroundColor: colorMap[user.id] || colors[index % colors.length] }">
-                        {{ task.day_goal }}-{{ task.task_content }} - 耗时：{{ task.time_spent }}小时 - 进度:{{ progressType(task.progress) }}
-                      </div>
-                    </template>
+                    <el-table :key="tableKey" :data="user.dailyTasks.filter(task => parseFloat(task.time_spent) > 0) || []" border style="width: 100%" :row-class-name="taskClassName" >
+                    <!-- <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
+                    <el-table-column prop="date" label="日期"  width="100" align="center" header-align="center" /> -->
+                    <el-table-column prop="merger" label="目标-方案" header-align="center"/>
+                    <!-- <el-table-column prop="task_content" label="拆解任务" header-align="center"/> -->
+                    <el-table-column prop="time_spent" label="耗时(小时)"  width="100" align="center" header-align="center"/>
+                    <el-table-column prop="progress" label="进度"  width="90" align="center" header-align="center"/>
+                  </el-table>
                   </div>
                 </div>
               </div>
@@ -87,6 +89,7 @@ const detailVisible = ref(false)
 const currentTask = ref(null)
 const colors = ref(['#f0f9eb', '#fdf6ec', '#fef0f0', '#f0f9ff'])
 const colorMap = ref({})
+const tableKey = ref(0);
 
 const progressType = (value) => {
   const types = {
@@ -97,6 +100,15 @@ const progressType = (value) => {
   }
   return types[value] || '未知状态'
 }
+
+const taskClassName = ({ row }) => {
+  let style = ''
+  if (row.progress === '100%') {
+    style = 'green-row'
+  }
+  return style
+}
+
 
 const taskDetailVisible = ref(false)
 const currentExecutorId = ref(0)
@@ -112,10 +124,13 @@ const showUserDetail = (user) => {
 // 获取当日目标
 const getDailyGoal = async () => {
   try {
+    const departmentId = localStorage.getItem('department_id_cache') || 2
+
     const res = await http.get('/DayGoalAPI.php', {
       params: {
         action: 'get_target',
-        report_date: currentDate.value
+        report_date: currentDate.value,
+        department_id: departmentId
       }
     })
     goalContent.value = res?.content || ''
@@ -130,11 +145,18 @@ const saveGoal = async () => {
     ElMessage.warning('目标内容不能为空');
     return;
   }
+
+
   try {
+    const departmentId = localStorage.getItem('department_id_cache') || 2
+
     const formData = new URLSearchParams();
     formData.append('action', 'save_target');
     formData.append('report_date', currentDate.value);
     formData.append('content', goalContent.value);
+    formData.append('department_id', departmentId);
+
+    
 
     await http.post('DayGoalAPI.php', formData, {
       timeout: 30000,
@@ -193,10 +215,19 @@ const getUserGoalAndTasks = async () => {
       }
     });
     allTasks.value = res || [];
+
+    for(let i = 0; i < allTasks.value.data.length; i++){
+      let user = allTasks.value.data[i]
+      for(let j = 0; j < user.dailyTasks.length; j++){
+        allTasks.value.data[i].dailyTasks[j].merger = user.dailyTasks[j].day_goal+'-'+user.dailyTasks[j].task_content
+        tableKey.value = tableKey+1
+      }
+    }
+
     console.log(allTasks)
 
-    console.log(JSON.stringify(allTasks.value.data[0].dailyGoals[0]))
-    console.log(JSON.stringify(allTasks.value.data[1].dailyTasks[0]))
+    // console.log(JSON.stringify(allTasks.value.data[0].dailyGoals[0]))
+    // console.log(JSON.stringify(allTasks.value.data[1].dailyTasks[0]))
 
   } catch (error) {
     console.error('获取任务失败:', error);
@@ -353,6 +384,11 @@ onMounted(() => {
   margin: 0 0 10px !important;
   padding-bottom: 8px !important;
   border-bottom: 1px solid #eee;
+}
+
+
+.green-row {
+  background-color: #A9D08D !important;
 }
 </style>
 

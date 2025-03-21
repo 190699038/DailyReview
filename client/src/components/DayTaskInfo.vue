@@ -30,8 +30,10 @@
 
 
         <div class="content-container">
-          <el-table :key="tableKey" :data="dailyTasks || []" border style="width: 100%" :row-class-name="rowClassName">
+          <el-table :key="tableKey" :data="dailyTasks.filter(task => parseFloat(task.time_spent) > 0)  || []" border style="width: 100%" :row-class-name="taskClassName">
             <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
+            <el-table-column prop="date" label="日期"  width="100" align="center" header-align="center" />
+
             <el-table-column prop="day_goal" label="目标" header-align="center"/>
             <el-table-column prop="task_content" label="拆解任务" header-align="center"/>
             <el-table-column prop="time_spent" label="耗时(小时)"  width="100" align="center" header-align="center"/>
@@ -80,6 +82,13 @@ const rowClassName = ({ row }) => {
   return style
 }
 
+const taskClassName = ({ row }) => {
+  let style = ''
+  if (row.progress === '100%') {
+    style = 'green-row'
+  }
+  return style
+}
 
 
 // 加载任务数据

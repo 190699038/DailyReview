@@ -99,9 +99,11 @@ try {
 
         case 'get_target':
             $date =  $_REQUEST['report_date'] ?? date('Ymd');
+            $department_id =  $_REQUEST['department_id'] ??0;
+
             // echo($date );
-            $stmt = $conn->prepare("SELECT * FROM today_target WHERE report_date = ?");
-            $stmt->execute([$date]);
+            $stmt = $conn->prepare("SELECT * FROM today_target WHERE report_date = ? AND department_id =?");
+            $stmt->execute([$date,$department_id]);
             echo json_encode($stmt->fetch(PDO::FETCH_ASSOC) ?: []);
             break;
 
@@ -113,11 +115,12 @@ try {
             }
             $date = $_POST['report_date'] ?? date('Ymd');
             $content = $_POST['content'] ?? '';
+            $department_id = $_POST['department_id'] ?? 0;
 
-            $stmt = $conn->prepare("INSERT INTO today_target (report_date, content, message) 
-                VALUES (?, ?, '') 
+            $stmt = $conn->prepare("INSERT INTO today_target (report_date, content,department_id, message) 
+                VALUES (?, ?, ?,'') 
                 ON DUPLICATE KEY UPDATE content = VALUES(content)");
-            $stmt->execute([$date, $content]);
+            $stmt->execute([$date, $content, $department_id]);
             echo json_encode(['affected_rows' => $stmt->rowCount()]);
             break;
         case 'batch_create':
