@@ -45,7 +45,7 @@
 
                 <!-- 任务分解区域 -->
                 <div class="task-area">
-                  <div class="section-title">今日任务</div>
+                  <div class="section-title">昨日任务清单</div>
                   <div class="scroll-content">
                     <el-table :key="tableKey" :data="user.dailyTasks.filter(task => parseFloat(task.time_spent) > 0) || []" border style="width: 100%" :row-class-name="taskClassName" >
                     <!-- <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
@@ -135,6 +135,7 @@ const getDailyGoal = async () => {
     })
     goalContent.value = res?.content || ''
     // console.log('获取目标成功:', res?.content || '')
+    fenxTodayTarget()
   } catch (error) {
     console.error('获取目标失败:', error)
   }
@@ -233,8 +234,14 @@ const getUserGoalAndTasks = async () => {
     console.error('获取任务失败:', error);
     ElMessage.error('数据获取失败，请检查控制台');
   }
+
 }
 
+const fenxTodayTarget = ()=>{
+    //goalContent.value
+
+
+  }
 
 // 保存目标
 const batchGoal = async (transformedData) => {

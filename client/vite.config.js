@@ -5,6 +5,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './', // 添加这行确保资源使用相对路径
   plugins: [vue(), vueJsx()],
   resolve: {
     alias: {
