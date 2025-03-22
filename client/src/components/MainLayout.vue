@@ -18,6 +18,7 @@
 import { useRoute } from 'vue-router'
 import { onMounted } from 'vue'
 import http from '@/utils/http'
+import {megerOAUserIDS} from '@/utils/dailyPlanAsync'
 
 const route = useRoute()
 const activeIndex = route.path
@@ -27,6 +28,7 @@ onMounted(async () => {
     const departmentId = localStorage.getItem('department_id_cache') || 2
     const res = await http.get(`UserInfoAPI.php?action=get_users&department_id=${departmentId}`)
     localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+    megerOAUserIDS(departmentId)
   } catch (error) {
     console.error('用户信息初始化失败:', error)
   }

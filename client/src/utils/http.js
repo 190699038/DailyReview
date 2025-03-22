@@ -1,7 +1,9 @@
 import axios from 'axios'
 
 const service = axios.create({
-  baseURL: 'http://127.0.0.1/DailyReview/server/',
+  // baseURL: 'http://10.10.10.95/DailyReview/server/',
+  baseURL: 'http://10.10.100.49/DailyReview/server/',
+
   timeout: 5000
 })
 

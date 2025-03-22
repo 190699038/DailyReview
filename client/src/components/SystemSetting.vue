@@ -73,6 +73,7 @@
 import { ref } from 'vue'
 import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
+import {megerOAUserIDS} from '@/utils/dailyPlanAsync'
 
 const form = ref({
   apiDomain: '',
@@ -114,6 +115,7 @@ const handleDepartmentChange = (val) => {
     .then(res => {
       users.value = res.data
       localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+      megerOAUserIDS(val)
     })
 }
 

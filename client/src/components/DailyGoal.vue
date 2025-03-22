@@ -47,7 +47,7 @@
                 <div class="task-area">
                   <div class="section-title">昨日任务清单</div>
                   <div class="scroll-content">
-                    <el-table :key="tableKey" :data="user.dailyTasks.filter(task => parseFloat(task.time_spent) > 0) || []" border style="width: 100%" :row-class-name="taskClassName" >
+                    <el-table :key="tableKey" :data="user.dailyTasks.filter(task => parseFloat(task.time_spent) != 0) || []" border style="width: 100%" :row-class-name="taskClassName" >
                     <!-- <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
                     <el-table-column prop="date" label="日期"  width="100" align="center" header-align="center" /> -->
                     <el-table-column prop="merger" label="目标-方案" header-align="center"/>
@@ -80,6 +80,7 @@ import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
 import { parseExcelFile } from '@/utils/excelParser'
 import DayTaskInfo from '@/components/DayTaskInfo.vue'
+import { megerOAUserIDS} from '@/utils/dailyPlanAsync'
 
 const currentDate = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
 const goalContent = ref('')
@@ -230,8 +231,6 @@ const getUserGoalAndTasks = async () => {
 
     console.log(allTasks)
 
-    // console.log(JSON.stringify(allTasks.value.data[0].dailyGoals[0]))
-    // console.log(JSON.stringify(allTasks.value.data[1].dailyTasks[0]))
 
   } catch (error) {
     console.error('获取任务失败:', error);
@@ -273,7 +272,7 @@ const showTaskDetail = (task) => {
 }
 
 // 文件导入处理
-const handleImport = () => {
+const handleImport = () => {  
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = '.xlsx'
@@ -286,7 +285,7 @@ const handleImport = () => {
       tasks.value = importedTasks.map(task => ({
         executor: task.executor,
         progress: task.progress,
-        time_spent: task.time_spent,
+        time_spent: task.time_spent == 'None'? '-1' : task.time_spent,
         date: task.date,
         day_goal: task.day_goal,
         task_content: task.task_content,
@@ -301,6 +300,17 @@ const handleImport = () => {
   }
 
   input.click()
+
+  //  let users = localStorage.getItem('departments_user_cache');
+  //  users = JSON.parse(users)
+  //  let singleOAID =  users[0].oa_userid; 
+  //   if (singleOAID == null || singleOAID == ''){
+  //     megerOAUserIDS()
+  //     return 
+  //   }
+
+
+
 }
 
 // 加载初始数据

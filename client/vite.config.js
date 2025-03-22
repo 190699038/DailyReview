@@ -22,7 +22,9 @@ export default defineConfig({
 
     proxy: {
       '/DailyReview/server': {
-        target: 'http://127.0.0.1/DailyReview/server',
+        // target: 'http://127.0.0.1/DailyReview/server',
+        target: 'http://10.10.10.95/DailyReview/server',
+
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/server/, '')
       }
