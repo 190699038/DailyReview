@@ -230,7 +230,7 @@ const getUserGoalAndTasks = async () => {
     }
 
     console.log(allTasks)
-
+    dailyPlanAsync()
 
   } catch (error) {
     console.error('获取任务失败:', error);
@@ -238,6 +238,14 @@ const getUserGoalAndTasks = async () => {
   }
 
 }
+
+const  dailyPlanAsync = async () => {
+  allTasks.value
+}
+
+
+
+
 
 const fenxTodayTarget = ()=>{
     //goalContent.value
@@ -273,43 +281,33 @@ const showTaskDetail = (task) => {
 
 // 文件导入处理
 const handleImport = () => {  
-  // const input = document.createElement('input')
-  // input.type = 'file'
-  // input.accept = '.xlsx'
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.xlsx'
 
-  // input.onchange = async (e) => {
-  //   const file = e.target.files[0]
-  //   if (!file) return
-  //   try {
-  //     const importedTasks = await parseExcelFile(file, 'daily')
-  //     tasks.value = importedTasks.map(task => ({
-  //       executor: task.executor,
-  //       progress: task.progress,
-  //       time_spent: task.time_spent == 'None'? '-1' : task.time_spent,
-  //       date: task.date,
-  //       day_goal: task.day_goal,
-  //       task_content: task.task_content,
-  //       executor_id: task.executor_id,
-  //     }))
-  //     ElMessage.success(`成功导入${importedTasks.length}条任务`)
-  //     batchGoal(tasks.value)
-  //   } catch (error) {
-  //     console.error('导入失败:', error)
-  //     ElMessage.error('文件解析失败，请使用标准模板文件')
-  //   }
-  // }
+  input.onchange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    try {
+      const importedTasks = await parseExcelFile(file, 'daily')
+      tasks.value = importedTasks.map(task => ({
+        executor: task.executor,
+        progress: task.progress,
+        time_spent: task.time_spent == 'None'? '-1' : task.time_spent,
+        date: task.date,
+        day_goal: task.day_goal,
+        task_content: task.task_content,
+        executor_id: task.executor_id,
+      }))
+      ElMessage.success(`成功导入${importedTasks.length}条任务`)
+      batchGoal(tasks.value)
+    } catch (error) {
+      console.error('导入失败:', error)
+      ElMessage.error('文件解析失败，请使用标准模板文件')
+    }
+  }
 
   input.click()
-
-  //  let users = localStorage.getItem('departments_user_cache');
-  //  users = JSON.parse(users)
-  //  let singleOAID =  users[0].oa_userid; 
-  //   if (singleOAID == null || singleOAID == ''){
-  //     megerOAUserIDS()
-  //     return 
-  //   }
-
-
 
 }
 
