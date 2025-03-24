@@ -6,7 +6,7 @@
       v-model="selectedPeriod"
       @change="loadData"
       placeholder="选择周周期"
-      style="margin-right: 20px;width: 200px"
+      style="margin-right: 20px;width: 200px;margin-bottom: 15px;"
     >
       <el-option
         v-for="period in weekPeriodOptions"
@@ -73,7 +73,7 @@
             :timestamp="formatDate(date)"
             placement="top"
           >
-          <el-table :data="tasks" border>
+          <el-table :data="tasks" border :row-class-name="taskClassName" >
             <el-table-column prop="megerData" label="目标方案" />
             <el-table-column prop="progress" label="进度"  width="100" align="center" header-align="center"/>
             <el-table-column prop="time_spent" label="耗时(小时)" width="100" align="center" header-align="center" />
@@ -120,6 +120,15 @@ onMounted(async () => {
 
   loadData()
 })
+
+
+const taskClassName = ({ row }) => {
+  let style = ''
+  if (row.progress === '100%') {
+    style = 'green-row'
+  }
+  return style
+}
 
 // 部门人员数据处理
 const departmentUsers = computed(() => {
@@ -258,6 +267,11 @@ rowinfo.dailyTasks = Object.keys(groups)
     result.push(rowinfo);
   }
 
+  // 设置第一个用户默认展开
+  if (result.length > 0) {
+    result[0].isExpanded = true;
+  }
+
   tableData.value = result;
   console.log((result))
 
@@ -347,7 +361,51 @@ onMounted(async () => {
 })
 </script>
 
-<style>
+<style scoped>
+.card-header {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e1effe 100%);
+  border-radius: 8px 8px 0 0;
+  padding: 15px 20px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.user-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.goals-section {
+  background: #f3faf3;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  border: 1px solid #e8f5e9;
+}
+
+.tasks-section {
+  background: #f8f9fc;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  border: 1px solid #f0f1f5;
+}
+
+.el-table {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.el-timeline-item__timestamp {
+  color: #666;
+  font-size: 0.9em;
+}
 .header-right {
   display: flex;
   justify-content: flex-end;
@@ -363,5 +421,9 @@ onMounted(async () => {
 
 .rotate-180 {
   transform: rotate(180deg) scale(1.2);
+}
+
+.green-row {
+  background-color: #A9D08D !important;
 }
 </style>
