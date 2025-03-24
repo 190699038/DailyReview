@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" >
     <el-row :gutter="20">
       <!-- 左侧队长目标管理 -->
       <el-col :span="8">
@@ -17,8 +17,10 @@
       <!-- 右侧任务卡片 -->
       <el-col :span="15">
         <div class="task-header">
-          <el-button type="success" @click="handleImport"
-            style="margin-bottom: 15px;margin-top: 10px;">导入昨日计划</el-button>
+          <!-- <el-button type="success" @click="handleImport"
+            style="margin-bottom: 15px;margin-top: 10px;">导入昨日计划</el-button> -->
+            <el-button type="success" @click="handleSync"
+            style="margin-bottom: 15px;margin-top: 10px;" v-if="showAsync">日计划同步</el-button>
         </div>
         <!-- <div style="width: 100%;height: 95%;"> -->
         <el-row :gutter="16" style="margin-top:10px;height: 600px;">
@@ -80,7 +82,7 @@ import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
 import { parseExcelFile } from '@/utils/excelParser'
 import DayTaskInfo from '@/components/DayTaskInfo.vue'
-import { megerOAUserIDS} from '@/utils/dailyPlanAsync'
+import { megerOAUserIDS,getDailyPlan} from '@/utils/dailyPlanAsync'
 
 const currentDate = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
 const goalContent = ref('')
@@ -91,6 +93,7 @@ const currentTask = ref(null)
 const colors = ref(['#f0f9eb', '#fdf6ec', '#fef0f0', '#f0f9ff'])
 const colorMap = ref({})
 const tableKey = ref(0);
+const showAsync = ref(false)
 
 const progressType = (value) => {
   const types = {
@@ -230,7 +233,25 @@ const getUserGoalAndTasks = async () => {
     }
 
     console.log(allTasks)
-    dailyPlanAsync()
+    let noTaskData = true
+    let tasks = allTasks.value.data
+    for (let i = 0; i < tasks.length; i++) {
+      const dTasks = tasks[i].dailyTasks;
+      if(dTasks.length > 0){
+        noTaskData = false
+        break;
+      }
+      
+    }
+
+    if (noTaskData) {
+      showAsync.value = true
+    }
+
+    //检查下OA的账号登录状态
+    megerOAUserIDS()
+
+
 
   } catch (error) {
     console.error('获取任务失败:', error);
@@ -239,8 +260,42 @@ const getUserGoalAndTasks = async () => {
 
 }
 
-const  dailyPlanAsync = async () => {
-  allTasks.value
+const  handleSync = async () => {
+  // tasks.value = importedTasks.map(task => ({
+  //       executor: task.executor,
+  //       progress: task.progress,
+  //       time_spent: task.time_spent == 'None'? '-1' : task.time_spent,
+  //       date: task.date,
+  //       day_goal: task.day_goal,
+  //       task_content: task.task_content,
+  //       executor_id: task.executor_id,
+  //     }))
+   let objects = []
+   let users_str = localStorage.getItem('departments_user_cache')
+   let users = JSON.parse(users_str)
+   for(let i = 0; i < users.length; i++){
+    let user = users[i]
+    let res = await getDailyPlan(false,user.oa_userid)
+    if( res != null && res.length > 0){
+      for(let j = 0; j < res.length; j++){
+        let obj = res[j]
+        let task = {}
+        task.executor = user.partner_name
+        task.executor_id = user.id
+        task.date = obj.createdAt.replace(/^(\d{4})-(\d{2})-(\d{2}).*/, '$1$2$3')
+        task.progress = obj.complete != null && obj.complete != 'null' ? obj.complete+'%' : '0%',
+        task.time_spent = obj.r_time == null ? '-1' : obj.r_time,
+        task.day_goal = obj.d_describe,
+        task.task_content = obj.p_describe,
+        objects.push(task)
+      }
+      // tableKey.value = tableKey+1
+    }
+    
+   }
+   batchGoal(objects)
+   console.log(objects)
+   showAsync.value = false
 }
 
 
@@ -266,7 +321,7 @@ const batchGoal = async (transformedData) => {
       }
     });
     ElMessage.success('保存成功');
-    getDailyGoal();
+    getUserGoalAndTasks()
   } catch (error) {
     console.error('保存失败:', error.response?.data || error.message);
     ElMessage.error(`保存失败: ${error.response?.data?.message || '服务器异常'}`);
@@ -298,6 +353,7 @@ const handleImport = () => {
         day_goal: task.day_goal,
         task_content: task.task_content,
         executor_id: task.executor_id,
+        mondayDate:getMondayDate(currentDate.value)
       }))
       ElMessage.success(`成功导入${importedTasks.length}条任务`)
       batchGoal(tasks.value)

@@ -3,6 +3,7 @@ import MainLayout from '@/components/MainLayout.vue'
 import WeekGoal from '@/components/WeekGoal.vue'
 import DailyGoal from '@/components/DailyGoal.vue'
 import SystemSetting from '@/components/SystemSetting.vue'
+import DailyHistory from '@/components/DailyHistory.vue'
 
 export default createRouter({
   history: createWebHashHistory(),
@@ -14,6 +15,7 @@ export default createRouter({
         { path: 'daily-goal', component: DailyGoal },
         { path: 'week-goal', component: WeekGoal },
         { path: 'system-setting', component: SystemSetting },
+        { path: 'history-daily', component: DailyHistory },
         { path: '', redirect: 'daily-goal' }
       ]
     }

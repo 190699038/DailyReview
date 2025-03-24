@@ -32,6 +32,12 @@ try {
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             break;
 
+        case 'getWeekPeriod':
+            $stmt = $conn->prepare("SELECT DISTINCT(mondayDate) FROM weekly_goals ORDER BY mondayDate DESC LIMIT 20");
+            $stmt->execute();
+            echo json_encode($stmt->fetchAll(PDO::FETCH_COLUMN, 0));
+            break;
+
         case 'batch_create':
             $postData = $_POST;//json_decode(file_get_contents('php://input'), true);
             if (!is_array($postData)) {

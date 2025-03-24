@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 /**
  * 1. 从localStorage 登录的token  , key 为token  
  * 2. 如果token 不存在 
@@ -65,35 +67,81 @@ export const  loginOA = async () => {
   }
 }
 
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+export const  getDailyPlanWithExecutorId = async (isToday,executor_id) => {
+  
+  let oa_userid = 0;
+  const cache = localStorage.getItem('departments_user_cache');
+  let users = cache? JSON.parse(cache) : [];
+  if (users.length === 0) {
+     return [];
+  }
+
+  for (let i = 0; i < users.length; i++) {
+    if (users[i].id === executor_id) {
+      oa_userid = users[i].oa_userid;
+    }
+  }
+
+  let value =  await getDailyPlan(isToday,oa_userid);
+  return value;
+}
+
+export const  getDailyPlan = async (isToday,uid) => {
+    let token = await loginOA();
+    const todayStart = new Date();
+    const todayEnd = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    todayEnd.setHours(23, 59, 59, 0);
+
+    let startTime = '';
+    let endTime = '';
+    if(isToday){
+      // 获取今天的时间范围
+     
+      startTime = formatDate(todayStart);
+      endTime = formatDate(todayEnd);
+    }else{
+      // 获取昨天的时间范围
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+      const yesterdayEnd = new Date(todayEnd);
+      yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+      startTime = formatDate(yesterdayStart);
+      endTime = formatDate(yesterdayEnd);
+    }
+
+    let resData = getSingleUserDailyPlan(uid,token,startTime,endTime);
+    return resData;
+}
+
 // 获取单人的日计划
-const  getDailyPlan =  async (uid, token,startTime,endTime) =>{
-    // const now = new Date();
-    // const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
-    // const startTime = new Date(yesterday);
-    // startTime.setHours(0, 0, 0, 0);
-    
-    // const endTime = new Date(yesterday);
-    // endTime.setHours(23, 59, 59, 999);
-
-    // const dailyData = {
-    //     ...dailyDataTemplate,
-    //     startDate: formatDate(startTime, "YYYY-MM-DD HH:mm:ss"),
-    //     endDate: formatDate(endTime, "YYYY-MM-DD HH:mm:ss"),
-    //     userid: uid
-    // };
-
-    // try {
-    //     const response = await axios.post(
-    //         "https://oa.aizyun.com/admin/dailyplan/list",
-    //         dailyData,
-    //         { headers: { ...headers, Authorization: token } }
-    //     );
-    //     return response.data.data.sort((a, b) => a.sort - b.sort);
-    // } catch (error) {
-    //     console.error(`获取用户${uid}日报失败:`, error.response?.data);
-    //     return null;
-    // }
+const  getSingleUserDailyPlan =  async (uid, token,startTime,endTime) =>{
+    const dailyData = {
+        startDate: startTime,
+        endDate: endTime,
+        userid: uid
+    };
+    try {
+        const response = await axios.post(dailyURL,
+            dailyData,
+            { headers: { ...headers, Authorization: token } }
+        );
+        return response.data.data.sort((a, b) => a.sort - b.sort);
+    } catch (error) {
+        console.error(`获取用户${uid}日报失败:`, error.response?.data);
+        return null;
+    }
 }
 
 
@@ -137,6 +185,7 @@ export const megerOAUserIDS = async ( department_id ) => {
 
     }else{
         localStorage.removeItem('token');
+        loginOA();
     }
 }
 

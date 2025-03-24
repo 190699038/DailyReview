@@ -64,10 +64,7 @@ const dailyGoals = ref([]);
 const dailyTasks = ref([]);
 const tableKey = ref(0);
 const today =  new Date().toISOString().slice(0, 10).replace(/-/g, '')
-const jinRi = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
-
-
-
+var idx = 1;
 
 const props = defineProps({
   visible: Boolean,
@@ -76,25 +73,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible'])
 
-const activeTab = ref('')
+const activeTab = ref('0')
 const taskData = ref([])
 const index = ref(0)
-
-const getMondayDate = (dateStr) => {
-  const year = dateStr.substr(0, 4)
-  const month = dateStr.substr(4, 2) - 1
-  const day = dateStr.substr(6, 2)
-  const date = new Date(year, month, day)
-  const dayOfWeek = date.getDay()
-  const adjustDays = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  date.setDate(date.getDate() + adjustDays)
-  return [
-    date.getFullYear(),
-    (date.getMonth() + 1).toString().padStart(2, '0'),
-    date.getDate().toString().padStart(2, '0')
-  ].join('')
-}
-
 
 const rowClassName = ({ row }) => {
   let style = ''
@@ -147,6 +128,7 @@ const loadTaskData = async (executor_id,monday_date) => {
       }
     });
 
+    
     for( let i = 0; i < tempTask.data.length; i++) {
       let item = tempTask.data[i]
       if(item.date == today && item.dailyTasks.length <= 0){
@@ -168,10 +150,16 @@ const loadTaskData = async (executor_id,monday_date) => {
 
       }
     }
-
     tasks.value = tempTask;
     console.log(tempTask)
+    idx = idx + 1
+    initActiveTab()
     drawTable()
+
+
+  
+    
+    // drawTable()
     // ElMessage.success('获取任务成功');
   } catch (error) {
     console.error('获取任务失败:', error.response?.data || error.message);
@@ -181,15 +169,24 @@ const loadTaskData = async (executor_id,monday_date) => {
 defineExpose({ loadTaskData }); // 关键！暴露方法给父组件
 
 
-const drawTable = () => {
+
+
+const drawTable =  () => {
   taskData.value = [];
+
   const dailyGoal = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyGoals) ? tasks.value.data[obj.tabIndex].dailyGoals : [];
-    const dailyTask = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyTasks) ? tasks.value.data[obj.tabIndex].dailyTasks : [];
-    dailyGoals.value = dailyGoal;
-    dailyTasks.value = [...dailyTask];
-    tableKey.value += 1;
-    console.log(dailyGoal)
-    console.log(dailyTask)
+
+  const dailyTask = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyTasks) ? tasks.value.data[obj.tabIndex].dailyTasks : [];
+
+  dailyGoals.value = dailyGoal;
+
+  dailyTasks.value = dailyTask//[...dailyTask];
+
+  tableKey.value += 1;
+
+  console.log(dailyGoal)
+
+  console.log(dailyTask)
 }
 const  getWeekDates = () => {
   const today = new Date(); // 当前日期（2025-03-20）
@@ -221,7 +218,7 @@ const formatDate = (date) => {
 const handleTabChange = (tabName) => {
     console.log(tabName)
     let week = parseInt(tabName)
-    index.value = week - 1;
+    index.value = week ;
     obj.tabIndex = index.value;
     currentDate.value = getDateByWeekday(week)
     drawTable()
@@ -251,22 +248,23 @@ const initActiveTab = () => {
   const options = { weekday: 'long', timeZone: 'Asia/Shanghai' };
   const localWeekday = now.toLocaleDateString('en-US', options);
   const weekdays = {
-    'Monday': '1',
-    'Tuesday': '2',
-    'Wednesday': '3',
-    'Thursday': '4',
-    'Friday': '5',
-    'Saturday': '6',
-    'Sunday': '7'
+    'Monday': '0',
+    'Tuesday': '1',
+    'Wednesday': '2',
+    'Thursday': '3',
+    'Friday': '4',
+    'Saturday': '5',
+    'Sunday': '6'
   };
-  activeTab.value = weekdays[localWeekday];
+  activeTab.value = parseInt(weekdays[localWeekday]);
 
-  obj.tabIndex = parseInt(activeTab.value)
+  obj.tabIndex = parseInt(activeTab.value) 
 
   for (let index = 0; index < weekDays.length; index++) {
     weekDays[index].date = getDateByWeekday(index+1);
   }
 
+  handleTabChange(weekdays[localWeekday])
 }
 
 initActiveTab()

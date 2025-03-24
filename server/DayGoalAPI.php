@@ -142,8 +142,8 @@ try {
                 $conn->beginTransaction();
     
                 $stmt = $conn->prepare("INSERT INTO daily_tasks 
-                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate)
-                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?)");
+                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate)
+                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?)");
 
                 foreach ($input as $item) {
                     //模糊查询周目标是否在目标的标准，查询daily_goals表中的字段weekly_goal like '%$item['day_goal']',返回daily_goals中的表id值
@@ -168,7 +168,8 @@ try {
                         $item['time_spent'] ?? 0,
                         $item['is_new_goal'] ?? 0,
                         $daily_goals_id,
-                        date('Ymd')
+                        date('Ymd'),
+                        $item['mondayDate']
                     ]);
                 }
 

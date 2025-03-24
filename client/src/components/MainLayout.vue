@@ -8,6 +8,7 @@
     >
       <el-menu-item index="/daily-goal">日目标管理</el-menu-item>
       <el-menu-item index="/week-goal">周目标管理</el-menu-item>
+      <el-menu-item index="/history-daily">历史记录</el-menu-item>
       <el-menu-item index="/system-setting">部门设置</el-menu-item>
     </el-menu>
     <router-view class="content-container" />
@@ -29,6 +30,7 @@ onMounted(async () => {
     const res = await http.get(`UserInfoAPI.php?action=get_users&department_id=${departmentId}`)
     localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
     megerOAUserIDS(departmentId)
+
   } catch (error) {
     console.error('用户信息初始化失败:', error)
   }
