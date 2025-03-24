@@ -100,6 +100,38 @@ try {
     
                 echo json_encode(['data' => $result]);
                 break;
+        case 'get_history':
+            $week_period = $_GET['week_period'] ?? '';
+            $executor_ids = $_GET['executor_id'] ?? '';
+            $end_date = $_GET['end_date'] ?? '';
+            
+            if(empty($executor_ids) || empty($week_period) || empty($end_date)) {
+                http_response_code(400);
+                echo json_encode(['error' => '缺少必要参数']);
+                break;
+            }
+
+            $result = [];
+            foreach(explode(',', $executor_ids) as $executor_id) {
+                // 查询周目标
+                $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ?");
+                $goal_stmt->execute([$week_period, $executor_id]);
+                $dailyGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // 查询周任务
+                $task_stmt = $conn->prepare("SELECT * FROM daily_tasks 
+                                            WHERE date >= ? AND date < ? AND executor_id = ?");
+                $task_stmt->execute([$week_period, $end_date, $executor_id]);
+                $dailyTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                $result[$executor_id] = [
+                    'dailyGoal' => $dailyGoals,
+                    'dailyTasks' => $dailyTasks
+                ];
+            }
+    
+            echo json_encode(['data' => $result]);
+            break;
         default:
             http_response_code(400);
             echo json_encode(['error' => '无效的操作类型']);
