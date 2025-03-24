@@ -31,20 +31,61 @@
       />
     </el-select>
 
-    <el-table
-      :data="tableData"
-      style="width: 100%"
-      :span-method="cellMerge"
-      border
-    >
-      <el-table-column prop="partner_name" label="用户名" width="100" />
-      <el-table-column prop="period" label="周期" width="140" />
-   
+    <div class="user-cards-container">
+  <el-card 
+    v-for="(userData, index) in tableData" 
+    :key="index"
+    class="user-card"
+    style="margin-bottom: 15px;"
+    shadow="hover"
+  >
+    <template #header>
+      <div class="card-header" @click="userData.isExpanded = !userData.isExpanded">
+        <span>{{ userData.partner_name }} - {{ userData.period }}</span>
+        <div class="header-right">
+          <el-icon :class="['caret-icon', { 'rotate-90': userData.isExpanded }]">
+            <component :is="userData.isExpanded ? CaretTop : CaretBottom" />
+          </el-icon>
+        </div>
+      </div>
+    </template>
 
-      <!-- <el-table-column prop="goal" label="个人周目标" min-width="300" />
-      <el-table-column prop="plan" label="每日方案" min-width="300" />
-      <el-table-column prop="date" label="日期" width="120" /> -->
-    </el-table>
+    <el-collapse-transition>
+      <div class="card-content" v-show="userData.isExpanded">
+      <div class="goals-section">
+        <h4>周目标</h4>
+        <el-table :data="userData.dailyGoal" border>
+          <el-table-column prop="weekly_goal" label="目标内容" />
+          <!-- <el-table-column label="状态" width="120">
+            <template #default="{ row }">
+              {{ {1:'进行中',2:'测试中',3:'已上线',4:'已暂停',0:'未开始'}[row.status] }}
+            </template>
+          </el-table-column> -->
+        </el-table>
+      </div>
+
+      <div class="tasks-section">
+        <h4>每日任务</h4>
+        <el-timeline>
+          <el-timeline-item
+            v-for="[date, tasks] in Object.entries(userData.dailyTasks).sort((a, b) => a[0].localeCompare(b[0]))"
+            :key="date"
+            :timestamp="formatDate(date)"
+            placement="top"
+          >
+          <el-table :data="tasks" border>
+            <el-table-column prop="megerData" label="目标方案" />
+            <el-table-column prop="progress" label="进度"  width="100" align="center" header-align="center"/>
+            <el-table-column prop="time_spent" label="耗时(小时)" width="100" align="center" header-align="center" />
+            </el-table>
+
+          </el-timeline-item>
+        </el-timeline>
+      </div>
+    </div>
+    </el-collapse-transition>
+  </el-card>
+</div>
   </div>
 </template>
 
@@ -52,6 +93,7 @@
 import { ref, onMounted, computed } from 'vue'
 import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
+import { CaretTop, CaretBottom } from '@element-plus/icons-vue'
 
 const selectedPeriod = ref('')
 const selectedExecutor = ref(0)
@@ -152,6 +194,13 @@ const loadData = async () => {
 }
 
 
+const formatDate = (dateStr) => {
+  const year = dateStr.slice(0,4);
+  const month = dateStr.slice(4,6);
+  const day = dateStr.slice(6,8);
+  return `${year}年${month}月${day}日`;
+};
+
 const dataAnlysis = (data,startDate) => {
   // 获取当前部门用户映射表
   const usercache = localStorage.getItem('departments_user_cache') ;
@@ -180,6 +229,15 @@ const dataAnlysis = (data,startDate) => {
     const groups = initGroup(startDate);
     dailyTasks.forEach(task => {
       const date = task.date;
+      let day_goal = task.day_goal;
+      let task_content = task.task_content; 
+      if(day_goal.indexOf('task_content') >= 0 || task_content.indexOf('day_goal') >= 0){
+        task.megerData = task_content
+      }else{
+        task.megerData = `${day_goal} - (${task_content})`
+      }
+
+
       if (groups[date]) {
         groups[date].push(task);
       }else{
@@ -187,7 +245,16 @@ const dataAnlysis = (data,startDate) => {
       }
     })
 
-    rowinfo.dailyTasks = groups;
+    // 转换日期格式为YYYYMMDD并过滤空任务
+rowinfo.dailyTasks = Object.keys(groups)
+  .filter(date => groups[date].length > 0)
+  .reduce((acc, date) => {
+    acc[date] = groups[date].map(task => ({
+      ...task,
+      status: {1:'进行中',2:'完成',3:'延迟'}[task.status] || '未知状态'
+    }));
+    return acc;
+  }, {});
     result.push(rowinfo);
   }
 
@@ -279,3 +346,22 @@ onMounted(async () => {
 //   loadData()
 })
 </script>
+
+<style>
+.header-right {
+  display: flex;
+  justify-content: flex-end;
+  flex-grow: 1;
+}
+
+.caret-icon {
+  transition: all 0.3s ease;
+  font-size: 1.2em;
+  transform: scale(1.2);
+  margin-left: 10px;
+}
+
+.rotate-180 {
+  transform: rotate(180deg) scale(1.2);
+}
+</style>
