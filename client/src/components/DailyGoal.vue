@@ -10,6 +10,7 @@
               @change="getDailyGoal" style="margin-bottom: 8px;width: 130px;" />
             <el-input v-model="goalContent" type="textarea" :rows="30" placeholder="请输入当日主要目标" />
             <el-button type="primary" @click="saveGoal" style="margin-top: 8px;">保存目标</el-button>
+          <el-button @click="fullscreenDialogVisible = true" style="margin-top: 8px;margin-left: 8px;">全屏查看</el-button>
           </el-form>
         </div>
       </el-col>
@@ -41,7 +42,14 @@
                   <div class="scroll-content">
                     <template v-for="goal in user.dailyGoals" :key="goal.id">
                       <div class="goal-item" :style="{ backgroundColor: goal.is_new_goal === 1 ? '#FFF3CE' : '' }">{{ goal.weekly_goal }}</div>
-                    </template>
+                      <!-- 全屏弹窗 -->
+                    <!-- <el-dialog v-model="fullscreenDialogVisible" title="目标全屏查看" fullscreen>
+                      <pre class="fullscreen-content">{{ goalContent }}</pre>
+                      <template #footer>
+                        <el-button @click="fullscreenDialogVisible = false">返回</el-button>
+                      </template>
+                    </el-dialog> -->
+                  </template>
                   </div>
                 </div>
 
@@ -74,6 +82,10 @@
       :executor-id="currentExecutorId"
     />
   </div>
+  <!-- 全屏弹窗 -->
+  <el-dialog v-model="fullscreenDialogVisible" title="目标全屏查看" fullscreen>
+    <pre class="fullscreen-content">{{ goalContent }}</pre>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -86,6 +98,7 @@ import { megerOAUserIDS,getDailyPlan} from '@/utils/dailyPlanAsync'
 
 const currentDate = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
 const goalContent = ref('')
+const fullscreenDialogVisible = ref(false)
 const tasks = ref([])
 const allTasks = ref([])
 const detailVisible = ref(false)
@@ -430,6 +443,15 @@ onMounted(() => {
   font-size: 12px;
   color: #666;
   margin-bottom: 6px;
+}
+
+.fullscreen-content {
+  font-size: 16px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  padding: 20px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .goal-item,
