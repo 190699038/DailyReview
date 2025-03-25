@@ -1,5 +1,17 @@
 <template>
   <el-dialog :model-value="visible" title="用户任务详情" width="70%" @update:model-value="emit('update:visible', $event)">
+    <div style="margin-bottom: 20px;">
+      <span style="margin-right: 10px;">选择用户：</span>
+      <el-select v-model="obj.executor_id" @change="handleUserChange" placeholder="请选择用户" style="width: 240px">
+        <el-option
+          v-for="user in userList"
+          :key="user.id"
+          :label="user.partner_name"
+          :value="user.id"
+        />
+      </el-select>
+    </div>
+    
     <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
       <el-tab-pane
         v-for="(day, index) in weekDays"
@@ -42,10 +54,43 @@
             <el-table-column prop="task_content" label="拆解任务" header-align="center"/>
             <el-table-column prop="time_spent" label="耗时(小时)"  width="100" align="center" header-align="center"/>
             <el-table-column prop="progress" label="进度"  width="90" align="center" header-align="center"/>
-
+            <el-table-column label="操作" width="100"  header-align="center" align="center">
+            <template #default="{ row }">
+              <div style="display: flex; justify-content: center; align-items: center; gap: 8px">
+                <el-button size="small" @click="showDialog('edit', row)">修改</el-button>
+                <!-- <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button> -->
+              </div>
+            </template>
+          </el-table-column>
           </el-table>
         </div>
       </el-tab-pane>
+
+      <el-dialog v-model="dialogVisible" :title="dialogTitle" width="40%">
+        <el-form :model="form" :rules="rules" label-width="100px">
+          <el-form-item label="耗时（小时）" prop="time_spent">
+            <el-input-number v-model="form.time_spent" :min="0" :precision="1" :step="0.5" />
+          </el-form-item>
+          <el-form-item label="进度" prop="progress">
+            <el-input v-model="form.progress" placeholder="输入百分比（0-100）">
+              <template #append>%</template>
+            </el-input>
+          </el-form-item>
+          <el-form-item label="新增需求标记">
+            <el-switch
+              v-model="form.is_new_goal"
+              :active-value="1"
+              :inactive-value="0"
+              active-text="是"
+              inactive-text="否"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="submitForm">保存</el-button>
+            <el-button @click="dialogVisible = false">取消</el-button>
+          </el-form-item>
+        </el-form>
+      </el-dialog>
     </el-tabs>
   </el-dialog>
 </template>
@@ -60,18 +105,38 @@ import { getDailyPlanWithExecutorId} from '@/utils/dailyPlanAsync'
 const currentDate = ref({});
 const tasks = ref({});
 const obj = ref({})
+const dialogVisible = ref(false);
+const dialogTitle = ref('');
+const form = ref({
+  id: null,
+  time_spent: 0,
+  progress: 0,
+  is_new_goal: 0
+});
+const rules = {
+  time_spent: [{ required: true, message: '请输入耗时', trigger: 'blur' }],
+  progress: [
+    { required: true, message: '请输入进度', trigger: 'blur' },
+    { pattern: /^\d+$/, message: '进度必须为数字', trigger: 'blur' },
+    { validator: (_, v) => v <= 100 ? Promise.resolve() : Promise.reject('进度不能超过100%'), trigger: 'blur' }
+  ]
+};
 const dailyGoals = ref([]);
 const dailyTasks = ref([]);
 const tableKey = ref(0);
 const today =  new Date().toISOString().slice(0, 10).replace(/-/g, '')
 const jinRi = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
+const userList = ref([])
 
 
 
+const handleUserChange = (newId) => {
+  loadTaskData(newId, obj.monday_date)
+}
 
 const props = defineProps({
   visible: Boolean,
-  executorId: Number
+  executorId: Number,
 })
 
 const emit = defineEmits(['update:visible'])
@@ -116,6 +181,51 @@ const taskClassName = ({ row }) => {
   return style
 }
 
+const submitForm = async () => {
+  try {
+    const formData = new URLSearchParams();
+    formData.append('action', 'updateTask');
+    formData.append('id', form.value.id);
+    formData.append('time_spent', form.value.time_spent);
+    formData.append('progress', form.value.progress + '%');
+    formData.append('is_new_goal', form.value.is_new_goal);
+
+    await http.post('DayTaskAPI.php', formData, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+
+    ElMessage.success('修改成功');
+    dialogVisible.value = false;
+    loadTaskData(obj.value.executor_id, obj.value.monday_date);
+  } catch (error) {
+    console.error('修改失败:', error);
+    ElMessage.error(`修改失败: ${error.response?.data?.message || '服务器异常'}`);
+  }
+};
+
+const deleteTask = async (row) => {
+
+}
+
+const showDialog = (type, row) => {
+  if(row.date === jinRi.value) {
+    ElMessage.warning('当日计划不能修改');
+    return;
+  }
+
+  form.value = {
+    id: row.id,
+    time_spent: row.time_spent,
+    progress: row.progress.replace('%',''),
+    is_new_goal: row.is_new_goal || 0
+  };
+  dialogTitle.value = '修改任务';
+  dialogVisible.value = true;
+ 
+
+
+  
+}
 
 // 加载任务数据
 const loadTaskData = async (executor_id,monday_date) => {
@@ -123,11 +233,10 @@ const loadTaskData = async (executor_id,monday_date) => {
   if(executor_id == null || monday_date == null){
     return
   }
+
   try {
     obj.monday_date = monday_date
     obj.executor_id = executor_id
-
-
     let weeeks = getWeekDates()
     let date_str = ""
     for (let i = 0; i < weeeks.length; i++) {
@@ -267,6 +376,16 @@ const initActiveTab = () => {
     weekDays[index].date = getDateByWeekday(index+1);
   }
 
+  const cache = localStorage.getItem('departments_user_cache');
+  let users = cache ? JSON.parse(cache) : [];  
+  userList.value = users;
+
+// 添加默认选择逻辑
+const targetUser = userList.value.find(user => user.id === 15);
+if (targetUser) {
+  obj.executor_id = 15;
+  handleUserChange(15, obj.monday_date);
+}
 }
 
 initActiveTab()

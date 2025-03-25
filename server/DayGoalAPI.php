@@ -155,7 +155,7 @@ try {
                     //     $$daily_goals_id = $goal['id'];
                     // }
 
-                    echo('SELECT id FROM daily_goals WHERE executor_id = executor_id = '.$item['executor_id'].'  and weekly_goal LIKE %'.$item['day_goal'].'%');
+                    // echo('SELECT id FROM daily_goals WHERE executor_id = executor_id = '.$item['executor_id'].'  and weekly_goal LIKE %'.$item['day_goal'].'%');
 
 
                     // var_dump($item);

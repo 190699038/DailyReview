@@ -122,6 +122,7 @@ const showUserDetail = (user) => {
   currentExecutorId.value = user.dailyGoals[0].executor_id
   taskDetailVisible.value = true
 
+
   taskDetailRef.value.loadTaskData(user.dailyGoals[0].executor_id, getMondayDate(currentDate.value))
 }
 
@@ -287,6 +288,7 @@ const  handleSync = async () => {
         task.time_spent = obj.r_time == null ? '-1' : obj.r_time,
         task.day_goal = obj.d_describe,
         task.task_content = obj.p_describe,
+        task.mondayDate = getMondayDate(currentDate.value)
         objects.push(task)
       }
       // tableKey.value = tableKey+1

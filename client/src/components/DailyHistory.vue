@@ -20,7 +20,7 @@
       v-model="selectedExecutor"
       @change="loadData"
       placeholder="选择执行人"
-      style="width: 200px"
+      style="width: 200px;margin-bottom: 15px;"
     >
       <el-option label="全部" :value="0" />
       <el-option

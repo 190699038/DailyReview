@@ -19,7 +19,15 @@ try {
             $stmt->execute([$date]);
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             break;
-
+        case 'updateTask':
+            $executor_id = $_POST['id'];
+            $time_spent = $_POST['time_spent'];
+            $time_spent = $_POST['progress'];
+            $is_new_goal = $_POST['is_new_goal'];
+            $stmt = $conn->prepare("UPDATE daily_tasks SET time_spent = ?, progress = ?, is_new_goal = ? WHERE id = ?");
+            $stmt->execute([$time_spent, $progress, $is_new_goal, $id]);
+            echo json_encode(['updated' => $stmt->rowCount()]);
+            break;
         case 'create':
             $date = $_POST['date'];
             $executor_id = $_POST['executor_id'];
@@ -53,7 +61,7 @@ try {
             echo json_encode(['deleted' => $stmt->rowCount()]);
             break;
 
-                case 'delete':
+        case 'delete':
             if($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 http_response_code(405);
                 echo json_encode(['error' => '仅支持POST方法']);
