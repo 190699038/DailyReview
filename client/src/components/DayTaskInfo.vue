@@ -72,7 +72,7 @@
             <el-input-number v-model="form.time_spent" :min="0" :precision="1" :step="0.5" />
           </el-form-item>
           <el-form-item label="进度" prop="progress">
-            <el-input v-model="form.progress" placeholder="输入百分比（0-100）">
+            <el-input v-model.number="form.progress" placeholder="输入百分比（0-100）">
               <template #append>%</template>
             </el-input>
           </el-form-item>
@@ -117,7 +117,7 @@ const rules = {
   time_spent: [{ required: true, message: '请输入耗时', trigger: 'blur' }],
   progress: [
     { required: true, message: '请输入进度', trigger: 'blur' },
-    { pattern: /^\d+$/, message: '进度必须为数字', trigger: 'blur' },
+    { pattern: /^\d+(\.\d+)?$/, message: '进度必须为数字', trigger: 'blur' },
     { validator: (_, v) => v <= 100 ? Promise.resolve() : Promise.reject('进度不能超过100%'), trigger: 'blur' }
   ]
 };
@@ -196,7 +196,7 @@ const submitForm = async () => {
 
     ElMessage.success('修改成功');
     dialogVisible.value = false;
-    loadTaskData(obj.value.executor_id, obj.value.monday_date);
+    loadTaskData(obj.executor_id, obj.monday_date);
   } catch (error) {
     console.error('修改失败:', error);
     ElMessage.error(`修改失败: ${error.response?.data?.message || '服务器异常'}`);
@@ -215,8 +215,8 @@ const showDialog = (type, row) => {
 
   form.value = {
     id: row.id,
-    time_spent: row.time_spent,
-    progress: row.progress.replace('%',''),
+    time_spent: parseFloat(row.time_spent),
+    progress:parseInt(row.progress.replace('%', '')),
     is_new_goal: row.is_new_goal || 0
   };
   dialogTitle.value = '修改任务';

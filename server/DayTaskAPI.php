@@ -22,10 +22,10 @@ try {
         case 'updateTask':
             $executor_id = $_POST['id'];
             $time_spent = $_POST['time_spent'];
-            $time_spent = $_POST['progress'];
+            $progress = $_POST['progress'];
             $is_new_goal = $_POST['is_new_goal'];
             $stmt = $conn->prepare("UPDATE daily_tasks SET time_spent = ?, progress = ?, is_new_goal = ? WHERE id = ?");
-            $stmt->execute([$time_spent, $progress, $is_new_goal, $id]);
+            $stmt->execute([$time_spent, $progress, $is_new_goal, $executor_id]);
             echo json_encode(['updated' => $stmt->rowCount()]);
             break;
         case 'create':

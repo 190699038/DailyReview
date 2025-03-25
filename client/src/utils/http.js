@@ -3,8 +3,8 @@ import { ElMessage } from 'element-plus'
 
 const service = axios.create({
   // baseURL: 'http://192.168.2.6/DailyReview/server/',
-  baseURL: 'http://10.10.100.49/DailyReview/server/',
-  // baseURL: 'http://10.10.10.95/DailyReview/server/',
+  // baseURL: 'http://10.10.100.49/DailyReview/server/',
+  baseURL: 'http://10.10.10.95/DailyReview/server/',
   timeout: 5000
 })
 
