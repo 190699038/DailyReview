@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container" >
+  <div class="page-container">
     <el-row :gutter="20">
       <!-- 左侧队长目标管理 -->
       <el-col :span="8">
@@ -81,11 +81,11 @@
       v-model:visible="taskDetailVisible"
       :executor-id="currentExecutorId"
     />
+    <!-- 全屏弹窗 -->
+    <el-dialog v-model="fullscreenDialogVisible" title="目标全屏查看" fullscreen>
+      <pre class="fullscreen-content">{{ goalContent }}</pre>
+    </el-dialog>
   </div>
-  <!-- 全屏弹窗 -->
-  <el-dialog v-model="fullscreenDialogVisible" title="目标全屏查看" fullscreen>
-    <pre class="fullscreen-content">{{ goalContent }}</pre>
-  </el-dialog>
 </template>
 
 <script setup>

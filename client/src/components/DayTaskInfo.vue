@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :model-value="visible" title="用户任务详情" width="70%" @update:model-value="emit('update:visible', $event)">
+  <el-dialog :model-value="visible" title="用户任务详情" width="70%" height="90%" @update:model-value="emit('update:visible', $event)">
     <div style="margin-bottom: 20px;">
       <span style="margin-right: 10px;">选择用户：</span>
       <el-select v-model="obj.executor_id" @change="handleUserChange" placeholder="请选择用户" style="width: 240px">
