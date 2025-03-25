@@ -136,7 +136,7 @@ const showUserDetail = (user) => {
   taskDetailVisible.value = true
 
 
-  taskDetailRef.value.loadTaskData(user.dailyGoals[0].executor_id, getMondayDate(currentDate.value))
+  taskDetailRef.value.loadTaskData(user.dailyGoals[0].executor_id, getMondayDate(currentDate.value),true)
 }
 
 // 获取当日目标
