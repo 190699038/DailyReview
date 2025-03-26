@@ -447,11 +447,12 @@ onMounted(() => {
 
 .fullscreen-content {
   font-size: 16px;
-  line-height: 1.8;
+  line-height: 1.3;
   white-space: pre-wrap;
   padding: 20px;
   max-height: 90vh;
   overflow-y: auto;
+  font-weight:bold;
 }
 
 .goal-item,

@@ -25,7 +25,7 @@
               <div style="margin-bottom: 5px;margin-left: 1px;">周目标</div>
 
                 <el-table :data="dailyGoals || []" border style="width: 100%" :row-class-name="rowClassName">
-                  <el-table-column prop="weekly_goals_id" label="序号" width="90" />
+                  <el-table-column prop="weekly_goals_id" label="序号" width="90" align="center" header-align="center"/>
                   <el-table-column prop="executor" label="执行人"  width="90" align="center" header-align="center"/>
                   
                   <el-table-column label="优先级" width="80" align="center" header-align="center">
