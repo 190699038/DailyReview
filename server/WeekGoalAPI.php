@@ -297,6 +297,21 @@ try {
                             $placeholders = implode(', ', array_fill(0, count($insertValues), '?'));
                             $insertStmt = $conn->prepare("INSERT INTO daily_goals (" . implode(', ', $insertFields) . ") VALUES ($placeholders)");
                             $insertStmt->execute($insertValues);
+                        }else{
+                            // 更新daily_goals记录
+                            $updateFields = [ 
+                            'weekly_goal',
+                            'is_new_goal',
+                            'priority',
+                            'status'];
+                            $updateValues = [
+                                $weeklyGoal['weekly_goal'],
+                                $weeklyGoal['is_new_goal'],
+                                $weeklyGoal['priority'],
+                                $weeklyGoal['status'],
+                            ];
+                            $updateStmt = $conn->prepare("UPDATE daily_goals SET ". implode(' =?, ', $updateFields). " =? WHERE weekly_goals_id =? AND executor_id =?");
+                            $updateStmt->execute(array_merge($updateValues, [$id, $eid]));
                         }
                     }
                 }
