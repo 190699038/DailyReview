@@ -16,7 +16,9 @@ export default defineConfig({
   },
   build: {
     sourcemap: true, // 生成 Sourcemap
+    assetsDir: 'assets'
   },
+  assetsInclude: ['**/*.svg'],
   server: {
     host: '0.0.0.0',
 

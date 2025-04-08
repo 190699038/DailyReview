@@ -55,6 +55,9 @@ const priorityMap = {
 };
 
 const convertPriority = (value) => {
+  if(typeof(value) == 'number' ){
+    return value;
+  }
   return priorityMap[value.trim()] || 5;
 };
 

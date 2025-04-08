@@ -1,8 +1,13 @@
 <template>
   <div class="page-container">
-    <el-row :gutter="20">
+    <el-row :gutter="20" class="main-layout">
+    <!-- 折叠按钮 -->
+    <div class="collapse-btn" @click="toggleCollapse" :style="{left: isCollapsed ? '0.5%' : '30%'}">
+      <el-icon class="collapse-icon" :style="{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', width: '36px', height: '36px' }"><ArrowLeft /></el-icon>
+      <span class="collapse-text">{{ isCollapsed ? '打开' : '收起' }}</span>
+    </div>
       <!-- 左侧队长目标管理 -->
-      <el-col :span="8">
+      <el-col :span="isCollapsed ? 0 : 8">
         <div class="goal-container">
           <h3>当日主要目标</h3>
           <el-form label-width="80px">
@@ -16,7 +21,7 @@
       </el-col>
 
       <!-- 右侧任务卡片 -->
-      <el-col :span="15">
+      <el-col :span="isCollapsed ? 24 : 16">
         <div class="task-header">
           <!-- <el-button type="success" @click="handleImport"
             style="margin-bottom: 15px;margin-top: 10px;">导入昨日计划</el-button> -->
@@ -96,6 +101,7 @@ import { parseExcelFile } from '@/utils/excelParser'
 import DayTaskInfo from '@/components/DayTaskInfo.vue'
 import { megerOAUserIDS,getDailyPlan} from '@/utils/dailyPlanAsync'
 
+const isCollapsed = ref(false)
 const currentDate = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
 const goalContent = ref('')
 const fullscreenDialogVisible = ref(false)
@@ -383,7 +389,23 @@ const handleImport = () => {
 }
 
 // 加载初始数据
+// 初始化折叠状态
+const initCollapseState = () => {
+  try {
+    const savedState = localStorage.getItem('dailyGoalCollapse')
+    isCollapsed.value = savedState ? JSON.parse(savedState) : true
+  } catch {
+    isCollapsed.value = true
+  }
+}
+
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+  localStorage.setItem('dailyGoalCollapse', JSON.stringify(isCollapsed.value))
+}
+
 onMounted(() => {
+  initCollapseState()
   getDailyGoal()
   getUserGoalAndTasks()
 })
@@ -488,6 +510,63 @@ onMounted(() => {
 
 .green-row {
   background-color: #A9D08D !important;
+}
+
+.collapse-btn {
+  position: fixed;
+  top: 64%;
+  z-index: 1000;
+  width: 19px;
+  height: 45px;
+  background: var(--collapse-btn-bg, #67C23A);
+  border: 1px solid var(--collapse-btn-border, #67C23A);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.collapse-btn.is-collapsed {
+  --collapse-btn-bg: #F56C6C;
+  --collapse-btn-border: #F56C6C;
+}
+
+.collapse-text {
+  font-size: 14px;
+  color: var(--collapse-text-color, #fff);
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.collapse-btn.is-collapsed .collapse-text {
+  --collapse-text-color: #fff;
+}
+.collapse-icon {
+  transition: transform 0.3s ease;
+  opacity: 0.8;
+}
+
+.collapse-btn:hover .collapse-icon {
+  transform: scale(1.1);
+  opacity: 1;
+}
+.el-icon {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.collapse-btn:hover {
+  transform: translateX(3px);
+  background: #d6f3d1;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.main-layout {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 </style>
 

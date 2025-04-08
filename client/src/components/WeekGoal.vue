@@ -188,10 +188,18 @@ const fetchDepartments = async () => {
 
 const handleDepartmentChange = (val) => {
   localStorage.setItem('department_id_cache', val)
+  http.get(`UserInfoAPI.php?action=get_users&department_id=${val}`)
+    .then(res => {
+      users.value = res.data
+      localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+      megerOAUserIDS(val)
+    })
   loadData()
 }
 
 onMounted(async () => {
+  initUsers()
+  generateMondayOptions()
   await fetchDepartments()
   const cachedId = localStorage.getItem('department_id_cache') || 2
   const dept = departments.value.find(d => d.id == cachedId)
@@ -397,12 +405,6 @@ const rowClassName = ({ row }) => {
 
 const users = ref([])
 const allUser = ref([])
-
-onMounted(() => {
-  initUsers()
-  loadData()
-  generateMondayOptions()
-})
 
 const initUsers = () => {
   try {
