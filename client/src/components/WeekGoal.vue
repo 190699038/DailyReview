@@ -356,6 +356,7 @@ const rowClassName = ({ row }) => {
 }
 
 const users = ref([])
+const allUser = ref([])
 
 onMounted(() => {
   initUsers()
@@ -372,12 +373,28 @@ const initUsers = () => {
       ElMessage.error('用户数据未加载，请刷新页面')
       setTimeout(() => location.reload(), 2000) // 2秒后自动刷新
     }
+
+    allUser.value = JSON.parse(localStorage.getItem('all_users'))
+
   } catch (e) {
     console.error('用户数据解析失败:', e)
     users.value = []
     ElMessage.error('用户数据异常，请刷新页面')
   }
 }
+
+const getPriorityLabel = (value) => {
+  if(value === 10) return 'A+'
+  if(value === 9) return 'A'
+  if(value === 8) return 'A'
+  if(value === 7) return 'B'
+  if(value === 6) return 'B'
+  if(value === 5) return 'B'
+  if(value === 4) return 'C'
+  if(value === 3) return 'C'
+  if(value === 2) return 'C'
+  return  value
+};
 
 const uploadAll = async () => {
   try {
@@ -387,7 +404,7 @@ const uploadAll = async () => {
       // 精确匹配执行人
       const executorNames = item.executor.split('/').map(name => name.trim());
       const matchedUsers = executorNames.map(name => {
-        const user = users.value.find(u => u.partner_name === name);
+        const user = allUser.value.find(u => u.partner_name === name);
         if (!user) {
           throw new Error(`第${index + 1}行执行人'${name}'不存在`);
         }
@@ -404,11 +421,11 @@ const uploadAll = async () => {
         weekly_goal: item.weekly_goal,
         executor_id: matchedUsers.map(u => u.id).join('/'),
         executor:item.executor,
-        priority: item.priority,
+        priority:getPriorityLabel(item.priority),
         is_new_goal: 0,
         status: importForm.value.status,
         mondayDate: importForm.value.selectedWeek,
-        department_id: departmentId,
+        department_id: matchedUsers.map(u => u.department_id).join('/'),
         _row_index: index + 1  // 添加行号标识
       };
     });

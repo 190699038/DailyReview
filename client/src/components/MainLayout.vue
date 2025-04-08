@@ -31,6 +31,11 @@ onMounted(async () => {
     localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
     megerOAUserIDS(departmentId)
 
+    const all_users = await http.get('UserInfoAPI.php?action=get_all_users')
+
+    localStorage.setItem('all_users', JSON.stringify(all_users.data))
+
+
   } catch (error) {
     console.error('用户信息初始化失败:', error)
   }

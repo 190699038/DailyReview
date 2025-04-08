@@ -14,6 +14,15 @@ try {
     $action = $_REQUEST['action'] ?? '';
 
     switch ($action) {
+        case 'get_all_users':
+            // 4.1 查询部门用户（联表查询部门名称）
+            $stmt = $conn->prepare("SELECT u.*, d.department_name FROM users u 
+                                  JOIN departments d ON u.department_id = d.id 
+                                  WHERE u.is_active = 1");
+            $stmt->execute();
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['data' => $users]);
+            break;
         case 'get_users':
             // 4.1 查询部门用户（联表查询部门名称）
             $departmentId = $_REQUEST['department_id'];

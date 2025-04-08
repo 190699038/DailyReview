@@ -97,32 +97,33 @@ export const  getDailyPlanWithExecutorId = async (isToday,executor_id) => {
 }
 
 export const  getDailyPlan = async (isToday,uid) => {
-    let token = await loginOA();
-    const todayStart = new Date();
-    const todayEnd = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    todayEnd.setHours(23, 59, 59, 0);
+    // let token = await loginOA();
+    // const todayStart = new Date();
+    // const todayEnd = new Date();
+    // todayStart.setHours(0, 0, 0, 0);
+    // todayEnd.setHours(23, 59, 59, 0);
 
-    let startTime = '';
-    let endTime = '';
-    if(isToday){
-      // 获取今天的时间范围
+    // let startTime = '';
+    // let endTime = '';
+    // if(isToday){
+    //   // 获取今天的时间范围
      
-      startTime = formatDate(todayStart);
-      endTime = formatDate(todayEnd);
-    }else{
-      // 获取昨天的时间范围
-      const yesterdayStart = new Date(todayStart);
-      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    //   startTime = formatDate(todayStart);
+    //   endTime = formatDate(todayEnd);
+    // }else{
+    //   // 获取昨天的时间范围
+    //   const yesterdayStart = new Date(todayStart);
+    //   yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
-      const yesterdayEnd = new Date(todayEnd);
-      yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
-      startTime = formatDate(yesterdayStart);
-      endTime = formatDate(yesterdayEnd);
-    }
+    //   const yesterdayEnd = new Date(todayEnd);
+    //   yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+    //   startTime = formatDate(yesterdayStart);
+    //   endTime = formatDate(yesterdayEnd);
+    // }
 
-    let resData = getSingleUserDailyPlan(uid,token,startTime,endTime);
-    return resData;
+    // let resData = getSingleUserDailyPlan(uid,token,startTime,endTime);
+    // return resData;
+    return [];
 }
 
 // 获取单人的日计划
@@ -150,43 +151,43 @@ const  getSingleUserDailyPlan =  async (uid, token,startTime,endTime) =>{
  * 如果没有，则刷新一次
  */
 export const megerOAUserIDS = async ( department_id ) => {
-    department_id = 0;
-    const cache = localStorage.getItem('departments_user_cache');
-    let users = cache ? JSON.parse(cache) : [];
-    if (users.length === 0) {
-       return ;
-    }
+    // department_id = 0;
+    // const cache = localStorage.getItem('departments_user_cache');
+    // let users = cache ? JSON.parse(cache) : [];
+    // if (users.length === 0) {
+    //    return ;
+    // }
 
-    let singleOAID =  users[0].oa_userid; 
-    if(singleOAID) {
-       return ;
-    }
+    // let singleOAID =  users[0].oa_userid; 
+    // if(singleOAID) {
+    //    return ;
+    // }
 
-    loginOA();
+    // loginOA();
 
-    const response = await fetch(groupURL + department_id, {
-        method: 'GET',
-        headers: headers 
-    })
+    // const response = await fetch(groupURL + department_id, {
+    //     method: 'GET',
+    //     headers: headers 
+    // })
 
-    const data = await response.json();
+    // const data = await response.json();
 
-    if (data.code === 200) {
-        let oaGroupUsers = data.data;
-       for (let i = 0; i < oaGroupUsers.length; i++) {
-          for (let j = 0; j < users.length; j++) {
-             if (oaGroupUsers[i].label === users[j].partner_name) {
-                users[j].oa_userid = oaGroupUsers[i].value;
-             }
-          }
-       }
+    // if (data.code === 200) {
+    //     let oaGroupUsers = data.data;
+    //    for (let i = 0; i < oaGroupUsers.length; i++) {
+    //       for (let j = 0; j < users.length; j++) {
+    //          if (oaGroupUsers[i].label === users[j].partner_name) {
+    //             users[j].oa_userid = oaGroupUsers[i].value;
+    //          }
+    //       }
+    //    }
 
-       localStorage.setItem('departments_user_cache', JSON.stringify(users));
+    //    localStorage.setItem('departments_user_cache', JSON.stringify(users));
 
-    }else{
-        localStorage.removeItem('token');
-        loginOA();
-    }
+    // }else{
+    //     localStorage.removeItem('token');
+    //     loginOA();
+    // }
 }
 
 
