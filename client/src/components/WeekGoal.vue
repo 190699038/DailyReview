@@ -19,15 +19,24 @@
         
       />
       </el-select>
+
       <el-input
         v-model="searchText"
         placeholder="搜索目标或执行人"
         clearable
         style="max-width: 300px"
       />
-
+      <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange" style="max-width: 200px">
+          <el-option
+            v-for="dept in departments"
+            :key="dept.id"
+            :label="dept.department_name"
+            :value="dept.id"
+          />
+        </el-select>
+ 
     <el-table :data="filteredGoals" style="width: 100%" :row-class-name="rowClassName">
-      <el-table-column prop="id" label="序号" min-width="50"  header-align="center"/>
+      <el-table-column prop="id" label="序号" min-width="50"  header-align="center" align="center"/>
       <el-table-column prop="weekly_goal" label="周目标" min-width="220"  header-align="center"/>
       <el-table-column prop="executor" label="姓名" width="200" align="center" header-align="center" />
       <el-table-column label="优先级" width="120" align="center" header-align="center">
@@ -88,8 +97,8 @@
         </el-form-item>
         <el-form-item label="新增需求">
           <el-select v-model="form.is_new_goal">
-            <el-option label="新增需求" :value="1" />
-            <el-option label="正常取消" :value="0" />
+            <el-option label="新增" :value="1" />
+            <el-option label="默认" :value="0" />
           </el-select>
         </el-form-item>
         <el-form-item label="选择周范围" required>
@@ -158,6 +167,37 @@ import { computed } from 'vue'
 import * as XLSX from 'xlsx'
 import { parseExcelFile } from '@/utils/excelParser'
 const searchText = ref('')
+const departments = ref([])
+const selectedDepartmentId = ref(null)
+
+const fetchDepartments = async () => {
+  try {
+    const res = await http.get('UserInfoAPI.php?action=get_departments')
+    departments.value = res.data
+    localStorage.setItem('departments_cache', JSON.stringify(res.data))
+  } catch (error) {
+    console.error('获取部门列表失败:', error)
+    const cache = localStorage.getItem('departments_cache')
+    if(cache) {
+      departments.value = JSON.parse(cache)
+    } else {
+      departments.value = [{id: 2, department_name: '默认部门'}]
+    }
+  }
+}
+
+const handleDepartmentChange = (val) => {
+  localStorage.setItem('department_id_cache', val)
+  loadData()
+}
+
+onMounted(async () => {
+  await fetchDepartments()
+  const cachedId = localStorage.getItem('department_id_cache') || 2
+  const dept = departments.value.find(d => d.id == cachedId)
+  selectedDepartmentId.value = dept ? dept.id : departments.value[0]?.id || 2
+  loadData()
+})
 const goals = ref([])
 const mondayDate = ref(getCurrentMonday())
 const dialogVisible = ref(false)
@@ -257,7 +297,7 @@ function generateMondayOptions() {
 const loadData = async () => {
   mondayOptions.value = generateMondayOptions()
   try {
-    const departmentId = localStorage.getItem('department_id_cache') || 2
+    const departmentId = selectedDepartmentId.value
     const res = await http.get('WeekGoalAPI.php', {
       params: {
         action: 'get',
