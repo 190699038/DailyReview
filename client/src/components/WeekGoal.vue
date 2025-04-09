@@ -53,12 +53,13 @@
           }}
         </template>
       </el-table-column>
-      <el-table-column prop="department_name" label="部门" width="150" align="center" header-align="center" />
-      <el-table-column label="新增需求" width="120" align="center" header-align="center">
+      <!-- <el-table-column prop="department_name" label="部门" width="150" align="center" header-align="center" /> -->
+      <!-- <el-table-column label="新增需求" width="120" align="center" header-align="center">
         <template #default="{ row }">
           {{ {1:'新增需求',0:'计划需求'}[row.is_new_goal] || '未知状态' }}
         </template>
-      </el-table-column>
+      </el-table-column> -->
+      <el-table-column prop="remark" label="备注" width="120" align="center" header-align="center" />
       <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" />
       <el-table-column label="操作" width="200"  header-align="center" align="center">
         <template #default="{ row }">
@@ -119,6 +120,10 @@
             <el-option label="已暂停" :value="4" />
           </el-select>
         </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="form.remark" type="textarea" :rows="3" />
+        </el-form-item>
+
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -231,7 +236,8 @@ const form = ref({
   is_new_goal: 0,
   priority: 5,
   status: 1,
-  mondayDate: mondayDate.value
+  mondayDate: mondayDate.value,
+  remark: '',
 })
 
 const importForm = ref({

@@ -3,7 +3,7 @@
     <h2>部门设置</h2>
     <el-form :model="form" label-width="120px" class="center-form">
       <el-form-item label="部门选择" class="form-item-left">
-        <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange" style="max-width: 100px">
+        <el-select v-model="selectedDepartmentId" :placeholder="selectedDepartmentName" @change="handleDepartmentChange" style="max-width: 100px">
           <el-option
             v-for="dept in departments"
             :key="dept.id"
@@ -80,7 +80,8 @@ const form = ref({
   systemName: '周日任务校对系统'
 })
 const departments = ref([])
-const selectedDepartmentId = ref(localStorage.getItem('department_id_cache') || 2)
+const selectedDepartmentId = ref(null)
+const selectedDepartmentName = ref('请选择部门')
 const users = ref([])
 const editDialogVisible = ref(false)
 const editForm = ref({
@@ -103,8 +104,12 @@ const fetchDepartments = async () => {
     const cache = localStorage.getItem('departments_cache')
     if(cache) {
       departments.value = JSON.parse(cache)
+      selectedDepartmentName.value = departments.value.length > 0 
+        ? departments.value.find(d => d.id == 2)?.department_name || '默认部门'
+        : '请选择部门'
     } else {
       departments.value = [{id: 2, department_name: '默认部门'}]
+      selectedDepartmentName.value = '默认部门'
     }
   }
 }
@@ -159,13 +164,21 @@ const loadSettings = async () => {
     } else {
       await fetchDepartments()
     }
+    
+    const cachedDeptId = localStorage.getItem('department_id_cache') || 2;
+    const cachedDept = departments.value.find(d => d.id == cachedDeptId)
+    if (cachedDept) {
+      selectedDepartmentId.value = cachedDeptId
+      selectedDepartmentName.value = cachedDept.department_name
+    }
+    
+    // selectedDepartmentName.value = departments.value.length > 0 ? departments.value[0].department_name : '请选择部门';
+    // handleDepartmentChange()
+    handleDepartmentChange(cachedDeptId)
   } catch (error) {
     console.error('缓存解析失败，重新获取部门数据:', error)
     await fetchDepartments()
   }
-  const dpid = localStorage.getItem('department_id_cache') || 2;
-  handleDepartmentChange(dpid)
-
 }
 loadSettings()
 </script>

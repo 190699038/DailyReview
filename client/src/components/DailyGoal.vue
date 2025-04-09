@@ -62,7 +62,7 @@
                 <div class="task-area">
                   <div class="section-title">昨日任务清单</div>
                   <div class="scroll-content">
-                    <el-table :key="tableKey" :data="user.dailyTasks.filter(task => parseFloat(task.time_spent) != 0) || []" border style="width: 100%" :row-class-name="taskClassName" >
+                    <el-table :key="tableKey" :data="user.dailyTasks.filter(task => parseFloat(task.time_spent) > 0) || []" border style="width: 100%" :row-class-name="taskClassName" >
                     <!-- <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
                     <el-table-column prop="date" label="日期"  width="100" align="center" header-align="center" /> -->
                     <el-table-column prop="merger" label="目标-方案" header-align="center"/>
@@ -157,8 +157,11 @@ const getDailyGoal = async () => {
         department_id: departmentId
       }
     })
-    goalContent.value = res?.content || ''
-    // console.log('获取目标成功:', res?.content || '')
+     
+    let data = res?.content || ''
+    console.log(data)
+
+     goalContent.value = data
     fenxTodayTarget()
   } catch (error) {
     console.error('获取目标失败:', error)
