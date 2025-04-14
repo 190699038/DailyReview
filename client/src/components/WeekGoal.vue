@@ -34,19 +34,22 @@
             :value="dept.id"
           />
         </el-select>
+
+      <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制任务</el-button>
+
  
     <el-table :data="filteredGoals" style="width: 100%" :row-class-name="rowClassName">
-      <el-table-column prop="id" label="序号" min-width="50"  header-align="center" align="center"/>
-      <el-table-column prop="weekly_goal" label="周目标" min-width="220"  header-align="center"/>
-      <el-table-column prop="executor" label="姓名" width="200" align="center" header-align="center" />
-      <el-table-column label="优先级" width="120" align="center" header-align="center">
+      <el-table-column prop="id" label="序号" min-width="50"  header-align="center" align="center" border/>
+      <el-table-column prop="weekly_goal" label="周目标" min-width="220"  header-align="center" border/>
+      <el-table-column prop="executor" label="姓名" width="200" align="center" header-align="center" border/>
+      <el-table-column label="优先级" width="120" align="center" header-align="center" border>
         <template #default="{ row }">
           {{ 
             {10:'A+',9:'A',8:'A-',7:'B+',6:'B',5:'B-',4:'C+',3:'C',2:'C-'}[row.priority] 
           }}
         </template>
       </el-table-column>
-      <el-table-column label="完成进度" width="120" align="center" header-align="center">
+      <el-table-column label="完成进度" width="120" align="center" header-align="center" border>
         <template #default="{ row }">
           {{ 
             {1:'进行中',2:'测试中',3:'已上线',4:'已暂停',0:'未开始'}[row.status] || '未知状态'
@@ -59,12 +62,14 @@
           {{ {1:'新增需求',0:'计划需求'}[row.is_new_goal] || '未知状态' }}
         </template>
       </el-table-column> -->
-      <el-table-column prop="remark" label="备注" width="120" align="center" header-align="center" />
-      <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" />
-      <el-table-column label="操作" width="200"  header-align="center" align="center">
+      <el-table-column prop="remark" label="备注" width="120" align="center" header-align="center" border/>
+      <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border/>
+      <el-table-column label="操作"  header-align="center" align="center" border>
         <template #default="{ row }">
           <div style="display: flex; justify-content: center; align-items: center; gap: 8px">
             <el-button size="small" @click="showDialog('edit', row)">修改</el-button>
+            <el-button size="small" @click="submitFormSimple( row , 0)" v-if="row.status != 3">完成</el-button>
+            <el-button size="small" @click="submitFormSimple( row, 1)" v-if="row.status != 3">移动</el-button>
             <el-button size="small" type="danger" @click="deleteGoal(row)">删除</el-button>
           </div>
         </template>
@@ -201,6 +206,21 @@ const handleDepartmentChange = (val) => {
     })
   loadData()
 }
+
+const copytask = async () => {
+  try {
+    const text = filteredGoals.value
+      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.executor}`)
+      .join('\n');
+
+    await navigator.clipboard.writeText(text);
+    ElMessage.success('已复制' + filteredGoals.value.length + '条任务');
+  } catch (error) {
+    console.error('复制失败:', error);
+    ElMessage.error('复制失败，请手动选择文本');
+  }
+};
+
 
 onMounted(async () => {
   initUsers()
@@ -358,6 +378,35 @@ const showDialog = (mode, row) => {
 const handleImport = async () => {
   importDialogVisible.value = true;
 };
+
+// 提交表单
+const submitFormSimple = async ( row ,type) => {
+  if(type == 0){
+    row.status = 3
+  }else if(type == 1){
+    row.mondayDate = mondayOptions.value[3].value
+    row.status = 1
+  }else{
+    ElMessage.error('请选择操作类型')
+    return
+  }
+  try {
+    const submitData = {
+      ...row
+    };
+    await http.get('WeekGoalAPI.php', {
+      params: {
+        action:'update',
+        ...submitData
+      }
+    })
+    dialogVisible.value = false
+    loadData()
+  } catch (error) {
+    console.error('保存失败:', error)
+  }
+}
+
 
 // 提交表单
 const submitForm = async () => {
