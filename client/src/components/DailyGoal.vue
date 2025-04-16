@@ -44,7 +44,7 @@
 
 
               <div class="content-container">
-                <div style="margin-bottom: 5px;margin-left: 1px;">今日计划</div>
+                <div style="margin-bottom: 5px;margin-left: 1px;">日计划</div>
 
                 <el-table :key="tableKey" :data="dailyTodayTasks.filter(task => parseFloat(task.time_spent) > 0 || 1)  || []" border style="width: 100%" :row-class-name="taskClassName">
                   <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
@@ -60,7 +60,7 @@
 
 
               <div class="content-container">
-                <div style="margin-bottom: 5px;margin-left: 1px;">昨日日计划总结</div>
+                <div style="margin-bottom: 5px;margin-left: 1px;">日计划总结</div>
 
                 <el-table :key="tableKey" :data="dailyTasks.filter(task => parseFloat(task.time_spent) > 0)  || []" border style="width: 100%" :row-class-name="taskClassName">
                   <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
