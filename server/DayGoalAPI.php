@@ -34,6 +34,8 @@ try {
                 $task_stmt->execute([$last_date, $executor_id]);
                 $dailyTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+
+
                 // 查询周目标
                 $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ?");
                 $goal_stmt->execute([$monday_date, $executor_id]);

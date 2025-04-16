@@ -28,3 +28,18 @@ export const  getWeekDates = () => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}${month}${day}`;
   }
+
+  export const getMondayDate = (dateStr) => {
+    const year = dateStr.substr(0, 4)
+    const month = dateStr.substr(4, 2) - 1
+    const day = dateStr.substr(6, 2)
+    const date = new Date(year, month, day)
+    const dayOfWeek = date.getDay()
+    const adjustDays = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    date.setDate(date.getDate() + adjustDays)
+    return [
+      date.getFullYear(),
+      (date.getMonth() + 1).toString().padStart(2, '0'),
+      date.getDate().toString().padStart(2, '0')
+    ].join('')
+  }

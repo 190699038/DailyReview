@@ -92,6 +92,10 @@ try {
                         $task_stmt->execute([$date, $executor_id]);
                         $dailyTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+                       // 查询每日任务
+                        $task_stmt_today = $conn->prepare("SELECT * FROM daily_tasks_today WHERE date = ? AND executor_id = ?");
+                        $task_stmt_today->execute([$date, $executor_id]);
+                        $dailyTasks_today = $task_stmt_today->fetchAll(PDO::FETCH_ASSOC);
                         // 查询周目标
                         $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ? AND createdate <= ?");
                         $goal_stmt->execute([$monday_date, $executor_id,$date]);
@@ -100,7 +104,8 @@ try {
                         $result[] = [
                             'date' => $date,
                             'dailyTasks' => $dailyTasks,
-                            'dailyGoals' => $dailyGoals
+                            'dailyGoals' => $dailyGoals,
+                            'dailyTasks_today' => $dailyTasks_today
                         ];
                     }
                    

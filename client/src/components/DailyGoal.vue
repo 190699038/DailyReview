@@ -1,127 +1,182 @@
 <template>
   <div class="page-container">
-    <el-row :gutter="20" class="main-layout">
-    <!-- 折叠按钮 -->
-    <div class="collapse-btn" @click="toggleCollapse" :style="{left: isCollapsed ? '0.5%' : '30%'}">
-      <el-icon class="collapse-icon" :style="{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', width: '36px', height: '36px' }"><ArrowLeft /></el-icon>
-      <span class="collapse-text">{{ isCollapsed ? '打开' : '收起' }}</span>
-    </div>
-      <!-- 左侧队长目标管理 -->
-      <el-col :span="isCollapsed ? 0 : 8">
-        <div class="goal-container">
-          <h3>当日主要目标</h3>
-          <el-form label-width="80px">
-            <el-date-picker v-model="currentDate" type="date" value-format="YYYYMMDD" placeholder="选择日期"
-              @change="getDailyGoal" style="margin-bottom: 8px;width: 130px;" />
-            <el-input v-model="goalContent" type="textarea" :rows="30" placeholder="请输入当日主要目标" />
-            <el-button type="primary" @click="saveGoal" style="margin-top: 8px;">保存目标</el-button>
-          <el-button @click="fullscreenDialogVisible = true" style="margin-top: 8px;margin-left: 8px;">全屏查看</el-button>
-          </el-form>
-        </div>
-      </el-col>
+    <div class="user-tabs-container">
+      <el-tabs v-model="executorId" tab-position="left" class="user-tabs" @tab-change="handleUserChange">
+            <el-tab-pane
+              v-for="user in userList"
+              :key="user.id"
+              :label="user.partner_name"
+              :name="user.id"
+            />
+          </el-tabs>
+      </div>
 
-      <!-- 右侧任务卡片 -->
-      <el-col :span="isCollapsed ? 24 : 16">
-        <div class="task-header">
-          <!-- <el-button type="success" @click="handleImport"
-            style="margin-bottom: 15px;margin-top: 10px;">导入昨日计划</el-button> -->
-            <el-button type="success" @click="handleSync"
-            style="margin-bottom: 15px;margin-top: 10px;" v-if="showAsync">日计划同步</el-button>
-        </div>
-        <!-- <div style="width: 100%;height: 95%;"> -->
-        <el-row :gutter="16" style="margin-top:10px;height: 600px;">
-          <el-col v-for="(user, index) in allTasks.data || []" :key="index" :xs="24" :sm="12" :md="12" :lg="16" :xl="12"
-            style="margin-bottom:16px;">
-            <el-card width="50%" height="600px" :style="{
-                 backgroundColor: colorMap[user.id] || colors[index % colors.length],
-                borderRadius: '8px'}" shadow="hover" @click="showUserDetail(user)" v-if="user.dailyGoals.length > 0">
-              <div class="card-container">
-                <!-- 顶部执行人 -->
-                <div class="card-header">
-                  <el-tag effect="dark">{{ user.dailyGoals&&user.dailyGoals.length>0&&user.dailyGoals[0].executor ? user.dailyGoals[0].executor:'' }}</el-tag>
-                </div>
+      <div class="content-area">
+      <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
+            <el-tab-pane
+              v-for="(day, index) in weekDays"
+              :key="index"
+              :label="day.label"
+              :name="day.name"
+            >
+            <h2>{{ day.date }}  {{ day.label }} </h2>
 
-                <!-- 周目标区域 -->
-                <div class="goal-area">
-                  <div class="section-title">周目标</div>
-                  <div class="scroll-content">
-                    <template v-for="goal in user.dailyGoals" :key="goal.id">
-                      <div class="goal-item" :style="{ backgroundColor: goal.is_new_goal === 1 ? '#FFF3CE' : '' }">{{ goal.weekly_goal }}</div>
-                      <!-- 全屏弹窗 -->
-                    <!-- <el-dialog v-model="fullscreenDialogVisible" title="目标全屏查看" fullscreen>
-                      <pre class="fullscreen-content">{{ goalContent }}</pre>
-                      <template #footer>
-                        <el-button @click="fullscreenDialogVisible = false">返回</el-button>
-                      </template>
-                    </el-dialog> -->
-                  </template>
-                  </div>
-                </div>
+            <div class="content-container-top">
+              <div style="margin-bottom: 5px;margin-left: 1px;">周目标</div>
 
-                <!-- 任务分解区域 -->
-                <div class="task-area">
-                  <div class="section-title">昨日任务清单</div>
-                  <div class="scroll-content">
-                    <el-table :key="tableKey" :data="user.dailyTasks.filter(task => parseFloat(task.time_spent) > 0) || []" border style="width: 100%" :row-class-name="taskClassName" >
-                    <!-- <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
-                    <el-table-column prop="date" label="日期"  width="100" align="center" header-align="center" /> -->
-                    <el-table-column prop="merger" label="目标-方案" header-align="center"/>
-                    <!-- <el-table-column prop="task_content" label="拆解任务" header-align="center"/> -->
-                    <el-table-column prop="time_spent" label="耗时(小时)"  width="100" align="center" header-align="center"/>
-                    <el-table-column prop="progress" label="进度"  width="90" align="center" header-align="center"/>
-                  </el-table>
-                  </div>
-                </div>
+                <el-table :data="dailyGoals || []" border style="width: 100%" :row-class-name="rowClassName">
+                  <el-table-column prop="weekly_goals_id" label="序号" width="90" align="center" header-align="center"/>
+                  <el-table-column prop="executor" label="执行人"  width="90" align="center" header-align="center"/>
+                  
+                  <el-table-column label="优先级" width="80" align="center" header-align="center">
+                    <template #default="{row}">{{ {10:'A+',9:'A',8:'A-',7:'B+',6:'B',5:'B-',4:'C+',3:'C',2:'C-'}[row.priority] }}</template>
+                  </el-table-column>
+                  
+                  <el-table-column prop="weekly_goal" label="目标" header-align="center"/>
+                  
+                  <el-table-column label="状态" width="120" align="center" header-align="center">
+                    <template #default="{row}">
+                      {{ {1:'进行中',2:'测试中',3:'已上线',4:'已暂停',0:'未开始'}[row.status] || '未知状态' }}
+                    </template>
+                  </el-table-column>
+                </el-table>
               </div>
-            </el-card>
-          </el-col>
-        </el-row>
-        <!-- </div> -->
-      </el-col>
-    </el-row>
 
-    <!-- 任务详情弹窗 -->
-    <DayTaskInfo 
-      ref="taskDetailRef"
-      v-model:visible="taskDetailVisible"
-      :executor-id="currentExecutorId"
-    />
-    <!-- 全屏弹窗 -->
-    <el-dialog v-model="fullscreenDialogVisible" title="目标全屏查看" fullscreen>
-      <pre class="fullscreen-content">{{ goalContent }}</pre>
-    </el-dialog>
+
+              <div class="content-container">
+                <div style="margin-bottom: 5px;margin-left: 1px;">今日计划</div>
+
+                <el-table :key="tableKey" :data="dailyTodayTasks.filter(task => parseFloat(task.time_spent) > 0 || 1)  || []" border style="width: 100%" :row-class-name="taskClassName">
+                  <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
+                  <el-table-column prop="date" label="日期"  width="100" align="center" header-align="center" />
+
+                  <el-table-column prop="day_goal" label="目标" header-align="center"/>
+                  <el-table-column prop="task_content" label="拆解任务" header-align="center"/>
+                  <el-table-column prop="time_spent" label="耗时(小时)"  width="100" align="center" header-align="center"/>
+                  <el-table-column prop="progress" label="进度"  width="90" align="center" header-align="center"/>
+                  
+                </el-table>
+              </div>
+
+
+              <div class="content-container">
+                <div style="margin-bottom: 5px;margin-left: 1px;">昨日日计划总结</div>
+
+                <el-table :key="tableKey" :data="dailyTasks.filter(task => parseFloat(task.time_spent) > 0)  || []" border style="width: 100%" :row-class-name="taskClassName">
+                  <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
+                  <el-table-column prop="date" label="日期"  width="100" align="center" header-align="center" />
+
+                  <el-table-column prop="day_goal" label="目标" header-align="center"/>
+                  <el-table-column prop="task_content" label="拆解任务" header-align="center"/>
+                  <el-table-column prop="time_spent" label="耗时(小时)"  width="100" align="center" header-align="center"/>
+                  <el-table-column prop="progress" label="进度"  width="90" align="center" header-align="center"/>
+                  <el-table-column label="操作" width="100"  header-align="center" align="center">
+                  <template #default="{ row }">
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 8px">
+                      <el-button size="small" @click="showDialog('edit', row)">修改</el-button>
+                      <!-- <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button> -->
+                    </div>
+                  </template>
+                </el-table-column>
+                </el-table>
+              </div>
+            </el-tab-pane>
+
+            <el-dialog v-model="dialogVisible" :title="dialogTitle" width="40%">
+              <el-form :model="form" :rules="rules" label-width="100px">
+                <el-form-item label="耗时（小时）" prop="time_spent">
+                  <el-input-number v-model="form.time_spent" :min="0" :precision="1" :step="0.5" />
+                </el-form-item>
+                <el-form-item label="进度" prop="progress">
+                  <el-input v-model.number="form.progress" placeholder="输入百分比（0-100）">
+                    <template #append>%</template>
+                  </el-input>
+                </el-form-item>
+                <el-form-item label="新增需求标记">
+                  <el-switch
+                    v-model="form.is_new_goal"
+                    :active-value="1"
+                    :inactive-value="0"
+                    active-text="是"
+                    inactive-text="否"
+                  />
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="submitForm">保存</el-button>
+                  <el-button @click="dialogVisible = false">取消</el-button>
+                </el-form-item>
+              </el-form>
+            </el-dialog>
+          </el-tabs>
+      </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineProps, defineEmits } from 'vue'
 import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { parseExcelFile } from '@/utils/excelParser'
-import DayTaskInfo from '@/components/DayTaskInfo.vue'
-import { megerOAUserIDS,getDailyPlan} from '@/utils/dailyPlanAsync'
+import { getDailyPlanWithExecutorId} from '@/utils/dailyPlanAsync'
+import { getMondayDate } from '@/utils/dateUtils'
 
-const isCollapsed = ref(false)
-const currentDate = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
-const goalContent = ref('')
-const fullscreenDialogVisible = ref(false)
-const tasks = ref([])
-const allTasks = ref([])
-const detailVisible = ref(false)
-const currentTask = ref(null)
-const colors = ref(['#f0f9eb', '#fdf6ec', '#fef0f0', '#f0f9ff'])
-const colorMap = ref({})
+const currentDate = ref({});
+const tasks = ref({});
+const obj = ref({})
+const userinfo = ref({})
+const dialogVisible = ref(false);
+const dialogTitle = ref('');
+const executorId = ref('')
+const currentDay = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
+
+const form = ref({
+  id: null,
+  time_spent: 0,
+  progress: 0,
+  is_new_goal: 0
+});
+const rules = {
+  time_spent: [{ required: true, message: '请输入耗时', trigger: 'blur' }],
+  progress: [
+    { required: true, message: '请输入进度', trigger: 'blur' },
+    { pattern: /^\d+(\.\d+)?$/, message: '进度必须为数字', trigger: 'blur' },
+    { validator: (_, v) => v <= 100 ? Promise.resolve() : Promise.reject('进度不能超过100%'), trigger: 'blur' }
+  ]
+};
+const dailyGoals = ref([]);
+const dailyTasks = ref([]);
+const dailyTodayTasks = ref([]);
+
 const tableKey = ref(0);
-const showAsync = ref(false)
+const today =  new Date().toISOString().slice(0, 10).replace(/-/g, '')
+const jinRi = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
+const userList = ref([])
 
-const progressType = (value) => {
-  const types = {
-    0: '未开始',
-    1: '进行中',
-    2: '已完成',
-    3: '已延期'
+
+
+const handleUserChange = (newId) => {
+  loadTaskData(newId, getMondayDate(currentDay.value),false)
+}
+
+const emit = defineEmits(['update:visible'])
+
+const activeTab = ref('')
+const taskData = ref([])
+const index = ref(0)
+
+
+
+const rowClassName = ({ row }) => {
+  let style = ''
+  if (row.status === 3) {
+    style = 'green-row'
+  }else{
+    if(row.is_new_goal === 1){
+      style = 'highlight-row'
+    }
   }
-  return types[value] || '未知状态'
+  return style
 }
 
 const taskClassName = ({ row }) => {
@@ -132,285 +187,222 @@ const taskClassName = ({ row }) => {
   return style
 }
 
-
-const taskDetailVisible = ref(false)
-const currentExecutorId = ref(0)
-const taskDetailRef = ref(null)
-
-const showUserDetail = (user) => {
-  currentExecutorId.value = user.dailyGoals[0].executor_id
-  taskDetailVisible.value = true
-
-
-  taskDetailRef.value.loadTaskData(user.dailyGoals[0].executor_id, getMondayDate(currentDate.value),true)
-}
-
-// 获取当日目标
-const getDailyGoal = async () => {
+const submitForm = async () => {
   try {
-    const departmentId = localStorage.getItem('department_id_cache') || 2
+    const formData = new URLSearchParams();
+    formData.append('action', 'updateTask');
+    formData.append('id', form.value.id);
+    formData.append('time_spent', form.value.time_spent);
+    formData.append('progress', form.value.progress + '%');
+    formData.append('is_new_goal', form.value.is_new_goal);
 
-    const res = await http.get('/DayGoalAPI.php', {
-      params: {
-        action: 'get_target',
-        report_date: currentDate.value,
-        department_id: departmentId
-      }
-    })
-     
-    let data = res?.content || ''
-    console.log(data)
+    await http.post('DayTaskAPI.php', formData, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
 
-     goalContent.value = data
-    fenxTodayTarget()
+    ElMessage.success('修改成功');
+    dialogVisible.value = false;
+    loadTaskData(obj.executor_id, obj.monday_date,false);
   } catch (error) {
-    console.error('获取目标失败:', error)
+    console.error('修改失败:', error);
+    ElMessage.error(`修改失败: ${error.response?.data?.message || '服务器异常'}`);
   }
+};
+
+const deleteTask = async (row) => {
+
 }
 
-const saveGoal = async () => {
-  if (!goalContent.value.trim()) {
-    ElMessage.warning('目标内容不能为空');
+const showDialog = (type, row) => {
+  if(row.date === jinRi.value) {
+    ElMessage.warning('当日计划不能修改');
     return;
   }
 
+  form.value = {
+    id: row.id,
+    time_spent: parseFloat(row.time_spent),
+    progress:parseInt(row.progress.replace('%', '')),
+    is_new_goal: row.is_new_goal || 0
+  };
+  dialogTitle.value = '修改任务';
+  dialogVisible.value = true;
+ 
 
-  try {
-    const departmentId = localStorage.getItem('department_id_cache') || 2
 
-    const formData = new URLSearchParams();
-    formData.append('action', 'save_target');
-    formData.append('report_date', currentDate.value);
-    formData.append('content', goalContent.value);
-    formData.append('department_id', departmentId);
+  
+}
 
-    
-
-    await http.post('DayGoalAPI.php', formData, {
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
-    ElMessage.success('保存成功');
-    getDailyGoal();
-  } catch (error) {
-    console.error('保存失败:', error.response?.data || error.message);
-    ElMessage.error(`保存失败: ${error.response?.data?.message || '服务器异常'}`);
+// 加载任务数据
+const loadTaskData = async (executor_id,monday_date,bFirst) => {
+  console.log("loadTaskData called with executor_id:", executor_id);
+  if(executor_id == null || monday_date == null){
+    return
   }
-}
 
-const getMondayDate = (dateStr) => {
-  const year = dateStr.substr(0, 4)
-  const month = dateStr.substr(4, 2) - 1
-  const day = dateStr.substr(6, 2)
-  const date = new Date(year, month, day)
-  const dayOfWeek = date.getDay()
-  const adjustDays = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  date.setDate(date.getDate() + adjustDays)
-  return [
-    date.getFullYear(),
-    (date.getMonth() + 1).toString().padStart(2, '0'),
-    date.getDate().toString().padStart(2, '0')
-  ].join('')
-}
+  if (bFirst) {
+   
+  }
 
-
-const getYesterdayDate = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 1); // 减去一天
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // 补零到两位
-  const day = String(date.getDate()).padStart(2, '0');         // 补零到两位
-  return `${year}${month}${day}`;
-}
-
-const getUserGoalAndTasks = async () => {
   try {
-    const cache = localStorage.getItem('departments_user_cache');
-    let users = cache ? JSON.parse(cache) : [];
-    const userIds = users.map(u => u.id);
-    if(userIds.length == 0){
-      return 
+    obj.monday_date = monday_date
+    obj.executor_id = executor_id
+    let weeeks = getWeekDates()
+    let date_str = ""
+    for (let i = 0; i < weeeks.length; i++) {
+      const week = weeeks[i];
+      date_str += week + ","
     }
-
     const formData = new URLSearchParams();
     formData.append('action', 'getUserGoalAndTasks');
-    formData.append('last_date', getYesterdayDate());
-    formData.append('monday_date', getMondayDate(currentDate.value));
-    formData.append('user_ids', userIds.join(','));
+    formData.append('monday_date', monday_date);
+    formData.append('executor_id', executor_id); 
+    formData.append('dates', date_str); //周一到今天
 
-    const res = await http.post('DayGoalAPI.php', formData, {
+    let tempTask = await http.post('DayTaskAPI.php', formData, {
+      timeout: 30000,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     });
-    allTasks.value = res || [];
 
-    for(let i = 0; i < allTasks.value.data.length; i++){
-      let user = allTasks.value.data[i]
-      for(let j = 0; j < user.dailyTasks.length; j++){
-        allTasks.value.data[i].dailyTasks[j].merger = user.dailyTasks[j].day_goal+'-'+user.dailyTasks[j].task_content
-        tableKey.value = tableKey+1
-      }
-    }
+    console.log(tempTask);
+    // for( let i = 0; i < tempTask.data.length; i++) {
+    //   let item = tempTask.data[i]
+    //   if(item.date == today && item.dailyTasks.length <= 0){
+    //     let newTasks  = item.dailyTasks_today//await getDailyPlanWithExecutorId(true,executor_id)
+    //     for(let j = 0; j < newTasks.length; j++){
+    //       let o = newTasks[j]
+    //       let t = {}
+    //       t.executor = ''
+    //       t.executor_id = executor_id
+    //       t.date = o.createdAt.replace(/^(\d{4})-(\d{2})-(\d{2}).*/, '$1$2$3')
+    //       t.progress = o.complete != null && o.complete != 'null' ? o.complete+'%' : '0%'
+    //       t.time_spent = o.e_time == null ? '-1' : o.e_time
+    //       t.day_goal = o.d_describe
+    //       t.task_content = o.p_describe
+    //       t.id = o.id
+    //       console.log(t)
+    //       item.dailyTasks.push(t)
+    //     }
 
-    console.log(allTasks)
-    let noTaskData = true
-    let tasks = allTasks.value.data
-    for (let i = 0; i < tasks.length; i++) {
-      const dTasks = tasks[i].dailyTasks;
-      if(dTasks.length > 0){
-        noTaskData = false
-        break;
-      }
-      
-    }
+    //   }
+    // }
 
-    if (noTaskData) {
-      showAsync.value = true
-    }
-
-    //检查下OA的账号登录状态
-    megerOAUserIDS()
-
-
-
+    tasks.value = tempTask;
+    console.log(tempTask)
+    drawTable()
+    // ElMessage.success('获取任务成功');
   } catch (error) {
-    console.error('获取任务失败:', error);
-    ElMessage.error('数据获取失败，请检查控制台');
-  }
-
-}
-
-const  handleSync = async () => {
-  // tasks.value = importedTasks.map(task => ({
-  //       executor: task.executor,
-  //       progress: task.progress,
-  //       time_spent: task.time_spent == 'None'? '-1' : task.time_spent,
-  //       date: task.date,
-  //       day_goal: task.day_goal,
-  //       task_content: task.task_content,
-  //       executor_id: task.executor_id,
-  //     }))
-   let objects = []
-   let users_str = localStorage.getItem('departments_user_cache')
-   let users = JSON.parse(users_str)
-   for(let i = 0; i < users.length; i++){
-    let user = users[i]
-    let res = await getDailyPlan(false,user.oa_userid)
-    if( res != null && res.length > 0){
-      for(let j = 0; j < res.length; j++){
-        let obj = res[j]
-        let task = {}
-        task.executor = user.partner_name
-        task.executor_id = user.id
-        task.date = obj.createdAt.replace(/^(\d{4})-(\d{2})-(\d{2}).*/, '$1$2$3')
-        task.progress = obj.complete != null && obj.complete != 'null' ? obj.complete+'%' : '0%',
-        task.time_spent = obj.r_time == null ? '-1' : obj.r_time,
-        task.day_goal = obj.d_describe,
-        task.task_content = obj.p_describe,
-        task.mondayDate = getMondayDate(currentDate.value)
-        objects.push(task)
-      }
-      // tableKey.value = tableKey+1
-    }
-    
-   }
-   batchGoal(objects)
-   console.log(objects)
-   showAsync.value = false
-}
-
-
-
-
-
-const fenxTodayTarget = ()=>{
-    //goalContent.value
-
-
-  }
-
-// 保存目标
-const batchGoal = async (transformedData) => {
-
-  try {
-
-    await http.post('DayGoalAPI.php', transformedData, {
-      params: { action: 'batch_create' },
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    ElMessage.success('保存成功');
-    getUserGoalAndTasks()
-  } catch (error) {
-    console.error('保存失败:', error.response?.data || error.message);
-    ElMessage.error(`保存失败: ${error.response?.data?.message || '服务器异常'}`);
+    console.error('获取任务失败:', error.response?.data || error.message);
+    ElMessage.error(`获取任务失败: ${error.response?.data?.message || '服务器异常'}`);
   }
 }
+defineExpose({ loadTaskData }); // 关键！暴露方法给父组件
 
-// 显示任务详情
-const showTaskDetail = (task) => {
-  currentTask.value = task
-  detailVisible.value = true
+
+const drawTable = () => {
+  taskData.value = [];
+  const dailyGoal = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyGoals) ? tasks.value.data[obj.tabIndex].dailyGoals : [];
+    const dailyTask = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyTasks) ? tasks.value.data[obj.tabIndex].dailyTasks : [];
+    const dailyTaskToday = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyTasks_today) ? tasks.value.data[obj.tabIndex].dailyTasks_today : [];
+
+    dailyGoals.value = dailyGoal;
+    dailyTasks.value = [...dailyTask];
+    dailyTodayTasks.value = [...dailyTaskToday];
+    tableKey.value += 1;
+    console.log(dailyGoal)
+    console.log(dailyTask)
+}
+const  getWeekDates = () => {
+  const today = new Date(); // 当前日期（2025-03-20）
+  const currentDay = today.getDay() === 0 ? 7 : today.getDay(); // 转换为ISO星期码（周四=4）
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (currentDay - 1)); // 计算本周一（2025-03-17）
+
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i); // 从周一开始累加天数
+    dates.push(formatDate(date));
+  }
+  return dates;
+}
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // 补零处理
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}${month}${day}`; // 格式：YYYYMMDD
+}
+ const getDateByWeekday = (weekday) => {
+  const dates = getWeekDates();
+  return dates[weekday - 1]; // 索引0=周一，索引6=周日
 }
 
-// 文件导入处理
-const handleImport = () => {  
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.xlsx'
 
-  input.onchange = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    try {
-      const importedTasks = await parseExcelFile(file, 'daily')
-      tasks.value = importedTasks.map(task => ({
-        executor: task.executor,
-        progress: task.progress,
-        time_spent: task.time_spent == 'None'? '-1' : task.time_spent,
-        date: task.date,
-        day_goal: task.day_goal,
-        task_content: task.task_content,
-        executor_id: task.executor_id,
-        mondayDate:getMondayDate(currentDate.value)
-      }))
-      ElMessage.success(`成功导入${importedTasks.length}条任务`)
-      batchGoal(tasks.value)
-    } catch (error) {
-      console.error('导入失败:', error)
-      ElMessage.error('文件解析失败，请使用标准模板文件')
-    }
+
+// 处理标签切换
+const handleTabChange = (tabName) => {
+    console.log(tabName)
+    let week = parseInt(tabName)
+    index.value = week - 1;
+    obj.tabIndex = index.value;
+    currentDate.value = getDateByWeekday(week)
+    drawTable()
+
+//   loadTaskData(tabName)
+}
+
+// 初始化加载数据
+// loadTaskData(activeTab.value)
+
+// 原临时空数据
+
+const weekDays = [
+  { label: '周一', name: '1' },
+  { label: '周二', name: '2' },
+  { label: '周三', name: '3' },
+  { label: '周四', name: '4' },
+  { label: '周五', name: '5' },
+  { label: '周六', name: '6' },
+  { label: '周日', name: '7' }
+]
+
+
+// 自动设置默认激活的Tab
+const initActiveTab = () => {
+  const now = new Date();
+  const options = { weekday: 'long', timeZone: 'Asia/Shanghai' };
+  const localWeekday = now.toLocaleDateString('en-US', options);
+  const weekdays = {
+    'Monday': '1',
+    'Tuesday': '2',
+    'Wednesday': '3',
+    'Thursday': '4',
+    'Friday': '5',
+    'Saturday': '6',
+    'Sunday': '7'
+  };
+  activeTab.value = weekdays[localWeekday];
+
+  obj.tabIndex = parseInt(activeTab.value)
+
+  for (let index = 0; index < weekDays.length; index++) {
+    weekDays[index].date = getDateByWeekday(index+1);
   }
 
-  input.click()
+  const cache = localStorage.getItem('departments_user_cache');
+  let users = cache ? JSON.parse(cache) : [];  
+  userList.value = users;
 
 }
 
-// 加载初始数据
-// 初始化折叠状态
-const initCollapseState = () => {
-  try {
-    const savedState = localStorage.getItem('dailyGoalCollapse')
-    isCollapsed.value = savedState ? JSON.parse(savedState) : true
-  } catch {
-    isCollapsed.value = true
-  }
-}
-
-const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
-  localStorage.setItem('dailyGoalCollapse', JSON.stringify(isCollapsed.value))
-}
 
 onMounted(() => {
-  initCollapseState()
-  getDailyGoal()
-  getUserGoalAndTasks()
+  initActiveTab()
+  executorId.value = userList.value[0].id
+  loadTaskData(executorId.value, getMondayDate(currentDay.value),true)
+
 })
 </script>
 
@@ -421,155 +413,46 @@ onMounted(() => {
   border-radius: 4px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
-
-.task-grid {
-  padding: 10px;
-  background-color: aqua;
-}
-
-.task-card {
-  margin-bottom: 20px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.task-card:hover {
-  transform: translateY(-5px);
-}
-
-/* 新增卡片样式 */
-.card-container {
-  height: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.card-header {
-  height: 10%;
-  margin-bottom: 8px;
-}
-
-.goal-area {
-  height: 40%;
-  margin-bottom: 12px;
-}
-
-.task-area {
-  height: 50%;
-}
-
-.scroll-content {
+.user-tabs-container {
+  width: 80px;
+  float: left;
+  margin-right: 20px;
+  height: 500px;
   overflow-y: auto;
-  height: calc(100% - 24px);
-  padding-right: 8px;
 }
 
-.section-title {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 6px;
-}
-
-.fullscreen-content {
-  font-size: 16px;
-  line-height: 1.3;
-  white-space: pre-wrap;
-  padding: 20px;
-  max-height: 90vh;
-  overflow-y: auto;
-  font-weight:bold;
-}
-
-.goal-item,
-.task-item {
-  font-size: 13px;
-  padding: 6px 8px;
-  margin-bottom: 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.task-item {
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.task-item:hover {
-  transform: translateX(4px);
-}
-
-.card-content {
-  height: 80px;
+.content-area {
   overflow: hidden;
-  text-overflow: ellipsis;
+  padding-left: 20px;
 }
 
-.goal-container h3 {
-  margin: 0 0 10px !important;
-  padding-bottom: 8px !important;
-  border-bottom: 1px solid #eee;
+.content-container {
+  padding: 20px;
+  background: #f8f8f8;
+  border-radius: 8px;
 }
 
+.content-container-top {
+  padding: 20px;
+  background: #f8f8f8;
+  border-radius: 8px;
+}
+.user-tabs >>> .el-tabs__item {
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+}
+
+.highlight-row {
+  background-color: #FFF3CE !important;
+}
 
 .green-row {
   background-color: #A9D08D !important;
 }
 
-.collapse-btn {
-  position: fixed;
-  top: 64%;
-  z-index: 1000;
-  width: 19px;
-  height: 45px;
-  background: var(--collapse-btn-bg, #67C23A);
-  border: 1px solid var(--collapse-btn-border, #67C23A);
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: 0 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.collapse-btn.is-collapsed {
-  --collapse-btn-bg: #F56C6C;
-  --collapse-btn-border: #F56C6C;
-}
-
-.collapse-text {
-  font-size: 14px;
-  color: var(--collapse-text-color, #fff);
-  font-weight: bold;
-  transition: all 0.3s;
-}
-
-.collapse-btn.is-collapsed .collapse-text {
-  --collapse-text-color: #fff;
-}
-.collapse-icon {
-  transition: transform 0.3s ease;
-  opacity: 0.8;
-}
-
-.collapse-btn:hover .collapse-icon {
-  transform: scale(1.1);
-  opacity: 1;
-}
-.el-icon {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.collapse-btn:hover {
-  transform: translateX(3px);
-  background: #d6f3d1;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.main-layout {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-left: 0 !important;
-  margin-right: 0 !important;
+.el-tag {
+  margin-right: 10px;
 }
 </style>
 

@@ -118,7 +118,7 @@ try {
 
         case 'create':
             // 允许创建的字段白名单
-            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal', 'mondayDate','priority','status'];
+            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal', 'mondayDate','priority','status','remark'];
             
             // 动态收集参数并验证必填字段
             $fields = [];
@@ -200,7 +200,7 @@ try {
             $id = $_REQUEST['id'];
             
             // 允许更新的字段列表
-            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal','mondayDate','priority','status'];
+            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal','mondayDate','priority','status','remark'];
             $updates = [];
             $params = [];
             $executor = "";
@@ -303,11 +303,13 @@ try {
                             'weekly_goal',
                             'is_new_goal',
                             'priority',
+                            'mondayDate',
                             'status'];
                             $updateValues = [
                                 $weeklyGoal['weekly_goal'],
                                 $weeklyGoal['is_new_goal'],
                                 $weeklyGoal['priority'],
+                                $weeklyGoal['mondayDate'],
                                 $weeklyGoal['status'],
                             ];
                             $updateStmt = $conn->prepare("UPDATE daily_goals SET ". implode(' =?, ', $updateFields). " =? WHERE weekly_goals_id =? AND executor_id =?");

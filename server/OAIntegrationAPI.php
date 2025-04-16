@@ -33,7 +33,10 @@ $headers = [
 function loginOA() {
     global $headers;
     $headers = ['Content-Type' => 'application/json;charset=UTF-8'];
-    if (!isset($_SESSION['token'])) {
+    // if (!isset($_SESSION['token'])) {
+
+    if ( 1 == 1) {
+
         $loginData = json_encode([
             'username' => 'xuexizhanshi',
             'password' => '123456'
@@ -78,7 +81,7 @@ function formatDate($date) {
     return date('Y-m-d H:i:s', strtotime($date));
 }
 
-function handleSync() {
+function handleSync($isToday) {
     global $department_ids, $conn;
     try {
         $token = loginOA();
@@ -116,7 +119,7 @@ function handleSync() {
                     $users[$i]['oa_id'] =  $data['data'][$j]['value'];
                     $users[$i]['oa_deptid'] =  $data['data'][$j]['deptid'];
 
-                    $tasks = getDailyPlan(false,$users[$i]['oa_id']);
+                    $tasks = getDailyPlan($isToday,$users[$i]['oa_id']);
                     for($k = 0; $k < count($tasks); $k++){
                         $obj = $tasks[$k];
                         $task = [];
@@ -128,6 +131,8 @@ function handleSync() {
                         $task['day_goal'] = $obj['d_describe'];
                         $task['task_content'] = $obj['p_describe'];
                         $task['mondayDate'] = getMondayDate($obj['createdAt']);
+                        $task['oa_task_id'] = $obj['id'];
+
                         $oa_dailytask[] = $task;
                       }
 
@@ -137,36 +142,58 @@ function handleSync() {
         try {
             $conn->beginTransaction();
 
-            $stmt = $conn->prepare("INSERT INTO daily_tasks 
-                    (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate)
-                    VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?)");
+            if($isToday){
+                $checkStmtToday = $conn->prepare("SELECT id FROM daily_tasks_today WHERE oa_taskid = ? ");
+                foreach ($oa_dailytask as $item) {
+                    $checkStmtToday->execute([$item['oa_task_id']]);
+                    if ($checkStmtToday->fetch()) {
+                        continue;
+                    }
 
-            foreach ($oa_dailytask as $item) {
-                //模糊查询周目标是否在目标的标准，查询daily_goals表中的字段weekly_goal like '%$item['day_goal']',返回daily_goals中的表id值
-                // $goalCheckStmt = $conn->prepare("SELECT id FROM daily_goals WHERE executor_id = ? and weekly_goal LIKE ?");
-                // $goalCheckStmt->execute([$item['executor_id'],"%{$item['day_goal']}%"]);
-                // $goal = $goalCheckStmt->fetch(PDO::FETCH_ASSOC);
-                $daily_goals_id = 0;
-                // if ($goal) {
-                //     $$daily_goals_id = $goal['id'];
-                // }
+                    $daily_goals_id = 0;
+                    $stmt = $conn->prepare("INSERT INTO daily_tasks_today 
+                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate)
+                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?)");
+                    
+                    $stmt->execute([
+                        $item['date'],
+                        $item['day_goal'],
+                        $item['executor_id'],
+                        $item['task_content'],
+                        $item['progress'] ?? 0,
+                        $item['time_spent'] ?? 0,
+                        $item['is_new_goal'] ?? 0,
+                        $daily_goals_id,
+                        date('Ymd'),
+                        $item['mondayDate']
+                    ]);
+                }
+            }else{
+                $checkStmt = $conn->prepare("SELECT id FROM daily_tasks WHERE oa_taskid = ?");
+                foreach ($oa_dailytask as $item) {
+                    $checkStmt->execute([$item['oa_task_id']]);
+                    if ($checkStmt->fetch()) {
+                        continue;
+                    }
 
-                // echo('SELECT id FROM daily_goals WHERE executor_id = executor_id = '.$item['executor_id'].'  and weekly_goal LIKE %'.$item['day_goal'].'%');
-
-
-                // var_dump($item);
-                $stmt->execute([
-                    $item['date'],
-                    $item['day_goal'],
-                    $item['executor_id'],
-                    $item['task_content'],
-                    $item['progress'] ?? 0,
-                    $item['time_spent'] ?? 0,
-                    $item['is_new_goal'] ?? 0,
-                    $daily_goals_id,
-                    date('Ymd'),
-                    $item['mondayDate']
-                ]);
+                    $daily_goals_id = 0;
+                    $stmt = $conn->prepare("INSERT INTO daily_tasks 
+                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate)
+                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?)");
+                    
+                    $stmt->execute([
+                        $item['date'],
+                        $item['day_goal'],
+                        $item['executor_id'],
+                        $item['task_content'],
+                        $item['progress'] ?? 0,
+                        $item['time_spent'] ?? 0,
+                        $item['is_new_goal'] ?? 0,
+                        $daily_goals_id,
+                        date('Ymd'),
+                        $item['mondayDate']
+                    ]);
+                }
             }
 
             $conn->commit();
@@ -244,7 +271,10 @@ function getSingleUserDailyPlan($uid, $token, $startTime, $endTime) {
 $action = $_REQUEST['action'] ?? '';
 
 if ($action === 'sync_users') {
-    echo json_encode(handleSync());
+    echo json_encode(handleSync(false));
+    exit;
+}else if ($action === 'sync_users_today') {
+    echo json_encode(handleSync(true));
     exit;
 }
 
