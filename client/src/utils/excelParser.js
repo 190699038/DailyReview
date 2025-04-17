@@ -43,15 +43,15 @@ export const parseExcelFile = (file,type) => {
 };
 
 const priorityMap = {
-  'A+': 10,
+  'S': 10,
   'A': 9,
-  'A-': 8,
-  'B+': 7,
-  'B': 6,
-  'B-': 5,
+  'B': 8,
+  'C': 7,
+  'C': 6,
+  'C': 5,
   'C+': 4,
   'C': 3,
-  'C-': 2
+  'C': 2
 };
 
 const convertPriority = (value) => {

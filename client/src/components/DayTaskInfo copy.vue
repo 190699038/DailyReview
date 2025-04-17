@@ -17,7 +17,7 @@
             <el-table-column prop="executor" label="执行人"  width="90" align="center" header-align="center"/>
             
             <el-table-column label="优先级" width="80" align="center" header-align="center">
-              <template #default="{row}">{{ {10:'A+',9:'A',8:'A-',7:'B+',6:'B',5:'B-',4:'C+',3:'C',2:'C-'}[row.priority] }}</template>
+              <template #default="{row}">{{  {10:'S',9:'A',8:'B',7:'C',6:'C',5:'C',4:'C',3:'C',2:'C'}[row.priority] }}</template>
             </el-table-column>
             
             <el-table-column prop="weekly_goal" label="目标" header-align="center"/>

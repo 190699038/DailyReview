@@ -45,7 +45,7 @@
       <el-table-column label="优先级" width="120" align="center" header-align="center" border>
         <template #default="{ row }">
           {{ 
-            {10:'A+',9:'A',8:'A-',7:'B+',6:'B',5:'B-',4:'C+',3:'C',2:'C-'}[row.priority] 
+            {10:'S',9:'A',8:'B',7:'C',6:'C',5:'C',4:'C',3:'C',2:'C'}[row.priority] 
           }}
         </template>
       </el-table-column>
@@ -160,7 +160,7 @@
       <el-table :data="importData" height="400">
         <el-table-column prop="id" label="序号" width="100px" />
         <el-table-column prop="priority" label="优先级" width="100px">
-          <template #default="{row}">{{ {10:'A+',9:'A',8:'A-',7:'B+',6:'B',5:'B-',4:'C+',3:'C',2:'C-'}[row.priority] }}</template>
+          <template #default="{row}">{{ {10:'S',9:'A',8:'B',7:'C',6:'C',5:'C',4:'C',3:'C',2:'C'}[row.priority] }}</template>
         </el-table-column>
         <el-table-column prop="weekly_goal" label="任务内容" />
         <el-table-column prop="executor" label="执行人" width="150" />
@@ -266,15 +266,11 @@ const importForm = ref({
 })
 
 const priorityOptions = ref([
-  { label: 'A+ (10)', value: 10 },
+  { label: 'S (10)', value: 10 },
   { label: 'A (9)', value: 9 },
-  { label: 'A- (8)', value: 8 },
-  { label: 'B+ (7)', value: 7 },
-  { label: 'B (6)', value: 6 },
-  { label: 'B- (5)', value: 5 },
-  { label: 'C+ (4)', value: 4 },
-  { label: 'C (3)', value: 3 },
-  { label: 'C- (2)', value: 2 }
+  { label: 'B (8)', value: 8 },
+  { label: 'C (7)', value: 7 },
+
 ])
 
 // 获取当前周一日期
@@ -481,12 +477,12 @@ const initUsers = () => {
 }
 
 const getPriorityLabel = (value) => {
-  if(value === 10) return 'A+'
+  if(value === 10) return 'S'
   if(value === 9) return 'A'
-  if(value === 8) return 'A'
-  if(value === 7) return 'B'
-  if(value === 6) return 'B'
-  if(value === 5) return 'B'
+  if(value === 8) return 'B'
+  if(value === 7) return 'C'
+  if(value === 6) return 'C'
+  if(value === 5) return 'C'
   if(value === 4) return 'C'
   if(value === 3) return 'C'
   if(value === 2) return 'C'

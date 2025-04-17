@@ -1,5 +1,6 @@
 <template>
-  <div class="page-container">
+  <div>
+    <div class="page-container">
     <div class="user-tabs-container">
       <el-tabs v-model="executorId" tab-position="left" class="user-tabs" @tab-change="handleUserChange">
             <el-tab-pane
@@ -8,8 +9,10 @@
               :label="user.partner_name"
               :name="user.id"
             />
-          </el-tabs>
-      </div>
+      </el-tabs>
+      <el-button type="primary" @click="drawerVisible = true" style="margin-top: 20px;width: 40px;height: 100px;writing-mode: vertical-rl;text-orientation: upright;line-height: 120px;font-size:12px;padding:2px 8px;letter-spacing:1px;">打开抽屉</el-button>
+
+    </div>
 
       <div class="content-area">
       <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
@@ -29,7 +32,7 @@
                   <el-table-column prop="executor" label="执行人"  width="90" align="center" header-align="center"/>
                   
                   <el-table-column label="优先级" width="80" align="center" header-align="center">
-                    <template #default="{row}">{{ {10:'A+',9:'A',8:'A-',7:'B+',6:'B',5:'B-',4:'C+',3:'C',2:'C-'}[row.priority] }}</template>
+                    <template #default="{row}">{{ {10:'S',9:'A',8:'B',7:'C',6:'C',5:'C',4:'C',3:'C',2:'C'}[row.priority] }}</template>
                   </el-table-column>
                   
                   <el-table-column prop="weekly_goal" label="目标" header-align="center"/>
@@ -110,6 +113,32 @@
           </el-tabs>
       </div>
   </div>
+
+  <el-drawer
+    v-model="drawerVisible"
+    title="任务详情"
+    :size="'55%'"
+    :with-header="true"
+    direction="rtl"
+    class="custom-drawer"
+    :style="{ height: '80%' }"
+  >
+  <div class="goal-container">
+          <h3>当日主要目标</h3>
+          <el-form label-width="80px">
+            <el-date-picker v-model="currentDay" type="date" value-format="YYYYMMDD" placeholder="选择日期"
+              @change="getDailyGoal" style="margin-bottom: 8px;width: 130px;" />
+            <el-input v-model="goalContent" type="textarea" :rows="35" placeholder="请输入当日主要目标" />
+            <el-button type="primary" @click="saveGoal" style="margin-top: 8px;">保存目标</el-button>
+          <el-button @click="fullscreenDialogVisible = true" style="margin-top: 8px;margin-left: 8px;">全屏查看</el-button>
+          </el-form>
+        </div>
+  </el-drawer>
+  <!-- 全屏弹窗 -->
+  <el-dialog v-model="fullscreenDialogVisible" title="目标全屏查看" fullscreen>
+      <pre class="fullscreen-content">{{ goalContent }}</pre>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup>
@@ -121,6 +150,8 @@ import { parseExcelFile } from '@/utils/excelParser'
 import { getDailyPlanWithExecutorId} from '@/utils/dailyPlanAsync'
 import { getMondayDate } from '@/utils/dateUtils'
 
+const fullscreenDialogVisible = ref(false)
+
 const currentDate = ref({});
 const tasks = ref({});
 const obj = ref({})
@@ -129,6 +160,8 @@ const dialogVisible = ref(false);
 const dialogTitle = ref('');
 const executorId = ref('')
 const currentDay = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
+const drawerVisible = ref(false);
+const goalContent = ref('')
 
 const form = ref({
   id: null,
@@ -396,12 +429,66 @@ const initActiveTab = () => {
   userList.value = users;
 
 }
+// 获取当日目标
+const getDailyGoal = async () => {
+  try {
+    const departmentId = localStorage.getItem('department_id_cache') || 2
 
+    const res = await http.get('/DayGoalAPI.php', {
+      params: {
+        action: 'get_target',
+        report_date: currentDate.value,
+        department_id: departmentId
+      }
+    })
+     
+    let data = res?.content || ''
+    console.log(data)
+
+     goalContent.value = data
+    // fenxTodayTarget()
+  } catch (error) {
+    console.error('获取目标失败:', error)
+  }
+}
+
+const saveGoal = async () => {
+  if (!goalContent.value.trim()) {
+    ElMessage.warning('目标内容不能为空');
+    return;
+  }
+
+
+  try {
+    const departmentId = localStorage.getItem('department_id_cache') || 2
+
+    const formData = new URLSearchParams();
+    formData.append('action', 'save_target');
+    formData.append('report_date', currentDate.value);
+    formData.append('content', goalContent.value);
+    formData.append('department_id', departmentId);
+
+    
+
+    await http.post('DayGoalAPI.php', formData, {
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+    ElMessage.success('保存成功');
+    getDailyGoal();
+  } catch (error) {
+    console.error('保存失败:', error.response?.data || error.message);
+    ElMessage.error(`保存失败: ${error.response?.data?.message || '服务器异常'}`);
+  }
+}
 
 onMounted(() => {
   initActiveTab()
   executorId.value = userList.value[0].id
   loadTaskData(executorId.value, getMondayDate(currentDay.value),true)
+  getDailyGoal()
 
 })
 </script>
