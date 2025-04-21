@@ -23,13 +23,31 @@ try {
             }
             $mondayDate = $_REQUEST['mondayDate'];
             $departmentId = $_REQUEST['department_id'];
+
+
             
-            $stmt = $conn->prepare("SELECT wg.*,d.department_name 
+
+            if( $departmentId == 0){
+                $sql = "SELECT wg.*,d.department_name 
                 FROM weekly_goals wg
                 INNER JOIN departments d ON wg.department_id = d.id
-                WHERE mondayDate = ? AND wg.department_id = ?  ORDER BY executor,priority DESC");
-            $stmt->execute([$mondayDate, $departmentId]);
-            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+                WHERE mondayDate = ?  ORDER BY executor,priority DESC";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([$mondayDate]);
+                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+
+            }else{
+                $sql = "SELECT wg.*,d.department_name 
+                FROM weekly_goals wg
+                INNER JOIN departments d ON wg.department_id = d.id
+                WHERE mondayDate = ? AND wg.department_id = ?  ORDER BY executor,priority DESC";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([$mondayDate, $departmentId]);
+                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            }
+
+            
+            
             break;
 
         case 'getWeekPeriod':

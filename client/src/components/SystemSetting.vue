@@ -96,8 +96,9 @@ const editForm = ref({
 const fetchDepartments = async () => {
   try {
     const res = await http.get('UserInfoAPI.php?action=get_departments')
-    departments.value = res.data
-    localStorage.setItem('departments_cache', JSON.stringify(res.data))
+    let obj = [{'department_name':'全部', 'id': 0,'group_id': 0}]
+    departments.value = [...obj,...res.data]
+    localStorage.setItem('departments_cache', JSON.stringify( departments.value))
   } catch (error) {
     console.error('获取部门列表失败:', error)
     // 失败时尝试使用本地缓存并补充默认数据
@@ -116,12 +117,24 @@ const fetchDepartments = async () => {
 
 const handleDepartmentChange = (val) => {
   localStorage.setItem('department_id_cache', val)
-  http.get(`UserInfoAPI.php?action=get_users&department_id=${val}`)
+
+  if(val == 0) {
+    http.get(`UserInfoAPI.php?action=get_all_users&department_id=${val}`)
     .then(res => {
       users.value = res.data
       localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
       megerOAUserIDS(val)
     })
+  }else{
+    http.get(`UserInfoAPI.php?action=get_users&department_id=${val}`)
+    .then(res => {
+      users.value = res.data
+      localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+      megerOAUserIDS(val)
+    })
+  }
+
+ 
 }
 
 const handleEdit = (row) => {

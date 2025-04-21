@@ -41,7 +41,11 @@
     <el-table :data="filteredGoals" style="width: 100%" :row-class-name="rowClassName">
       <el-table-column prop="id" label="序号" min-width="50"  header-align="center" align="center" border/>
       <el-table-column prop="weekly_goal" label="周目标" min-width="220"  header-align="center" border/>
+      
+      <el-table-column prop="department_name" label="部门" width="200" align="center" header-align="center" border/>
+
       <el-table-column prop="executor" label="姓名" width="200" align="center" header-align="center" border/>
+
       <el-table-column label="优先级" width="120" align="center" header-align="center" border>
         <template #default="{ row }">
           {{ 
@@ -183,8 +187,9 @@ const selectedDepartmentId = ref(null)
 const fetchDepartments = async () => {
   try {
     const res = await http.get('UserInfoAPI.php?action=get_departments')
-    departments.value = res.data
-    localStorage.setItem('departments_cache', JSON.stringify(res.data))
+    let obj = [{'department_name':'全部', 'id': 0,'group_id': 0}]
+    departments.value = [...obj,...res.data]
+    localStorage.setItem('departments_cache', JSON.stringify( departments.value))
   } catch (error) {
     console.error('获取部门列表失败:', error)
     const cache = localStorage.getItem('departments_cache')
@@ -198,19 +203,32 @@ const fetchDepartments = async () => {
 
 const handleDepartmentChange = (val) => {
   localStorage.setItem('department_id_cache', val)
-  http.get(`UserInfoAPI.php?action=get_users&department_id=${val}`)
+
+  if(val == 0) {
+    http.get(`UserInfoAPI.php?action=get_all_users`)
     .then(res => {
       users.value = res.data
       localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
-      megerOAUserIDS(val)
+      // megerOAUserIDS(val)
     })
+  }else{
+    http.get(`UserInfoAPI.php?action=get_users&department_id=${val}`)
+    .then(res => {
+      users.value = res.data
+      localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+      // megerOAUserIDS(val)
+    })
+  }
+
+
+  
   loadData()
 }
 
 const copytask = async () => {
   try {
     const text = filteredGoals.value
-      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.executor}`)
+      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name} - ${goal.executor}`)
       .join('\n');
 
     await navigator.clipboard.writeText(text);
@@ -463,8 +481,8 @@ const initUsers = () => {
     users.value = cache ? JSON.parse(cache) : []
     
     if(users.value.length === 0) {
-      ElMessage.error('用户数据未加载，请刷新页面')
-      setTimeout(() => location.reload(), 2000) // 2秒后自动刷新
+      // ElMessage.error('用户数据未加载，请刷新页面')
+      // setTimeout(() => location.reload(), 2000) // 2秒后自动刷新
     }
 
     allUser.value = JSON.parse(localStorage.getItem('all_users'))

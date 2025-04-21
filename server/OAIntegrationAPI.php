@@ -127,7 +127,12 @@ function handleSync($isToday) {
                         $task['executor_id'] = $users[$i]['id'];
                         $task['date'] = date('Ymd', strtotime($obj['createdAt']));
                         $task['progress'] = $obj['complete'] == null || $obj['complete'] == 'null'? '0%' : $obj['complete'].'%';
-                        $task['time_spent'] = $obj['r_time'] == null? '-1' : $obj['r_time'];
+                        if($isToday){
+                            $task['time_spent'] = $obj['e_time'] == null? '-1' : $obj['e_time'];
+                        }else{
+                            $task['time_spent'] = $obj['r_time'] == null? '-1' : $obj['r_time'];
+                        }
+                        
                         $task['day_goal'] = $obj['d_describe'];
                         $task['task_content'] = $obj['p_describe'];
                         $task['mondayDate'] = getMondayDate($obj['createdAt']);
@@ -139,12 +144,14 @@ function handleSync($isToday) {
                 }   
             }    
         }
+        $insert_count = 0;
         try {
             $conn->beginTransaction();
 
             if($isToday){
-                $checkStmtToday = $conn->prepare("SELECT id FROM daily_tasks_today WHERE oa_taskid = ? ");
+                 $checkStmtToday = $conn->prepare("SELECT id FROM daily_tasks_today WHERE oa_taskid = ? ");
                 foreach ($oa_dailytask as $item) {
+                    echo('oa_task_id = '.$item['oa_task_id']).'|';
                     $checkStmtToday->execute([$item['oa_task_id']]);
                     if ($checkStmtToday->fetch()) {
                         continue;
@@ -152,8 +159,8 @@ function handleSync($isToday) {
 
                     $daily_goals_id = 0;
                     $stmt = $conn->prepare("INSERT INTO daily_tasks_today 
-                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate)
-                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?)");
+                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate,oa_taskid)
+                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?,?)");
                     
                     $stmt->execute([
                         $item['date'],
@@ -165,12 +172,16 @@ function handleSync($isToday) {
                         $item['is_new_goal'] ?? 0,
                         $daily_goals_id,
                         date('Ymd'),
-                        $item['mondayDate']
+                        $item['mondayDate'],
+                        $item['oa_task_id']
                     ]);
+                    $insert_count = $insert_count + 1;
                 }
             }else{
                 $checkStmt = $conn->prepare("SELECT id FROM daily_tasks WHERE oa_taskid = ?");
                 foreach ($oa_dailytask as $item) {
+                    echo('oa_task_id = '.$item['oa_task_id']).'|';
+
                     $checkStmt->execute([$item['oa_task_id']]);
                     if ($checkStmt->fetch()) {
                         continue;
@@ -178,8 +189,8 @@ function handleSync($isToday) {
 
                     $daily_goals_id = 0;
                     $stmt = $conn->prepare("INSERT INTO daily_tasks 
-                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate)
-                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?)");
+                        (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate,oa_taskid)
+                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?,?)");
                     
                     $stmt->execute([
                         $item['date'],
@@ -191,7 +202,8 @@ function handleSync($isToday) {
                         $item['is_new_goal'] ?? 0,
                         $daily_goals_id,
                         date('Ymd'),
-                        $item['mondayDate']
+                        $item['mondayDate'],
+                        $item['oa_task_id']
                     ]);
                 }
             }
@@ -207,7 +219,7 @@ function handleSync($isToday) {
 
 
 
-        return $oa_dailytask;
+        return '成功插入'.$insert_count.'条数据';
     } catch (Exception $e) {
         error_log('同步失败: '.$e->getMessage());
         return ['error' => $e->getMessage()];

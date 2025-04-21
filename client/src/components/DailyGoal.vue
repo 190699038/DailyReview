@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps, defineEmits } from 'vue'
+import { ref, onMounted, defineEmits } from 'vue'
 import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
@@ -437,7 +437,7 @@ const getDailyGoal = async () => {
     const res = await http.get('/DayGoalAPI.php', {
       params: {
         action: 'get_target',
-        report_date: currentDate.value,
+        report_date: currentDay.value,
         department_id: departmentId
       }
     })
@@ -464,7 +464,7 @@ const saveGoal = async () => {
 
     const formData = new URLSearchParams();
     formData.append('action', 'save_target');
-    formData.append('report_date', currentDate.value);
+    formData.append('report_date', currentDay.value);
     formData.append('content', goalContent.value);
     formData.append('department_id', departmentId);
 
