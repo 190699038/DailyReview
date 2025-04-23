@@ -1,45 +1,38 @@
 <template>
   <div>
     <div class="page-container">
-    <div class="user-tabs-container">
-      <el-tabs v-model="executorId" tab-position="left" class="user-tabs" @tab-change="handleUserChange">
-            <el-tab-pane
-              v-for="user in userList"
-              :key="user.id"
-              :label="user.partner_name"
-              :name="user.id"
-            />
-      </el-tabs>
-      <el-button type="primary" @click="drawerVisible = true" style="margin-top: 20px;width: 40px;height: 100px;writing-mode: vertical-rl;text-orientation: upright;line-height: 120px;font-size:12px;padding:2px 8px;letter-spacing:1px;">打开抽屉</el-button>
+      <div class="user-tabs-container">
+        <el-tabs v-model="executorId" tab-position="left" class="user-tabs" @tab-change="handleUserChange">
+          <el-tab-pane v-for="user in userList" :key="user.id" :label="user.partner_name" :name="user.id" />
+        </el-tabs>
+        <el-button type="primary" @click="drawerVisible = true"
+          style="margin-top: 20px;width: 40px;height: 100px;writing-mode: vertical-rl;text-orientation: upright;line-height: 120px;font-size:12px;padding:2px 8px;letter-spacing:1px;">打开抽屉</el-button>
 
-    </div>
+      </div>
 
       <div class="content-area">
-      <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
-            <el-tab-pane
-              v-for="(day, index) in weekDays"
-              :key="index"
-              :label="day.label"
-              :name="day.name"
-            >
-            <h2>{{ day.date }}  {{ day.label }} </h2>
+        <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
+          <el-tab-pane v-for="(day, index) in weekDays" :key="index" :label="day.label" :name="day.name">
+            <div class="content_area">
+              <h2>{{ day.date }} {{ day.label }} </h2>
 
-            <div class="content-container-top">
-              <div style="margin-bottom: 5px;margin-left: 1px;">周目标</div>
+              <div class="content-container-top">
+                <div style="margin-bottom: 5px;margin-left: 1px;">周目标</div>
 
                 <el-table :data="dailyGoals || []" border style="width: 100%" :row-class-name="rowClassName">
-                  <el-table-column prop="weekly_goals_id" label="序号" width="90" align="center" header-align="center"/>
-                  <el-table-column prop="executor" label="执行人"  width="90" align="center" header-align="center"/>
-                  
+                  <el-table-column prop="weekly_goals_id" label="序号" width="90" align="center" header-align="center" />
+                  <el-table-column prop="executor" label="执行人" width="90" align="center" header-align="center" />
+
                   <el-table-column label="优先级" width="80" align="center" header-align="center">
-                    <template #default="{row}">{{ {10:'S',9:'A',8:'B',7:'C',6:'C',5:'C',4:'C',3:'C',2:'C'}[row.priority] }}</template>
+                    <template #default="{ row }">{{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C', 6: 'C', 5: 'C', 4: 'C', 3: 'C', 2: 'C' }[row.priority]
+                      }}</template>
                   </el-table-column>
-                  
-                  <el-table-column prop="weekly_goal" label="目标" header-align="center"/>
-                  
+
+                  <el-table-column prop="weekly_goal" label="目标" header-align="center" />
+
                   <el-table-column label="状态" width="120" align="center" header-align="center">
-                    <template #default="{row}">
-                      {{ {1:'进行中',2:'测试中',3:'已上线',4:'已暂停',0:'未开始'}[row.status] || '未知状态' }}
+                    <template #default="{ row }">
+                      {{ { 1: '进行中', 2: '测试中', 3: '已上线', 4: '已暂停', 0: '未开始' }[row.status] || '未知状态' }}
                     </template>
                   </el-table-column>
                 </el-table>
@@ -49,15 +42,17 @@
               <div class="content-container">
                 <div style="margin-bottom: 5px;margin-left: 1px;">日计划</div>
 
-                <el-table :key="tableKey" :data="dailyTodayTasks.filter(task => parseFloat(task.time_spent) > 0 || 1)  || []" border style="width: 100%" :row-class-name="taskClassName">
-                  <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
-                  <el-table-column prop="date" label="日期"  width="100" align="center" header-align="center" />
+                <el-table :key="tableKey"
+                  :data="dailyTodayTasks.filter(task => parseFloat(task.time_spent) > 0 || 1) || []" border
+                  style="width: 100%" :row-class-name="taskClassName">
+                  <el-table-column prop="id" label="序号" width="90" align="center" header-align="center" />
+                  <el-table-column prop="date" label="日期" width="100" align="center" header-align="center" />
 
-                  <el-table-column prop="day_goal" label="目标" header-align="center"/>
-                  <el-table-column prop="task_content" label="拆解任务" header-align="center"/>
-                  <el-table-column prop="time_spent" label="耗时(小时)"  width="100" align="center" header-align="center"/>
-                  <el-table-column prop="progress" label="进度"  width="90" align="center" header-align="center"/>
-                  
+                  <el-table-column prop="day_goal" label="目标" header-align="center" />
+                  <el-table-column prop="task_content" label="拆解任务" header-align="center" />
+                  <el-table-column prop="time_spent" label="耗时(小时)" width="100" align="center" header-align="center" />
+                  <el-table-column prop="progress" label="进度" width="90" align="center" header-align="center" />
+
                 </el-table>
               </div>
 
@@ -65,77 +60,70 @@
               <div class="content-container">
                 <div style="margin-bottom: 5px;margin-left: 1px;">日计划总结</div>
 
-                <el-table :key="tableKey" :data="dailyTasks.filter(task => parseFloat(task.time_spent) > 0)  || []" border style="width: 100%" :row-class-name="taskClassName">
-                  <el-table-column prop="id" label="序号"  width="90" align="center" header-align="center" />
-                  <el-table-column prop="date" label="日期"  width="100" align="center" header-align="center" />
+                <el-table :key="tableKey" :data="dailyTasks.filter(task => parseFloat(task.time_spent) > 0) || []"
+                  border style="width: 100%" :row-class-name="taskClassName">
+                  <el-table-column prop="id" label="序号" width="90" align="center" header-align="center" />
+                  <el-table-column prop="date" label="日期" width="100" align="center" header-align="center" />
 
-                  <el-table-column prop="day_goal" label="目标" header-align="center"/>
-                  <el-table-column prop="task_content" label="拆解任务" header-align="center"/>
-                  <el-table-column prop="time_spent" label="耗时(小时)"  width="100" align="center" header-align="center"/>
-                  <el-table-column prop="progress" label="进度"  width="90" align="center" header-align="center"/>
-                  <el-table-column label="操作" width="100"  header-align="center" align="center">
-                  <template #default="{ row }">
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 8px">
-                      <el-button size="small" @click="showDialog('edit', row)">修改</el-button>
-                      <!-- <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button> -->
-                    </div>
-                  </template>
-                </el-table-column>
+                  <el-table-column prop="day_goal" label="目标" header-align="center" />
+                  <el-table-column prop="task_content" label="拆解任务" header-align="center" />
+                  <el-table-column prop="time_spent" label="耗时(小时)" width="100" align="center" header-align="center" />
+                  <el-table-column prop="progress" label="进度" width="90" align="center" header-align="center" />
+                  <el-table-column label="操作" width="100" header-align="center" align="center">
+                    <template #default="{ row }">
+                      <div style="display: flex; justify-content: center; align-items: center; gap: 8px">
+                        <el-button size="small" @click="showDialog('edit', row)">修改</el-button>
+                        <!-- <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button> -->
+                      </div>
+                    </template>
+                  </el-table-column>
                 </el-table>
               </div>
-            </el-tab-pane>
 
-            <el-dialog v-model="dialogVisible" :title="dialogTitle" width="40%">
-              <el-form :model="form" :rules="rules" label-width="100px">
-                <el-form-item label="耗时（小时）" prop="time_spent">
-                  <el-input-number v-model="form.time_spent" :min="0" :precision="1" :step="0.5" />
-                </el-form-item>
-                <el-form-item label="进度" prop="progress">
-                  <el-input v-model.number="form.progress" placeholder="输入百分比（0-100）">
-                    <template #append>%</template>
-                  </el-input>
-                </el-form-item>
-                <el-form-item label="新增需求标记">
-                  <el-switch
-                    v-model="form.is_new_goal"
-                    :active-value="1"
-                    :inactive-value="0"
-                    active-text="是"
-                    inactive-text="否"
-                  />
-                </el-form-item>
-                <el-form-item>
-                  <el-button type="primary" @click="submitForm">保存</el-button>
-                  <el-button @click="dialogVisible = false">取消</el-button>
-                </el-form-item>
-              </el-form>
-            </el-dialog>
-          </el-tabs>
+
+            </div>
+
+          </el-tab-pane>
+
+          <el-dialog v-model="dialogVisible" :title="dialogTitle" width="40%">
+            <el-form :model="form" :rules="rules" label-width="100px">
+              <el-form-item label="耗时（小时）" prop="time_spent">
+                <el-input-number v-model="form.time_spent" :min="0" :precision="1" :step="0.5" />
+              </el-form-item>
+              <el-form-item label="进度" prop="progress">
+                <el-input v-model.number="form.progress" placeholder="输入百分比（0-100）">
+                  <template #append>%</template>
+                </el-input>
+              </el-form-item>
+              <el-form-item label="新增需求标记">
+                <el-switch v-model="form.is_new_goal" :active-value="1" :inactive-value="0" active-text="是"
+                  inactive-text="否" />
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="submitForm">保存</el-button>
+                <el-button @click="dialogVisible = false">取消</el-button>
+              </el-form-item>
+            </el-form>
+          </el-dialog>
+        </el-tabs>
       </div>
-  </div>
+    </div>
 
-  <el-drawer
-    v-model="drawerVisible"
-    title="任务详情"
-    :size="'55%'"
-    :with-header="true"
-    direction="rtl"
-    class="custom-drawer"
-    :style="{ height: '80%' }"
-  >
-  <div class="goal-container">
-          <h3>当日主要目标</h3>
-          <el-form label-width="80px">
-            <el-date-picker v-model="currentDay" type="date" value-format="YYYYMMDD" placeholder="选择日期"
-              @change="getDailyGoal" style="margin-bottom: 8px;width: 130px;" />
-            <el-input v-model="goalContent" type="textarea" :rows="35" placeholder="请输入当日主要目标" />
-            <el-button type="primary" @click="saveGoal" style="margin-top: 8px;">保存目标</el-button>
+    <el-drawer v-model="drawerVisible" title="任务详情" :size="'55%'" :with-header="true" direction="rtl"
+      class="custom-drawer" :style="{ height: '80%' }">
+      <div class="goal-container">
+        <h3>当日主要目标</h3>
+        <el-form label-width="80px">
+          <el-date-picker v-model="currentDay" type="date" value-format="YYYYMMDD" placeholder="选择日期"
+            @change="getDailyGoal" style="margin-bottom: 8px;width: 130px;" />
+          <el-input v-model="goalContent" type="textarea" :rows="35" placeholder="请输入当日主要目标" />
+          <el-button type="primary" @click="saveGoal" style="margin-top: 8px;">保存目标</el-button>
           <el-button @click="fullscreenDialogVisible = true" style="margin-top: 8px;margin-left: 8px;">全屏查看</el-button>
-          </el-form>
-        </div>
-  </el-drawer>
-  <!-- 全屏弹窗 -->
-  <el-dialog v-model="fullscreenDialogVisible" title="目标全屏查看" fullscreen>
+        </el-form>
+      </div>
+    </el-drawer>
+    <!-- 全屏弹窗 -->
+    <el-dialog v-model="fullscreenDialogVisible" title="目标全屏查看" fullscreen>
       <pre class="fullscreen-content">{{ goalContent }}</pre>
     </el-dialog>
   </div>
@@ -147,7 +135,7 @@ import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { parseExcelFile } from '@/utils/excelParser'
-import { getDailyPlanWithExecutorId} from '@/utils/dailyPlanAsync'
+import { getDailyPlanWithExecutorId } from '@/utils/dailyPlanAsync'
 import { getMondayDate } from '@/utils/dateUtils'
 
 const fullscreenDialogVisible = ref(false)
@@ -182,14 +170,14 @@ const dailyTasks = ref([]);
 const dailyTodayTasks = ref([]);
 
 const tableKey = ref(0);
-const today =  new Date().toISOString().slice(0, 10).replace(/-/g, '')
+const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
 const jinRi = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
 const userList = ref([])
 
 
 
 const handleUserChange = (newId) => {
-  loadTaskData(newId, getMondayDate(currentDay.value),false)
+  loadTaskData(newId, getMondayDate(currentDay.value), false)
 }
 
 const emit = defineEmits(['update:visible'])
@@ -204,8 +192,8 @@ const rowClassName = ({ row }) => {
   let style = ''
   if (row.status === 3) {
     style = 'green-row'
-  }else{
-    if(row.is_new_goal === 1){
+  } else {
+    if (row.is_new_goal === 1) {
       style = 'highlight-row'
     }
   }
@@ -235,7 +223,7 @@ const submitForm = async () => {
 
     ElMessage.success('修改成功');
     dialogVisible.value = false;
-    loadTaskData(obj.executor_id, obj.monday_date,false);
+    loadTaskData(obj.executor_id, obj.monday_date, false);
   } catch (error) {
     console.error('修改失败:', error);
     ElMessage.error(`修改失败: ${error.response?.data?.message || '服务器异常'}`);
@@ -247,7 +235,7 @@ const deleteTask = async (row) => {
 }
 
 const showDialog = (type, row) => {
-  if(row.date === jinRi.value) {
+  if (row.date === jinRi.value) {
     ElMessage.warning('当日计划不能修改');
     return;
   }
@@ -255,26 +243,26 @@ const showDialog = (type, row) => {
   form.value = {
     id: row.id,
     time_spent: parseFloat(row.time_spent),
-    progress:parseInt(row.progress.replace('%', '')),
+    progress: parseInt(row.progress.replace('%', '')),
     is_new_goal: row.is_new_goal || 0
   };
   dialogTitle.value = '修改任务';
   dialogVisible.value = true;
- 
 
 
-  
+
+
 }
 
 // 加载任务数据
-const loadTaskData = async (executor_id,monday_date,bFirst) => {
+const loadTaskData = async (executor_id, monday_date, bFirst) => {
   console.log("loadTaskData called with executor_id:", executor_id);
-  if(executor_id == null || monday_date == null){
+  if (executor_id == null || monday_date == null) {
     return
   }
 
   if (bFirst) {
-   
+
   }
 
   try {
@@ -289,7 +277,7 @@ const loadTaskData = async (executor_id,monday_date,bFirst) => {
     const formData = new URLSearchParams();
     formData.append('action', 'getUserGoalAndTasks');
     formData.append('monday_date', monday_date);
-    formData.append('executor_id', executor_id); 
+    formData.append('executor_id', executor_id);
     formData.append('dates', date_str); //周一到今天
 
     let tempTask = await http.post('DayTaskAPI.php', formData, {
@@ -337,17 +325,17 @@ defineExpose({ loadTaskData }); // 关键！暴露方法给父组件
 const drawTable = () => {
   taskData.value = [];
   const dailyGoal = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyGoals) ? tasks.value.data[obj.tabIndex].dailyGoals : [];
-    const dailyTask = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyTasks) ? tasks.value.data[obj.tabIndex].dailyTasks : [];
-    const dailyTaskToday = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyTasks_today) ? tasks.value.data[obj.tabIndex].dailyTasks_today : [];
+  const dailyTask = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyTasks) ? tasks.value.data[obj.tabIndex].dailyTasks : [];
+  const dailyTaskToday = Array.isArray(tasks.value?.data?.[obj.tabIndex]?.dailyTasks_today) ? tasks.value.data[obj.tabIndex].dailyTasks_today : [];
 
-    dailyGoals.value = dailyGoal;
-    dailyTasks.value = [...dailyTask];
-    dailyTodayTasks.value = [...dailyTaskToday];
-    tableKey.value += 1;
-    console.log(dailyGoal)
-    console.log(dailyTask)
+  dailyGoals.value = dailyGoal;
+  dailyTasks.value = [...dailyTask];
+  dailyTodayTasks.value = [...dailyTaskToday];
+  tableKey.value += 1;
+  console.log(dailyGoal)
+  console.log(dailyTask)
 }
-const  getWeekDates = () => {
+const getWeekDates = () => {
   const today = new Date(); // 当前日期（2025-03-20）
   const currentDay = today.getDay() === 0 ? 7 : today.getDay(); // 转换为ISO星期码（周四=4）
   const monday = new Date(today);
@@ -367,7 +355,7 @@ const formatDate = (date) => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}${month}${day}`; // 格式：YYYYMMDD
 }
- const getDateByWeekday = (weekday) => {
+const getDateByWeekday = (weekday) => {
   const dates = getWeekDates();
   return dates[weekday - 1]; // 索引0=周一，索引6=周日
 }
@@ -376,14 +364,14 @@ const formatDate = (date) => {
 
 // 处理标签切换
 const handleTabChange = (tabName) => {
-    console.log(tabName)
-    let week = parseInt(tabName)
-    index.value = week - 1;
-    obj.tabIndex = index.value;
-    currentDate.value = getDateByWeekday(week)
-    drawTable()
+  console.log(tabName)
+  let week = parseInt(tabName)
+  index.value = week - 1;
+  obj.tabIndex = index.value;
+  currentDate.value = getDateByWeekday(week)
+  drawTable()
 
-//   loadTaskData(tabName)
+  //   loadTaskData(tabName)
 }
 
 // 初始化加载数据
@@ -421,11 +409,11 @@ const initActiveTab = () => {
   obj.tabIndex = parseInt(activeTab.value)
 
   for (let index = 0; index < weekDays.length; index++) {
-    weekDays[index].date = getDateByWeekday(index+1);
+    weekDays[index].date = getDateByWeekday(index + 1);
   }
 
   const cache = localStorage.getItem('departments_user_cache');
-  let users = cache ? JSON.parse(cache) : [];  
+  let users = cache ? JSON.parse(cache) : [];
   userList.value = users;
 
 }
@@ -441,11 +429,11 @@ const getDailyGoal = async () => {
         department_id: departmentId
       }
     })
-     
+
     let data = res?.content || ''
     console.log(data)
 
-     goalContent.value = data
+    goalContent.value = data
     // fenxTodayTarget()
   } catch (error) {
     console.error('获取目标失败:', error)
@@ -468,7 +456,7 @@ const saveGoal = async () => {
     formData.append('content', goalContent.value);
     formData.append('department_id', departmentId);
 
-    
+
 
     await http.post('DayGoalAPI.php', formData, {
       timeout: 30000,
@@ -487,7 +475,7 @@ const saveGoal = async () => {
 onMounted(() => {
   initActiveTab()
   executorId.value = userList.value[0].id
-  loadTaskData(executorId.value, getMondayDate(currentDay.value),true)
+  loadTaskData(executorId.value, getMondayDate(currentDay.value), true)
   getDailyGoal()
 
 })
@@ -500,12 +488,13 @@ onMounted(() => {
   border-radius: 4px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
+
 .user-tabs-container {
   width: 80px;
   float: left;
   margin-right: 20px;
   height: 500px;
-  overflow-y: auto;
+  /* overflow-y: auto; */
 }
 
 .content-area {
@@ -524,7 +513,8 @@ onMounted(() => {
   background: #f8f8f8;
   border-radius: 8px;
 }
-.user-tabs >>> .el-tabs__item {
+
+.user-tabs>>>.el-tabs__item {
   height: 40px;
   line-height: 40px;
   font-size: 14px;
@@ -541,6 +531,10 @@ onMounted(() => {
 .el-tag {
   margin-right: 10px;
 }
+
+.content_area {
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
 </style>
-
-
