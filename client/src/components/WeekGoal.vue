@@ -39,14 +39,14 @@
 
  
     <el-table :data="filteredGoals" style="width: 100%" :row-class-name="rowClassName">
-      <el-table-column prop="id" label="序号" min-width="50"  header-align="center" align="center" border/>
-      <el-table-column prop="weekly_goal" label="周目标" min-width="220"  header-align="center" border/>
+      <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/>
+      <el-table-column prop="weekly_goal" label="周目标"  header-align="center" border/>
       
-      <el-table-column prop="department_name" label="部门" width="200" align="center" header-align="center" border/>
+      <el-table-column prop="department_name" label="部门" width="100" align="center" header-align="center" border/>
 
-      <el-table-column prop="executor" label="姓名" width="200" align="center" header-align="center" border/>
+      <el-table-column prop="executor" label="姓名" width="150" align="center" header-align="center" border/>
 
-      <el-table-column label="优先级" width="120" align="center" header-align="center" border>
+      <el-table-column label="优先级" width="80" align="center" header-align="center" border>
         <template #default="{ row }">
           {{ 
             {10:'S',9:'A',8:'B',7:'C',6:'C',5:'C',4:'C',3:'C',2:'C'}[row.priority] 
@@ -60,14 +60,10 @@
           }}
         </template>
       </el-table-column>
-      <!-- <el-table-column prop="department_name" label="部门" width="150" align="center" header-align="center" /> -->
-      <!-- <el-table-column label="新增需求" width="120" align="center" header-align="center">
-        <template #default="{ row }">
-          {{ {1:'新增需求',0:'计划需求'}[row.is_new_goal] || '未知状态' }}
-        </template>
-      </el-table-column> -->
-      <el-table-column prop="remark" label="备注" width="120" align="center" header-align="center" border/>
+  
       <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border/>
+
+      <el-table-column prop="remark" label="备注" width="100" align="center" header-align="center" border/>
       <el-table-column label="操作"  header-align="center" align="center" border>
         <template #default="{ row }">
           <div style="display: flex; justify-content: center; align-items: center; gap: 8px">
