@@ -6,14 +6,14 @@
           <el-tab-pane v-for="user in userList" :key="user.id" :label="user.partner_name" :name="user.id" />
         </el-tabs>
         <el-button type="primary" @click="drawerVisible = true"
-          style="margin-top: 20px;width: 40px;height: 100px;writing-mode: vertical-rl;text-orientation: upright;line-height: 120px;font-size:12px;padding:2px 8px;letter-spacing:1px;">打开抽屉</el-button>
+          style="margin-top: 20px;width: 40px;height: 100px;writing-mode: vertical-rl;text-orientation: upright;line-height: 120px;font-size:12px;padding:2px 8px;letter-spacing:1px;">今日目标</el-button>
 
       </div>
 
       <div class="content-area">
         <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
           <el-tab-pane v-for="(day, index) in weekDays" :key="index" :label="day.label" :name="day.name">
-            <div class="content_area">
+           
               <h2>{{ day.date }} {{ day.label }} </h2>
 
               <div class="content-container-top">
@@ -38,7 +38,7 @@
                 </el-table>
               </div>
 
-
+              <div class="content_area">
               <div class="content-container">
                 <div style="margin-bottom: 5px;margin-left: 1px;">日计划</div>
 
@@ -50,7 +50,7 @@
 
                   <el-table-column prop="day_goal" label="目标" header-align="center" />
                   <el-table-column prop="task_content" label="拆解任务" header-align="center" />
-                  <el-table-column prop="time_spent" label="耗时(小时)" width="100" align="center" header-align="center" />
+                  <el-table-column prop="time_spent" label="预估耗时(小时)" width="120" align="center" header-align="center" />
                   <el-table-column prop="progress" label="进度" width="90" align="center" header-align="center" />
 
                 </el-table>
@@ -67,16 +67,16 @@
 
                   <el-table-column prop="day_goal" label="目标" header-align="center" />
                   <el-table-column prop="task_content" label="拆解任务" header-align="center" />
-                  <el-table-column prop="time_spent" label="耗时(小时)" width="100" align="center" header-align="center" />
+                  <el-table-column prop="time_spent" label="实际耗时(小时)" width="120" align="center" header-align="center" />
                   <el-table-column prop="progress" label="进度" width="90" align="center" header-align="center" />
-                  <el-table-column label="操作" width="100" header-align="center" align="center">
+                  <!-- <el-table-column label="操作" width="100" header-align="center" align="center">
                     <template #default="{ row }">
                       <div style="display: flex; justify-content: center; align-items: center; gap: 8px">
                         <el-button size="small" @click="showDialog('edit', row)">修改</el-button>
-                        <!-- <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button> -->
+                       <el-button size="small" type="danger" @click="deleteTask(row)">删除</el-button>
                       </div>
                     </template>
-                  </el-table-column>
+                  </el-table-column> -->
                 </el-table>
               </div>
 
@@ -190,10 +190,10 @@ const index = ref(0)
 
 const rowClassName = ({ row }) => {
   let style = ''
-  if (row.status === 3) {
+  if (row.status === '3') {
     style = 'green-row'
   } else {
-    if (row.is_new_goal === 1) {
+    if (row.is_new_goal === '1') {
       style = 'highlight-row'
     }
   }
@@ -498,8 +498,11 @@ onMounted(() => {
 }
 
 .content-area {
-  overflow: hidden;
-  padding-left: 20px;
+  /* overflow: hidden; */
+  padding-left: 10px;
+  overflow-y: none;
+
+
 }
 
 .content-container {

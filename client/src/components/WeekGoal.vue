@@ -35,10 +35,18 @@
           />
         </el-select>
 
+      <el-select v-model="selectedStatus" placeholder="完成进度" style="max-width: 200px;margin-left:8px">
+        <el-option label="全部" :value="0" />
+        <el-option label="进行中" :value="1" />
+        <el-option label="测试中" :value="2" />
+        <el-option label="已上线" :value="3" />
+        <el-option label="已暂停" :value="4" />
+      </el-select>
+
       <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制任务</el-button>
 
  
-    <el-table :data="filteredGoals" style="width: 100%" :row-class-name="rowClassName">
+    <el-table :data="filteredGoals"  :row-class-name="rowClassName">
       <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/>
       <el-table-column prop="weekly_goal" label="周目标"  header-align="center" border/>
       
@@ -64,13 +72,18 @@
       <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border/>
 
       <el-table-column prop="remark" label="备注" width="100" align="center" header-align="center" border/>
-      <el-table-column label="操作"  header-align="center" align="center" border>
+      <el-table-column label="操作"  header-align="center" align="center" border width="200">
         <template #default="{ row }">
-          <div style="display: flex; justify-content: center; align-items: center; gap: 8px">
-            <el-button size="small" @click="showDialog('edit', row)">修改</el-button>
-            <el-button size="small" @click="submitFormSimple( row , 0)" v-if="row.status != 3">完成</el-button>
-            <el-button size="small" @click="submitFormSimple( row, 1)" v-if="row.status != 3">移动</el-button>
-            <el-button size="small" type="danger" @click="deleteGoal(row)">删除</el-button>
+          <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+            <div>
+              <el-button size="small" type="warning" @click="showDialog('edit', row)">修改</el-button>
+              <el-button size="small" type="danger" @click="deleteGoal(row)">删除</el-button>
+            </div>
+            <div v-if="row.status != 3" style="margin-top: 5px;">
+              <el-button size="small" type="primary" @click="submitFormSimple( row, 1)">移动</el-button>
+              <el-button size="small"  type="success" @click="submitFormSimple( row , 0)">完成</el-button>
+            </div>
+            
           </div>
         </template>
       </el-table-column>
@@ -221,6 +234,7 @@ const handleDepartmentChange = (val) => {
   loadData()
 }
 
+
 const copytask = async () => {
   try {
     const text = filteredGoals.value
@@ -249,10 +263,14 @@ const goals = ref([])
 const mondayDate = ref(getCurrentMonday())
 const dialogVisible = ref(false)
 
+// 修改状态变量初始值
+const selectedStatus = ref(0)  // 从null改为0，对应'全部'选项
+
+// 修正过滤条件逻辑
 const filteredGoals = computed(() => {
-  if (!searchText.value) return goals.value
   const searchLower = searchText.value.toLowerCase()
   return goals.value.filter(item => 
+    (selectedStatus.value === 0 || Number(item.status) === selectedStatus.value) &&
     (item.weekly_goal?.toLowerCase().includes(searchLower) ||
     item.executor?.toLowerCase().includes(searchLower))
   )
@@ -371,14 +389,17 @@ const showDialog = (mode, row) => {
       ...row,
       executor_id: executorIds.length > 0 ? executorIds : [row.executor_id]
     }
+    form.value.priority = parseInt(row.priority)
+    form.value.status = parseInt(row.status)
   } else {
     form.value = {
       id: null,
       executor: '',
       weekly_goal: '',
-      priority:5,
+      priority:9,
       is_new_goal: 0,
-      mondayDate: mondayDate.value
+      mondayDate: mondayDate.value,
+      status: 1
     }
   }
   dialogVisible.value = true
@@ -427,6 +448,11 @@ const submitForm = async () => {
       executor: form.value.executor_id.map(id => users.value.find(u => u.id === id)?.partner_name).join('/'),
       department_id: localStorage.getItem('department_id_cache') || 2
     };
+
+    if (submitData.remark === 'undefined' ||  submitData.remark === null || submitData.remark == '') {
+      submitData.remark == '无'
+    }
+
     await http.get('WeekGoalAPI.php', {
       params: {
         action: dialogType.value === 'add' ? 'create' : 'update',
@@ -458,12 +484,10 @@ const deleteGoal = async (row) => {
 // 行样式处理
 const rowClassName = ({ row }) => {
   let style = ''
-  if (row.status === 3) {
-    style = 'green-row'
-  }else{
-    if(row.is_new_goal === 1){
-      style = 'highlight-row'
-    }
+  if (parseInt(row.status) === 3) {
+    style = 'green-row text-line-through'
+  } else if (parseInt(row.is_new_goal) === 1) {
+    style = 'highlight-row'
   }
   return style
 }
@@ -603,6 +627,9 @@ const readExcel = (file) => {
   background-color: #FFF3CE !important;
 }
 
+.text-line-through {
+  text-decoration: line-through;
+}
 .green-row {
   background-color: #A9D08D !important;
 }

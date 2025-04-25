@@ -440,6 +440,6 @@ initActiveTab()
 .content_area{
   width: 100%;
   max-height: 80vh;
-  overflow-y: auto;
+  /* overflow-y: auto; */
 }
 </style>
