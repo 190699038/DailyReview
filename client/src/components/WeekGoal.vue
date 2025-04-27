@@ -42,8 +42,8 @@
         <el-option label="已上线" :value="3" />
         <el-option label="已暂停" :value="4" />
       </el-select>
-
-      <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制任务</el-button>
+      <el-button type="primary" style="margin-left: 8px;" @click="copytaskSimple()">简单复制</el-button>
+      <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
 
  
     <el-table :data="filteredGoals"  :row-class-name="rowClassName">
@@ -238,7 +238,21 @@ const handleDepartmentChange = (val) => {
 const copytask = async () => {
   try {
     const text = filteredGoals.value
-      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name} - ${goal.executor}`)
+      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name} - ${goal.executor} - ${goal.status == 1? '进行中': (goal.status == 2? '测试中': (goal.status == 3? '已上线': '已暂停'))}`)
+      .join('\n');
+
+    await navigator.clipboard.writeText(text);
+    ElMessage.success('已复制' + filteredGoals.value.length + '条任务');
+  } catch (error) {
+    console.error('复制失败:', error);
+    ElMessage.error('复制失败，请手动选择文本');
+  }
+};
+
+const copytaskSimple = async () => {
+  try {
+    const text = filteredGoals.value
+      .map((goal, index) => `${index + 1}、${goal.weekly_goal} `)
       .join('\n');
 
     await navigator.clipboard.writeText(text);
