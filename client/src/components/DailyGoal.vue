@@ -11,11 +11,24 @@
       </div>
 
       <div class="content-area">
+        <el-select
+        v-model="mondayDate"
+        @change="changeMonday"
+        placeholder="选择周范围"
+        style="max-width: 200px;margin-left: 10px;margin-right: 10px;"
+      >
+      <el-option
+        width="200"
+        v-for="option in mondayOptions"
+        :key="option.value"
+        :label="option.label"
+        :value="option.value"
+        
+      />
+      </el-select>
         <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
-          <el-tab-pane v-for="(day, index) in weekDays" :key="index" :label="day.label" :name="day.name">
-           
-              <h2>{{ day.date }} {{ day.label }} </h2>
-
+          <el-tab-pane v-for="(day, index) in weekDays" :key="index" :label="day.label" :name="day.name">           
+              <!-- <h2>{{ day.date }} {{ day.label }} </h2> -->
               <div class="content-container-top">
                 <div style="margin-bottom: 5px;margin-left: 1px;">周目标</div>
 
@@ -151,6 +164,9 @@ const currentDay = ref(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
 const drawerVisible = ref(false);
 const goalContent = ref('')
 
+const mondayOptions = ref([])
+const mondayDate = ref(getCurrentMonday())
+
 const form = ref({
   id: null,
   time_spent: 0,
@@ -261,14 +277,10 @@ const loadTaskData = async (executor_id, monday_date, bFirst) => {
     return
   }
 
-  if (bFirst) {
-
-  }
-
   try {
     obj.monday_date = monday_date
     obj.executor_id = executor_id
-    let weeeks = getWeekDates()
+    let weeeks = generateWeekDates(monday_date)
     let date_str = ""
     for (let i = 0; i < weeeks.length; i++) {
       const week = weeeks[i];
@@ -380,13 +392,13 @@ const handleTabChange = (tabName) => {
 // 原临时空数据
 
 const weekDays = [
-  { label: '周一', name: '1' },
-  { label: '周二', name: '2' },
-  { label: '周三', name: '3' },
-  { label: '周四', name: '4' },
-  { label: '周五', name: '5' },
-  { label: '周六', name: '6' },
-  { label: '周日', name: '7' }
+  { label: '星期一', name: '1' },
+  { label: '星期二', name: '2' },
+  { label: '星期三', name: '3' },
+  { label: '星期四', name: '4' },
+  { label: '星期五', name: '5' },
+  { label: '星期六', name: '6' },
+  { label: '星期日', name: '7' }
 ]
 
 
@@ -472,13 +484,92 @@ const saveGoal = async () => {
   }
 }
 
-onMounted(() => {
-  initActiveTab()
-  executorId.value = userList.value[0].id
-  loadTaskData(executorId.value, getMondayDate(currentDay.value), true)
-  getDailyGoal()
 
+const changeMonday = () => {
+  
+  loadTaskData(executorId.value, mondayDate.value, true)
+}
+
+const initView = () =>{
+  initActiveTab()
+  mondayOptions.value = generateMondayOptions()
+  executorId.value = userList.value[0].id
+  loadTaskData(executorId.value, mondayDate.value, true)
+  getDailyGoal()
+}
+
+
+onMounted(() => {
+  initView()
 })
+
+
+// 生成完整周日期
+const generateWeekDates = (mondayStr) => {
+  const date = new Date(
+    mondayStr.slice(0,4),
+    mondayStr.slice(4,6) - 1,
+    mondayStr.slice(6,8)
+  );
+  
+  return Array.from({length:7}).map((_,i) => {
+    const d = new Date(date);
+    d.setDate(date.getDate() + i);
+    return [
+      d.getFullYear(),
+      String(d.getMonth()+1).padStart(2,'0'),
+      String(d.getDate()).padStart(2,'0')
+    ].join('');
+  });
+};
+
+// 获取当前周一日期
+function getCurrentMonday() {
+  const date = new Date();
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  date.setDate(diff);
+  date.setHours(0, 0, 0, 0);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}${mm}${dd}`;
+}
+
+function generateMondayOptions() {
+  const currentMonday = new Date();
+  currentMonday.setHours(0,0,0,0);
+  const day = currentMonday.getDay();
+  const diff = currentMonday.getDate() - day + (day === 0 ? -6 : 1);
+  currentMonday.setDate(diff);
+  
+  return [-14, -7, 0, 7].map(offset => {
+    const date = new Date(currentMonday);
+    date.setDate(date.getDate() + offset);
+    if (date.getDay() !== 1) {
+      const diff = date.getDay() === 0 ? -6 : 1 - date.getDay();
+      date.setDate(date.getDate() + diff);
+    }
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const value = `${yyyy}${mm}${dd}`;
+    
+    let label = '';
+    switch(offset) {
+      case -14: label = '前两周周一'; break;
+      case -7: label = '上一周周一'; break;
+      case 0: label = '当前周周一'; break;
+      case 7: label = '下一周周一'; break;
+      default: label = '未知周期'; break;
+    }
+    return {
+      value: value,
+      label: `${label}(${value})`
+    };
+  });
+}
+
 </script>
 
 <style scoped>
@@ -541,3 +632,4 @@ onMounted(() => {
   overflow-y: auto;
 }
 </style>
+
