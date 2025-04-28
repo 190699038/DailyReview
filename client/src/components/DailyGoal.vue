@@ -11,47 +11,49 @@
       </div>
 
       <div class="content-area">
-        <el-select
-        v-model="mondayDate"
-        @change="changeMonday"
-        placeholder="选择周范围"
-        style="max-width: 200px;margin-left: 10px;margin-right: 10px;"
-      >
-      <el-option
-        width="200"
-        v-for="option in mondayOptions"
-        :key="option.value"
-        :label="option.label"
-        :value="option.value"
-        
-      />
-      </el-select>
+        <el-select v-model="mondayDate" @change="changeMonday" placeholder="选择周范围"
+          style="width: 100%; max-width: 240px; border-radius: 8px; transition: all 0.3s ease;"
+          :popper-class="'custom-select-dropdown'">
+          <el-option v-for="option in mondayOptions" :key="option.value" :label="option.label" :value="option.value"
+            style="padding: 8px 12px;" />
+        </el-select>
+        <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange" style="max-width: 200px">
+          <el-option
+            v-for="dept in departments"
+            :key="dept.id"
+            :label="dept.department_name"
+            :value="dept.id"
+          />
+        </el-select>
+
+
         <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
-          <el-tab-pane v-for="(day, index) in weekDays" :key="index" :label="day.label" :name="day.name">           
-              <!-- <h2>{{ day.date }} {{ day.label }} </h2> -->
-              <div class="content-container-top">
-                <div style="margin-bottom: 5px;margin-left: 1px;">周目标</div>
+          <el-tab-pane v-for="(day, index) in weekDays" :key="index" :label="day.label" :name="day.name">
+            <!-- <h2>{{ day.date }} {{ day.label }} </h2> -->
+            <div class="content-container-top">
+              <div style="margin-bottom: 5px;margin-left: 1px;">周目标</div>
 
-                <el-table :data="dailyGoals || []" border style="width: 100%" :row-class-name="rowClassName">
-                  <el-table-column prop="weekly_goals_id" label="序号" width="90" align="center" header-align="center" />
-                  <el-table-column prop="executor" label="执行人" width="90" align="center" header-align="center" />
+              <el-table :data="dailyGoals || []" border style="width: 100%" :row-class-name="rowClassName">
+                <el-table-column prop="weekly_goals_id" label="序号" width="90" align="center" header-align="center" />
+                <el-table-column prop="executor" label="执行人" width="90" align="center" header-align="center" />
 
-                  <el-table-column label="优先级" width="80" align="center" header-align="center">
-                    <template #default="{ row }">{{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C', 6: 'C', 5: 'C', 4: 'C', 3: 'C', 2: 'C' }[row.priority]
-                      }}</template>
-                  </el-table-column>
+                <el-table-column label="优先级" width="80" align="center" header-align="center">
+                  <template #default="{ row }">{{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C', 6: 'C', 5: 'C', 4: 'C', 3: 'C', 2:
+                    'C' }[row.priority]
+                    }}</template>
+                </el-table-column>
 
-                  <el-table-column prop="weekly_goal" label="目标" header-align="center" />
+                <el-table-column prop="weekly_goal" label="目标" header-align="center" />
 
-                  <el-table-column label="状态" width="120" align="center" header-align="center">
-                    <template #default="{ row }">
-                      {{ { 1: '进行中', 2: '测试中', 3: '已上线', 4: '已暂停', 0: '未开始' }[row.status] || '未知状态' }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </div>
+                <el-table-column label="状态" width="120" align="center" header-align="center">
+                  <template #default="{ row }">
+                    {{ { 1: '进行中', 2: '测试中', 3: '已上线', 4: '已暂停', 0: '未开始' }[row.status] || '未知状态' }}
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
 
-              <div class="content_area">
+            <div class="content_area">
               <div class="content-container">
                 <div style="margin-bottom: 5px;margin-left: 1px;">日计划</div>
 
@@ -63,7 +65,8 @@
 
                   <el-table-column prop="day_goal" label="目标" header-align="center" />
                   <el-table-column prop="task_content" label="拆解任务" header-align="center" />
-                  <el-table-column prop="time_spent" label="预估耗时(小时)" width="120" align="center" header-align="center" />
+                  <el-table-column prop="time_spent" label="预估耗时(小时)" width="120" align="center"
+                    header-align="center" />
                   <el-table-column prop="progress" label="进度" width="90" align="center" header-align="center" />
 
                 </el-table>
@@ -80,7 +83,8 @@
 
                   <el-table-column prop="day_goal" label="目标" header-align="center" />
                   <el-table-column prop="task_content" label="拆解任务" header-align="center" />
-                  <el-table-column prop="time_spent" label="实际耗时(小时)" width="120" align="center" header-align="center" />
+                  <el-table-column prop="time_spent" label="实际耗时(小时)" width="120" align="center"
+                    header-align="center" />
                   <el-table-column prop="progress" label="进度" width="90" align="center" header-align="center" />
                   <!-- <el-table-column label="操作" width="100" header-align="center" align="center">
                     <template #default="{ row }">
@@ -166,7 +170,8 @@ const goalContent = ref('')
 
 const mondayOptions = ref([])
 const mondayDate = ref(getCurrentMonday())
-
+const departments = ref([])
+const selectedDepartmentId = ref(null)
 const form = ref({
   id: null,
   time_spent: 0,
@@ -300,28 +305,7 @@ const loadTaskData = async (executor_id, monday_date, bFirst) => {
     });
 
     console.log(tempTask);
-    // for( let i = 0; i < tempTask.data.length; i++) {
-    //   let item = tempTask.data[i]
-    //   if(item.date == today && item.dailyTasks.length <= 0){
-    //     let newTasks  = item.dailyTasks_today//await getDailyPlanWithExecutorId(true,executor_id)
-    //     for(let j = 0; j < newTasks.length; j++){
-    //       let o = newTasks[j]
-    //       let t = {}
-    //       t.executor = ''
-    //       t.executor_id = executor_id
-    //       t.date = o.createdAt.replace(/^(\d{4})-(\d{2})-(\d{2}).*/, '$1$2$3')
-    //       t.progress = o.complete != null && o.complete != 'null' ? o.complete+'%' : '0%'
-    //       t.time_spent = o.e_time == null ? '-1' : o.e_time
-    //       t.day_goal = o.d_describe
-    //       t.task_content = o.p_describe
-    //       t.id = o.id
-    //       console.log(t)
-    //       item.dailyTasks.push(t)
-    //     }
-
-    //   }
-    // }
-
+    
     tasks.value = tempTask;
     console.log(tempTask)
     drawTable()
@@ -331,8 +315,6 @@ const loadTaskData = async (executor_id, monday_date, bFirst) => {
     ElMessage.error(`获取任务失败: ${error.response?.data?.message || '服务器异常'}`);
   }
 }
-defineExpose({ loadTaskData }); // 关键！暴露方法给父组件
-
 
 const drawTable = () => {
   taskData.value = [];
@@ -403,7 +385,7 @@ const weekDays = [
 
 
 // 自动设置默认激活的Tab
-const initActiveTab = () => {
+const initActiveTab = async () => {
   const now = new Date();
   const options = { weekday: 'long', timeZone: 'Asia/Shanghai' };
   const localWeekday = now.toLocaleDateString('en-US', options);
@@ -427,6 +409,12 @@ const initActiveTab = () => {
   const cache = localStorage.getItem('departments_user_cache');
   let users = cache ? JSON.parse(cache) : [];
   userList.value = users;
+
+
+  const cachedId = localStorage.getItem('department_id_cache') || 2
+  const dept = departments.value.find(d => d.id == cachedId)
+  selectedDepartmentId.value = dept ? dept.id : departments.value[0]?.id || 2
+
 
 }
 // 获取当日目标
@@ -490,16 +478,18 @@ const changeMonday = () => {
   loadTaskData(executorId.value, mondayDate.value, true)
 }
 
-const initView = () =>{
-  initActiveTab()
+const initView = async() =>{
+
+  await initActiveTab()
   mondayOptions.value = generateMondayOptions()
   executorId.value = userList.value[0].id
-  loadTaskData(executorId.value, mondayDate.value, true)
-  getDailyGoal()
+  await loadTaskData(executorId.value, mondayDate.value, true)
+  await getDailyGoal()
 }
 
 
-onMounted(() => {
+onMounted( async() => {
+  await fetchDepartments()
   initView()
 })
 
@@ -543,7 +533,7 @@ function generateMondayOptions() {
   const diff = currentMonday.getDate() - day + (day === 0 ? -6 : 1);
   currentMonday.setDate(diff);
   
-  return [-14, -7, 0, 7].map(offset => {
+  return [-14, -7, 0].map(offset => {
     const date = new Date(currentMonday);
     date.setDate(date.getDate() + offset);
     if (date.getDay() !== 1) {
@@ -557,10 +547,9 @@ function generateMondayOptions() {
     
     let label = '';
     switch(offset) {
-      case -14: label = '前两周周一'; break;
+      case -14: label = '上上周周一'; break;
       case -7: label = '上一周周一'; break;
       case 0: label = '当前周周一'; break;
-      case 7: label = '下一周周一'; break;
       default: label = '未知周期'; break;
     }
     return {
@@ -569,6 +558,49 @@ function generateMondayOptions() {
     };
   });
 }
+
+const fetchDepartments = async () => {
+  try {
+    const res = await http.get('UserInfoAPI.php?action=get_departments')
+    let obj = [{'department_name':'全部', 'id': 0,'group_id': 0}]
+    departments.value = [...obj,...res.data]
+    localStorage.setItem('departments_cache', JSON.stringify( departments.value))
+  } catch (error) {
+    console.error('获取部门列表失败:', error)
+    const cache = localStorage.getItem('departments_cache')
+    if(cache) {
+      departments.value = JSON.parse(cache)
+    } else {
+      departments.value = [{id: 2, department_name: '默认部门'}]
+    }
+  }
+}
+
+
+const handleDepartmentChange = (val) => {
+  localStorage.setItem('department_id_cache', val)
+
+  if(val == 0) {
+    http.get(`UserInfoAPI.php?action=get_all_users`)
+    .then(res => {
+      userList.value = res.data
+      localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+      initView()
+
+    })
+  }else{
+    http.get(`UserInfoAPI.php?action=get_users&department_id=${val}`)
+    .then(res => {
+      userList.value = res.data
+      localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+      initView()
+    })
+  }
+
+
+  
+}
+
 
 </script>
 
@@ -630,6 +662,29 @@ function generateMondayOptions() {
   width: 100%;
   max-height: 80vh;
   overflow-y: auto;
+}
+:deep(.custom-select-dropdown) {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  .el-select-dropdown__item {
+    padding: 10px 16px;
+    transition: background-color 0.2s;
+    
+    &:hover {
+      background-color: #f5f7fa;
+    }
+    
+    &.selected {
+      background-color: #409eff;
+      color: white;
+    }
+  }
+}
+
+.el-select:hover:deep(.el-input__inner) {
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
 }
 </style>
 
