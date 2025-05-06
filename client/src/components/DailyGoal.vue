@@ -681,7 +681,25 @@ const handleDepartmentChange = (val) => {
     }
   }
 }
+:deep(.el-table) {
+  border: 1px solid #d0d7e5;
+  font-family: '微软雅黑';
+}
 
+:deep(.el-table th) {
+  background: #004bff;
+  /* color: white; */
+  font-weight: bold;
+}
+
+:deep(.el-table__row--striped) {
+  background: #f8f9fa;
+}
+
+:deep(.el-table__cell) {
+  border-right: 1px solid #d0d7e5 !important;
+  border-bottom: 1px solid #d0d7e5 !important;
+}
 .el-select:hover:deep(.el-input__inner) {
   border-color: #409eff;
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);

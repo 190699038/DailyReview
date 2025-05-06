@@ -46,7 +46,7 @@
       <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
 
  
-    <el-table :data="filteredGoals"  :row-class-name="rowClassName">
+    <el-table :data="filteredGoals"  border :row-class-name="rowClassName">
       <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/>
       <el-table-column prop="weekly_goal" label="周目标"  header-align="center" border/>
       
@@ -497,14 +497,21 @@ const deleteGoal = async (row) => {
 
 // 行样式处理
 const rowClassName = ({ row }) => {
-  let style = ''
-  if (parseInt(row.status) === 3) {
-    style = 'green-row text-line-through'
-  } else if (parseInt(row.is_new_goal) === 1) {
-    style = 'highlight-row'
+  switch (row.status) {
+    case 1:
+      return 'status-in-progress';
+    case 2:
+      return 'status-testing';
+    case 3:
+      return 'status-online';
+    case 4:
+      return 'status-paused';
+    case 0:
+      return 'status-not-started';
+    default:
+      return '';
   }
-  return style
-}
+};
 
 const users = ref([])
 const allUser = ref([])
@@ -671,5 +678,43 @@ const readExcel = (file) => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+:deep(.el-table) {
+  border: 1px solid #d0d7e5;
+  font-family: '微软雅黑';
+}
+
+:deep(.el-table th) {
+  background: #004bff;
+  /* color: white; */
+  font-weight: bold;
+}
+
+:deep(.el-table__row--striped) {
+  background: #f8f9fa;
+}
+
+:deep(.el-table__cell) {
+  border-right: 1px solid #d0d7e5 !important;
+  border-bottom: 1px solid #d0d7e5 !important;
+}
+</style>
+
+<style scoped>
+.status-in-progress {
+  background-color: #f0f9eb;
+}
+.status-testing {
+  background-color: #e8f5e9;
+}
+.status-online {
+  background-color: #e3f2fd;
+}
+.status-paused {
+  background-color: #fbe9e7;
+}
+.status-not-started {
+  background-color: #f3e5f5;
 }
 </style>
