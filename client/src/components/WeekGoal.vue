@@ -497,7 +497,7 @@ const deleteGoal = async (row) => {
 
 // 行样式处理
 const rowClassName = ({ row }) => {
-  switch (row.status) {
+  switch (parseInt(row.status)  ) {
     case 1:
       return 'status-in-progress';
     case 2:
@@ -699,22 +699,20 @@ const readExcel = (file) => {
   border-right: 1px solid #d0d7e5 !important;
   border-bottom: 1px solid #d0d7e5 !important;
 }
-</style>
 
-<style scoped>
 .status-in-progress {
-  background-color: #f0f9eb;
+  background-color: #fff  !important;
 }
 .status-testing {
-  background-color: #e8f5e9;
+  background-color: #e8f5e9 !important;
 }
 .status-online {
-  background-color: #e3f2fd;
+  background-color: #e3f2fd !important;
 }
 .status-paused {
-  background-color: #fbe9e7;
+  background-color: #fbe9e7 !important;
 }
 .status-not-started {
-  background-color: #f3e5f5;
+  background-color: #f3e5f5  !important;
 }
 </style>
