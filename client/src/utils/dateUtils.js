@@ -16,6 +16,14 @@ export const  getWeekDates = () => {
   }
 
 
+  export const  getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // 补零
+    const day = String(today.getDate()).padStart(2, '0');         // 补零
+    return `${year}${month}${day}`;
+  }
+
   export const formatDate = (date) => {
     if (!(date instanceof Date)) {
       date = new Date(date);

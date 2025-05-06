@@ -70,9 +70,10 @@
       </el-table-column>
   
       <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border/>
+      <el-table-column prop="pre_finish_date" label="截止日期" width="100" align="center" header-align="center" border/>
 
-      <el-table-column prop="remark" label="备注" width="100" align="center" header-align="center" border/>
-      <el-table-column label="操作"  header-align="center" align="center" border width="200">
+      <el-table-column prop="remark" label="备注" width="150" align="center" header-align="center" class-name="custom-column" border/>
+      <el-table-column label="操作"  header-align="center" align="center" border width="160">
         <template #default="{ row }">
           <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
             <div>
@@ -138,6 +139,11 @@
             <el-option label="已暂停" :value="4" />
           </el-select>
         </el-form-item>
+
+        <el-form-item label="截止日期">
+          <el-date-picker v-model="form.pre_finish_date" type="date" placeholder="选择日期" format="YYYYMMDD" value-format="YYYYMMDD" />
+        </el-form-item>
+
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" :rows="3" />
         </el-form-item>
@@ -189,6 +195,7 @@ import { ElMessage } from 'element-plus'
 import { computed } from 'vue'
 import * as XLSX from 'xlsx'
 import { parseExcelFile } from '@/utils/excelParser'
+import {getTodayDate} from '@/utils/dateUtils'
 const searchText = ref('')
 const departments = ref([])
 const selectedDepartmentId = ref(null)
@@ -303,6 +310,7 @@ const form = ref({
   priority: 5,
   status: 1,
   mondayDate: mondayDate.value,
+  pre_finish_date: '',
   remark: '',
 })
 
@@ -464,7 +472,7 @@ const submitForm = async () => {
     };
 
     if (submitData.remark === 'undefined' ||  submitData.remark === null || submitData.remark == '') {
-      submitData.remark == '无'
+      submitData.remark = '无';
     }
 
     await http.get('WeekGoalAPI.php', {
@@ -497,6 +505,17 @@ const deleteGoal = async (row) => {
 
 // 行样式处理
 const rowClassName = ({ row }) => {
+
+  if (row.pre_finish_date != null && parseInt(row.status) != 3) {
+    const curDate = parseInt(getTodayDate());
+    if(parseInt(row.pre_finish_date) === curDate) {
+      return 'pre-finish-today';
+    }else if(parseInt(row.pre_finish_date) < curDate) {
+      return 'pre-finish-overdue';
+    }
+  }
+
+
   switch (parseInt(row.status)  ) {
     case 1:
       return 'status-in-progress';
@@ -707,12 +726,24 @@ const readExcel = (file) => {
   background-color: #e8f5e9 !important;
 }
 .status-online {
-  background-color: #e3f2fd !important;
+  background-color: #A9D08D !important;
 }
 .status-paused {
   background-color: #fbe9e7 !important;
 }
 .status-not-started {
   background-color: #f3e5f5  !important;
+}
+
+.pre-finish-today {
+  background-color: #fff3ce!important;
+}
+
+.pre-finish-overdue{
+  background-color: #e2adad !important;
+}
+/* 设置该列的字体大小 */
+.custom-column .cell {
+  font-size: 12px;
 }
 </style>
