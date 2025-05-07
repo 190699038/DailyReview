@@ -42,6 +42,17 @@
         <el-option label="已上线" :value="3" />
         <el-option label="已暂停" :value="4" />
       </el-select>
+
+      <!-- 新增截止日期选择器 -->
+      <el-date-picker
+        v-model="selectedDate"
+        type="date"
+        placeholder="选择截止日期"
+        format="YYYYMMDD"
+        value-format="YYYYMMDD"
+        style="margin-left: 8px; max-width: 200px;"
+      />
+
       <el-button type="primary" style="margin-left: 8px;" @click="copytaskSimple()">简单复制</el-button>
       <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
 
@@ -286,12 +297,13 @@ const dialogVisible = ref(false)
 
 // 修改状态变量初始值
 const selectedStatus = ref(0)  // 从null改为0，对应'全部'选项
-
+const selectedDate = ref('')
 // 修正过滤条件逻辑
 const filteredGoals = computed(() => {
   const searchLower = searchText.value.toLowerCase()
   return goals.value.filter(item => 
     (selectedStatus.value === 0 || Number(item.status) === selectedStatus.value) &&
+    (selectedDate.value === '' || item.pre_finish_date === selectedDate.value) &&
     (item.weekly_goal?.toLowerCase().includes(searchLower) ||
     item.executor?.toLowerCase().includes(searchLower))
   )
