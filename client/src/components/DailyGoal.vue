@@ -198,7 +198,7 @@ const userList = ref([])
 
 
 const handleUserChange = (newId) => {
-  loadTaskData(newId, getMondayDate(currentDay.value), false)
+  loadTaskData(newId, mondayDate.value, false)
 }
 
 const emit = defineEmits(['update:visible'])
@@ -278,6 +278,8 @@ const showDialog = (type, row) => {
 // 加载任务数据
 const loadTaskData = async (executor_id, monday_date, bFirst) => {
   console.log("loadTaskData called with executor_id:", executor_id);
+  console.log(mondayDate.value)
+
   if (executor_id == null || monday_date == null) {
     return
   }
@@ -474,7 +476,6 @@ const saveGoal = async () => {
 
 
 const changeMonday = () => {
-  
   loadTaskData(executorId.value, mondayDate.value, true)
 }
 

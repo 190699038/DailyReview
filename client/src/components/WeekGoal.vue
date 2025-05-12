@@ -59,8 +59,21 @@
  
     <el-table :data="filteredGoals"  border :row-class-name="rowClassName">
       <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/>
-      <el-table-column prop="weekly_goal" label="周目标"  header-align="center" border/>
-      
+      <el-table-column prop="weekly_goal" label="周目标"  header-align="center" border>
+        <template #default="{ row }">
+          【{{ 
+            countryOptions.find(opt => opt.value === row.country)?.label || row.country 
+          }}】- {{ row.weekly_goal  }} 
+        </template>
+
+      </el-table-column>  
+      <!-- <el-table-column label="地区" width="100" align="center" header-align="center" border>
+        <template #default="{ row }">
+          {{ 
+            countryOptions.find(opt => opt.value === row.country)?.label || row.country 
+          }}
+        </template>
+      </el-table-column> -->
       <el-table-column prop="department_name" label="部门" width="100" align="center" header-align="center" border/>
 
       <el-table-column prop="executor" label="姓名" width="150" align="center" header-align="center" border/>
@@ -123,6 +136,17 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="地区" required>
+          <el-select v-model="form.country" placeholder="请选择地区">
+            <el-option
+              v-for="option in countryOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="周目标" required>
           <el-input v-model="form.weekly_goal" type="textarea" :rows="3" />
         </el-form-item>
@@ -256,7 +280,7 @@ const handleDepartmentChange = (val) => {
 const copytask = async () => {
   try {
     const text = filteredGoals.value
-      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name} - ${goal.executor} - ${goal.status == 1? '进行中': (goal.status == 2? '测试中': (goal.status == 3? '已上线': '已暂停'))}`)
+      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name}- ${countryOptions.value.find(opt => opt.value === goal.country)?.label} - ${goal.executor} - ${goal.status == 1? '进行中': (goal.status == 2? '测试中': (goal.status == 3? '已上线': '已暂停'))}`)
       .join('\n');
 
     await navigator.clipboard.writeText(text);
@@ -314,6 +338,23 @@ const importData = ref([]);
 const selectedWeek = ref('');
 const executorList = ref([]);
 
+const countryOptions = ref([ 
+  { value: 'OA', label: 'OA系统' }, 
+  { value: 'US1', label: '美国1' }, 
+  { value: 'US2', label: '美国2' }, 
+  { value: 'BR1', label: '巴西1' }, 
+  { value: 'BR2', label: '巴西2' }, 
+  { value: 'MX', label: '墨西哥' }, 
+  { value: 'PE', label: '秘鲁' }, 
+  { value: 'CL', label: '智利' }, 
+  { value: 'AU', label: '澳大利亚' }, 
+  { value: 'PH', label: '菲律宾' }, 
+  { value: 'YW', label: '运维' }, 
+  { value: 'CW', label: '财务' }, 
+  { value: 'QT', label: '其它' }, 
+
+])
+
 const form = ref({
   id: null,
   executor_id: [],
@@ -324,6 +365,7 @@ const form = ref({
   mondayDate: mondayDate.value,
   pre_finish_date: '',
   remark: '',
+  country:'OA'
 })
 
 const importForm = ref({
