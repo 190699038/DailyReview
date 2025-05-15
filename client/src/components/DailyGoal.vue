@@ -34,7 +34,10 @@
               <div style="margin-bottom: 5px;margin-left: 1px;">周目标</div>
 
               <el-table :data="dailyGoals || []" border style="width: 100%" :row-class-name="rowClassName">
-                <el-table-column prop="weekly_goals_id" label="序号" width="90" align="center" header-align="center" />
+                <!-- <el-table-column prop="weekly_goals_id" label="序号" width="90" align="center" header-align="center" /> -->
+                <el-table-column label="序号" width="90" align="center" header-align="center">
+                    <template #default="{$index}">{{ $index + 1 }}</template>
+                  </el-table-column>
                 <el-table-column prop="executor" label="执行人" width="90" align="center" header-align="center" />
 
                 <el-table-column label="优先级" width="80" align="center" header-align="center">
@@ -60,7 +63,10 @@
                 <el-table :key="tableKey"
                   :data="dailyTodayTasks.filter(task => parseFloat(task.time_spent) > 0 || 1) || []" border
                   style="width: 100%" :row-class-name="taskClassName">
-                  <el-table-column prop="id" label="序号" width="90" align="center" header-align="center" />
+                  <el-table-column label="序号" width="90" align="center" header-align="center">
+                    <template #default="{$index}">{{ $index + 1 }}</template>
+                  </el-table-column>
+
                   <el-table-column prop="date" label="日期" width="100" align="center" header-align="center" />
 
                   <el-table-column prop="day_goal" label="目标" header-align="center" />
@@ -78,7 +84,10 @@
 
                 <el-table :key="tableKey" :data="dailyTasks.filter(task => parseFloat(task.time_spent) > 0) || []"
                   border style="width: 100%" :row-class-name="taskClassName">
-                  <el-table-column prop="id" label="序号" width="90" align="center" header-align="center" />
+                  <!-- <el-table-column prop="id" label="序号" width="90" align="center" header-align="center" /> -->
+                  <el-table-column label="序号" width="90" align="center" header-align="center">
+                    <template #default="{$index}">{{ $index + 1 }}</template>
+                  </el-table-column>
                   <el-table-column prop="date" label="日期" width="100" align="center" header-align="center" />
 
                   <el-table-column prop="day_goal" label="目标" header-align="center" />

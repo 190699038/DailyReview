@@ -58,7 +58,10 @@
 
  
     <el-table :data="filteredGoals"  border :row-class-name="rowClassName">
-      <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/>
+      <!-- <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/> -->
+      <el-table-column label="序号" width="90" align="center" header-align="center" border>
+                    <template #default="{$index}">{{ $index + 1 }}</template>
+                  </el-table-column>
       <el-table-column prop="weekly_goal" label="周目标"  header-align="center" border>
         <template #default="{ row }">
           【{{ 
@@ -76,7 +79,7 @@
       </el-table-column> -->
       <el-table-column prop="department_name" label="部门" width="100" align="center" header-align="center" border/>
 
-      <el-table-column prop="executor" label="姓名" width="150" align="center" header-align="center" border/>
+      <el-table-column prop="executor" label="负责人" width="150" align="center" header-align="center" border/>
 
       <el-table-column label="优先级" width="80" align="center" header-align="center" border>
         <template #default="{ row }">
@@ -94,7 +97,7 @@
       </el-table-column>
   
       <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border/>
-      <el-table-column prop="pre_finish_date" label="截止日期" width="100" align="center" header-align="center" border/>
+      <el-table-column prop="pre_finish_date" label="预计时间" width="100" align="center" header-align="center" border/>
 
       <el-table-column prop="remark" label="备注" width="150" align="center" header-align="center" class-name="custom-column" border/>
       <el-table-column label="操作"  header-align="center" align="center" border width="160">
@@ -178,7 +181,9 @@
         <el-form-item label="截止日期">
           <el-date-picker v-model="form.pre_finish_date" type="date" placeholder="选择日期" format="YYYYMMDD" value-format="YYYYMMDD" />
         </el-form-item>
-
+        <el-form-item label="实际完成时间">
+          <el-date-picker v-model="form.real_finish_date" type="date" placeholder="选择日期" format="YYYYMMDD" value-format="YYYYMMDD" />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" :rows="3" />
         </el-form-item>
@@ -364,6 +369,7 @@ const form = ref({
   status: 1,
   mondayDate: mondayDate.value,
   pre_finish_date: '',
+  real_finish_date:'',
   remark: '',
   country:'OA'
 })
