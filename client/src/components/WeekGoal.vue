@@ -64,9 +64,11 @@
                   </el-table-column>
       <el-table-column prop="weekly_goal" label="周目标"  header-align="center" border>
         <template #default="{ row }">
-          【{{ 
-            countryOptions.find(opt => opt.value === row.country)?.label || row.country 
-          }}】- {{ row.weekly_goal  }} 
+          <div style="white-space: pre-line;">  <!-- 添加换行样式 -->
+      【{{ 
+        countryOptions.find(opt => opt.value === row.country)?.label || row.country 
+      }}】- {{ row.weekly_goal  }} 
+    </div>
         </template>
 
       </el-table-column>  
@@ -91,15 +93,16 @@
       <el-table-column label="完成进度" width="120" align="center" header-align="center" border>
         <template #default="{ row }">
           {{ 
-            {1:'进行中',2:'测试中',3:'已上线',4:'已暂停',0:'未开始'}[row.status] || '未知状态'
+            {1:'进行中',2:'测试中',3:'已上线',4:'已暂停',5:'已完成',0:'未开始'}[row.status] || '未知状态'
           }}
         </template>
       </el-table-column>
   
       <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border/>
       <el-table-column prop="pre_finish_date" label="预计时间" width="100" align="center" header-align="center" border/>
+      <el-table-column prop="real_finish_date" label="上线时间" width="100" align="center" header-align="center" border/>
 
-      <el-table-column prop="remark" label="备注" width="150" align="center" header-align="center" class-name="custom-column" border/>
+      <el-table-column prop="remark" label="备注" width="250" align="center" header-align="center" class-name="custom-column" border/>
       <el-table-column label="操作"  header-align="center" align="center" border width="160">
         <template #default="{ row }">
           <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
@@ -175,6 +178,7 @@
             <el-option label="测试中" :value="2" />
             <el-option label="已上线" :value="3" />
             <el-option label="已暂停" :value="4" />
+            <el-option label="已完成" :value="5" />
           </el-select>
         </el-form-item>
 
@@ -212,6 +216,7 @@
           <el-option label="测试中" :value="2" />
           <el-option label="已上线" :value="3" />
           <el-option label="已暂停" :value="4" />
+          <el-option label="已完成" :value="5" />
         </el-select>
         <el-button type="primary" @click="uploadAll">全部上传</el-button>
       </div>
@@ -285,7 +290,7 @@ const handleDepartmentChange = (val) => {
 const copytask = async () => {
   try {
     const text = filteredGoals.value
-      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name}- ${countryOptions.value.find(opt => opt.value === goal.country)?.label} - ${goal.executor} - ${goal.status == 1? '进行中': (goal.status == 2? '测试中': (goal.status == 3? '已上线': '已暂停'))}`)
+      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name}- ${countryOptions.value.find(opt => opt.value === goal.country)?.label} - ${goal.executor} - ${goal.status == 1? '进行中': (goal.status == 2? '测试中': (goal.status == 3? '已上线': (goal.status == 4? '已暂停': (goal.status == 5? '已完成': '未知状态'))))}`)
       .join('\n');
 
     await navigator.clipboard.writeText(text);
@@ -356,6 +361,8 @@ const countryOptions = ref([
   { value: 'PH', label: '菲律宾' }, 
   { value: 'YW', label: '运维' }, 
   { value: 'CW', label: '财务' }, 
+  { value: 'TF', label: '投放' }, 
+  { value: 'DF', label: '支付' },
   { value: 'QT', label: '其它' }, 
 
 ])
