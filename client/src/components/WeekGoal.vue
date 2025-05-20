@@ -2,7 +2,7 @@
   <div class="page-container" style="width: 86%;margin-left: 7%;">
     <h2>项目组周目标</h2>
     <el-button type="primary" @click="showDialog('add')">新增周目标</el-button>
-    <el-button type="success" @click="handleImport">导入Excel</el-button>
+    <!-- <el-button type="success" @click="handleImport">导入Excel</el-button> -->
     
     <el-select
         v-model="mondayDate"
@@ -44,15 +44,22 @@
       </el-select>
 
       <!-- 新增截止日期选择器 -->
-      <el-date-picker
+      <!-- <el-date-picker
         v-model="selectedDate"
         type="date"
         placeholder="选择截止日期"
         format="YYYYMMDD"
         value-format="YYYYMMDD"
         style="margin-left: 8px; max-width: 200px;"
+      /> -->
+      <el-date-picker
+        v-model="selectedFinishDate"
+        type="date"
+        placeholder="选择完成日期"
+        format="YYYYMMDD"
+        value-format="YYYYMMDD"
+        style="margin-left: 8px; max-width: 200px;"
       />
-
       <el-button type="primary" style="margin-left: 8px;" @click="copytaskSimple()">简单复制</el-button>
       <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
 
@@ -331,17 +338,31 @@ const dialogVisible = ref(false)
 
 // 修改状态变量初始值
 const selectedStatus = ref(0)  // 从null改为0，对应'全部'选项
-const selectedDate = ref('')
+// const selectedDate = ref('')
+// // 修正过滤条件逻辑
+// let filteredGoals = computed(() => {
+//   const searchLower = searchText.value.toLowerCase()
+//   return goals.value.filter(item => 
+//     (selectedStatus.value === 0 || Number(item.status) === selectedStatus.value) &&
+//     (selectedDate.value === '' || item.pre_finish_date === selectedDate.value) &&
+//     (item.weekly_goal?.toLowerCase().includes(searchLower) ||
+//     item.executor?.toLowerCase().includes(searchLower))
+//   )
+// })
+
+const selectedFinishDate = ref('')
 // 修正过滤条件逻辑
 const filteredGoals = computed(() => {
   const searchLower = searchText.value.toLowerCase()
   return goals.value.filter(item => 
     (selectedStatus.value === 0 || Number(item.status) === selectedStatus.value) &&
-    (selectedDate.value === '' || item.pre_finish_date === selectedDate.value) &&
+    (selectedFinishDate.value === '' || item.real_finish_date === selectedFinishDate.value) &&
     (item.weekly_goal?.toLowerCase().includes(searchLower) ||
     item.executor?.toLowerCase().includes(searchLower))
   )
 })
+
+
 const dialogType = ref('add')
 const importDialogVisible = ref(false);
 const importData = ref([]);
@@ -573,7 +594,7 @@ const deleteGoal = async (row) => {
 // 行样式处理
 const rowClassName = ({ row }) => {
 
-  if (row.pre_finish_date != null && parseInt(row.status) != 3) {
+  if (row.pre_finish_date != null && parseInt(row.status) != 3 && parseInt(row.status) != 5 ) {
     const curDate = parseInt(getTodayDate());
     if(parseInt(row.pre_finish_date) === curDate) {
       return 'pre-finish-today';
@@ -592,6 +613,8 @@ const rowClassName = ({ row }) => {
       return 'status-online';
     case 4:
       return 'status-paused';
+    case 5:
+      return 'status-online';
     case 0:
       return 'status-not-started';
     default:
