@@ -3,48 +3,31 @@
     <h2>项目组周目标</h2>
     <el-button type="primary" @click="showDialog('add')">新增周目标</el-button>
     <!-- <el-button type="success" @click="handleImport">导入Excel</el-button> -->
-    
-    <el-select
-        v-model="mondayDate"
-        @change="loadData"
-        placeholder="选择周范围"
-        style="max-width: 200px;margin-left: 10px;margin-right: 10px;"
-      >
-      <el-option
-        width="200"
-        v-for="option in mondayOptions"
-        :key="option.value"
-        :label="option.label"
-        :value="option.value"
-        
-      />
-      </el-select>
 
-      <el-input
-        v-model="searchText"
-        placeholder="搜索目标或执行人"
-        clearable
-        style="max-width: 300px"
-      />
-      <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange" style="max-width: 200px">
-          <el-option
-            v-for="dept in departments"
-            :key="dept.id"
-            :label="dept.department_name"
-            :value="dept.id"
-          />
-        </el-select>
+    <el-select v-model="mondayDate" @change="loadData" placeholder="选择周范围"
+      style="max-width: 200px;margin-left: 10px;margin-right: 10px;">
+      <el-option width="200" v-for="option in mondayOptions" :key="option.value" :label="option.label"
+        :value="option.value" />
+    </el-select>
 
-      <el-select v-model="selectedStatus" placeholder="完成进度" style="max-width: 200px;margin-left:8px">
-        <el-option label="全部" :value="0" />
-        <el-option label="进行中" :value="1" />
-        <el-option label="测试中" :value="2" />
-        <el-option label="已上线" :value="3" />
-        <el-option label="已暂停" :value="4" />
-      </el-select>
+    <el-input v-model="searchText" placeholder="搜索目标或执行人" clearable style="max-width: 300px" />
+    <!-- 新增负责人下拉框 -->
+ 
+    <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange"
+      style="max-width: 200px">
+      <el-option v-for="dept in departments" :key="dept.id" :label="dept.department_name" :value="dept.id" />
+    </el-select>
 
-      <!-- 新增截止日期选择器 -->
-      <!-- <el-date-picker
+    <el-select v-model="selectedStatus" placeholder="完成进度" style="max-width: 200px;margin-left:8px">
+      <el-option label="全部" :value="0" />
+      <el-option label="进行中" :value="1" />
+      <el-option label="测试中" :value="2" />
+      <el-option label="已上线" :value="3" />
+      <el-option label="已暂停" :value="4" />
+    </el-select>
+
+    <!-- 新增截止日期选择器 -->
+    <!-- <el-date-picker
         v-model="selectedDate"
         type="date"
         placeholder="选择截止日期"
@@ -52,33 +35,27 @@
         value-format="YYYYMMDD"
         style="margin-left: 8px; max-width: 200px;"
       /> -->
-      <el-date-picker
-        v-model="selectedFinishDate"
-        type="date"
-        placeholder="选择完成日期"
-        format="YYYYMMDD"
-        value-format="YYYYMMDD"
-        style="margin-left: 8px; max-width: 200px;"
-      />
-      <el-button type="primary" style="margin-left: 8px;" @click="copytaskSimple()">简单复制</el-button>
-      <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
+    <el-date-picker v-model="selectedFinishDate" type="date" placeholder="选择完成日期" format="YYYYMMDD"
+      value-format="YYYYMMDD" style="margin-left: 8px; max-width: 200px;" />
+    <el-button type="primary" style="margin-left: 8px;" @click="copytaskSimple()">简单复制</el-button>
+    <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
 
- 
-    <el-table :data="filteredGoals"  border :row-class-name="rowClassName">
+
+    <el-table :data="filteredGoals" border :row-class-name="rowClassName">
       <!-- <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/> -->
       <el-table-column label="序号" width="90" align="center" header-align="center" border>
-                    <template #default="{$index}">{{ $index + 1 }}</template>
-                  </el-table-column>
-      <el-table-column prop="weekly_goal" label="周目标"  header-align="center" border>
+        <template #default="{ $index }">{{ $index + 1 }}</template>
+      </el-table-column>
+      <el-table-column prop="weekly_goal" label="周目标" header-align="center" border>
         <template #default="{ row }">
-          <div style="white-space: pre-line;">  <!-- 添加换行样式 -->
-      【{{ 
-        countryOptions.find(opt => opt.value === row.country)?.label || row.country 
-      }}】- {{ row.weekly_goal  }} 
-    </div>
+          <div style="white-space: pre-line;"> <!-- 添加换行样式 -->
+            【{{
+              countryOptions.find(opt => opt.value === row.country)?.label || row.country
+            }}】- {{ row.weekly_goal }}
+          </div>
         </template>
 
-      </el-table-column>  
+      </el-table-column>
       <!-- <el-table-column label="地区" width="100" align="center" header-align="center" border>
         <template #default="{ row }">
           {{ 
@@ -87,29 +64,30 @@
         </template>
       </el-table-column> -->
       <!-- <el-table-column prop="department_name" label="部门" width="100" align="center" header-align="center" border/> -->
-      <el-table-column prop="version" label="版本" width="100" align="center" header-align="center" border/>
-      <el-table-column prop="executor" label="负责人" width="150" align="center" header-align="center" border/>
+      <el-table-column prop="version" label="版本" width="100" align="center" header-align="center" border />
+      <el-table-column prop="executor" label="负责人" width="150" align="center" header-align="center" border />
       <el-table-column label="优先级" width="80" align="center" header-align="center" border>
         <template #default="{ row }">
-          {{ 
-            {10:'S',9:'A',8:'B',7:'C',6:'C',5:'C',4:'C',3:'C',2:'C'}[row.priority] 
+          {{
+            { 10: 'S', 9: 'A', 8: 'B', 7: 'C', 6: 'C', 5: 'C', 4: 'C', 3: 'C', 2: 'C' }[row.priority]
           }}
         </template>
       </el-table-column>
       <el-table-column label="完成进度" width="120" align="center" header-align="center" border>
         <template #default="{ row }">
-          {{ 
-            {1:'进行中',2:'测试中',3:'已上线',4:'已暂停',5:'已完成',0:'未开始'}[row.status] || '未知状态'
+          {{
+            { 1: '进行中', 2: '测试中', 3: '已上线', 4: '已暂停', 5: '已完成', 0: '未开始' }[row.status] || '未知状态'
           }}
         </template>
       </el-table-column>
-  
-      <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border/>
-      <el-table-column prop="pre_finish_date" label="预计时间" width="100" align="center" header-align="center" border/>
-      <el-table-column prop="real_finish_date" label="上线时间" width="100" align="center" header-align="center" border/>
 
-      <el-table-column prop="remark" label="备注" width="250" align="center" header-align="center" class-name="custom-column" border/>
-      <el-table-column label="操作"  header-align="center" align="center" border width="160">
+      <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border />
+      <el-table-column prop="pre_finish_date" label="预计时间" width="100" align="center" header-align="center" border />
+      <el-table-column prop="real_finish_date" label="上线时间" width="100" align="center" header-align="center" border />
+
+      <el-table-column prop="remark" label="备注" width="250" align="center" header-align="center"
+        class-name="custom-column" border />
+      <el-table-column label="操作" header-align="center" align="center" border width="160">
         <template #default="{ row }">
           <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
             <div>
@@ -117,10 +95,10 @@
               <el-button size="small" type="danger" @click="deleteGoal(row)">删除</el-button>
             </div>
             <div v-if="row.status != 3 && row.status != 5" style="margin-top: 5px;">
-              <el-button size="small" type="primary" @click="submitFormSimple( row, 1)">移动</el-button>
-              <el-button size="small"  type="success" @click="submitFormSimple( row , 0)">完成</el-button>
+              <el-button size="small" type="primary" @click="submitFormSimple(row, 1)">移动</el-button>
+              <el-button size="small" type="success" @click="submitFormSimple(row, 0)">完成</el-button>
             </div>
-            
+
           </div>
         </template>
       </el-table-column>
@@ -130,32 +108,19 @@
       <el-form :model="form" label-width="100px">
         <el-form-item label="执行人" required>
           <el-select v-model="form.executor_id" multiple placeholder="请选择执行人" filterable>
-            <el-option
-              v-for="user in users"
-              :key="user.id"
-              :label="user.partner_name"
-              :value="user.id"
-            />
+            <el-option v-for="user in users" :key="user.id" :label="user.partner_name" :value="user.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="优先级" required>
           <el-select v-model="form.priority" placeholder="请选择优先级">
-            <el-option
-              v-for="option in priorityOptions"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
+            <el-option v-for="option in priorityOptions" :key="option.value" :label="option.label"
+              :value="option.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="地区" required>
           <el-select v-model="form.country" placeholder="请选择地区">
-            <el-option
-              v-for="option in countryOptions"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
+            <el-option v-for="option in countryOptions" :key="option.value" :label="option.label"
+              :value="option.value" />
           </el-select>
         </el-form-item>
 
@@ -163,7 +128,7 @@
           <el-input v-model="form.weekly_goal" type="textarea" :rows="3" />
         </el-form-item>
         <el-form-item label="版本">
-          <el-input v-model="form.version"  />
+          <el-input v-model="form.version" />
         </el-form-item>
         <el-form-item label="新增需求">
           <el-select v-model="form.is_new_goal">
@@ -173,12 +138,8 @@
         </el-form-item>
         <el-form-item label="选择周范围" required>
           <el-select v-model="form.mondayDate" placeholder="请选择周范围">
-            <el-option
-              v-for="option in mondayOptions"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
+            <el-option v-for="option in mondayOptions" :key="option.value" :label="option.label"
+              :value="option.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="完成进度" required>
@@ -192,10 +153,12 @@
         </el-form-item>
 
         <el-form-item label="截止日期">
-          <el-date-picker v-model="form.pre_finish_date" type="date" placeholder="选择日期" format="YYYYMMDD" value-format="YYYYMMDD" />
+          <el-date-picker v-model="form.pre_finish_date" type="date" placeholder="选择日期" format="YYYYMMDD"
+            value-format="YYYYMMDD" />
         </el-form-item>
         <el-form-item label="实际完成时间">
-          <el-date-picker v-model="form.real_finish_date" type="date" placeholder="选择日期" format="YYYYMMDD" value-format="YYYYMMDD" />
+          <el-date-picker v-model="form.real_finish_date" type="date" placeholder="选择日期" format="YYYYMMDD"
+            value-format="YYYYMMDD" />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" :rows="3" />
@@ -213,12 +176,7 @@
         <input type="file" ref="fileInput" @change="selectFile" accept=".xlsx" hidden width="100">
         <el-button @click="$refs.fileInput.click()">选择文件</el-button>
         <el-select v-model="importForm.selectedWeek" placeholder="选择周范围">
-          <el-option
-            v-for="option in mondayOptions"
-            :key="option.value"
-            :label="option.label"
-            :value="option.value"
-          />
+          <el-option v-for="option in mondayOptions" :key="option.value" :label="option.label" :value="option.value" />
         </el-select>
         <el-select v-model="importForm.status" placeholder="完成进度">
           <el-option label="进行中" :value="1" />
@@ -229,11 +187,12 @@
         </el-select>
         <el-button type="primary" @click="uploadAll">全部上传</el-button>
       </div>
-      
+
       <el-table :data="importData" height="400">
         <el-table-column prop="id" label="序号" width="100px" />
         <el-table-column prop="priority" label="优先级" width="100px">
-          <template #default="{row}">{{ {10:'S',9:'A',8:'B',7:'C',6:'C',5:'C',4:'C',3:'C',2:'C'}[row.priority] }}</template>
+          <template #default="{ row }">{{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C', 6: 'C', 5: 'C', 4: 'C', 3: 'C', 2: 'C' }[row.priority]
+            }}</template>
         </el-table-column>
         <el-table-column prop="weekly_goal" label="任务内容" />
         <el-table-column prop="executor" label="执行人" width="150" />
@@ -249,7 +208,7 @@ import { ElMessage } from 'element-plus'
 import { computed } from 'vue'
 import * as XLSX from 'xlsx'
 import { parseExcelFile } from '@/utils/excelParser'
-import {getTodayDate} from '@/utils/dateUtils'
+import { getTodayDate } from '@/utils/dateUtils'
 const searchText = ref('')
 const departments = ref([])
 const selectedDepartmentId = ref(null)
@@ -257,16 +216,16 @@ const selectedDepartmentId = ref(null)
 const fetchDepartments = async () => {
   try {
     const res = await http.get('UserInfoAPI.php?action=get_departments')
-    let obj = [{'department_name':'全部', 'id': 0,'group_id': 0}]
-    departments.value = [...obj,...res.data]
-    localStorage.setItem('departments_cache', JSON.stringify( departments.value))
+    let obj = [{ 'department_name': '全部', 'id': 0, 'group_id': 0 }]
+    departments.value = [...obj, ...res.data]
+    localStorage.setItem('departments_cache', JSON.stringify(departments.value))
   } catch (error) {
     console.error('获取部门列表失败:', error)
     const cache = localStorage.getItem('departments_cache')
-    if(cache) {
+    if (cache) {
       departments.value = JSON.parse(cache)
     } else {
-      departments.value = [{id: 2, department_name: '默认部门'}]
+      departments.value = [{ id: 2, department_name: '默认部门' }]
     }
   }
 }
@@ -274,24 +233,24 @@ const fetchDepartments = async () => {
 const handleDepartmentChange = (val) => {
   localStorage.setItem('department_id_cache', val)
 
-  if(val == 0) {
+  if (val == 0) {
     http.get(`UserInfoAPI.php?action=get_all_users`)
-    .then(res => {
-      users.value = res.data
-      localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
-      // megerOAUserIDS(val)
-    })
-  }else{
+      .then(res => {
+        users.value = res.data
+        localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+        // megerOAUserIDS(val)
+      })
+  } else {
     http.get(`UserInfoAPI.php?action=get_users&department_id=${val}`)
-    .then(res => {
-      users.value = res.data
-      localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
-      // megerOAUserIDS(val)
-    })
+      .then(res => {
+        users.value = res.data
+        localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+        // megerOAUserIDS(val)
+      })
   }
 
 
-  
+
   loadData()
 }
 
@@ -299,7 +258,7 @@ const handleDepartmentChange = (val) => {
 const copytask = async () => {
   try {
     const text = filteredGoals.value
-      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name}- ${countryOptions.value.find(opt => opt.value === goal.country)?.label} - ${goal.executor} - ${goal.status == 1? '进行中': (goal.status == 2? '测试中': (goal.status == 3? '已上线': (goal.status == 4? '已暂停': (goal.status == 5? '已完成': '未知状态'))))}`)
+      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name}- ${countryOptions.value.find(opt => opt.value === goal.country)?.label} - ${goal.executor} - ${goal.status == 1 ? '进行中' : (goal.status == 2 ? '测试中' : (goal.status == 3 ? '已上线' : (goal.status == 4 ? '已暂停' : (goal.status == 5 ? '已完成' : '未知状态'))))}`)
       .join('\n');
 
     await navigator.clipboard.writeText(text);
@@ -356,11 +315,11 @@ const selectedFinishDate = ref('')
 // 修正过滤条件逻辑
 const filteredGoals = computed(() => {
   const searchLower = searchText.value.toLowerCase()
-  return goals.value.filter(item => 
+  return goals.value.filter(item =>
     (selectedStatus.value === 0 || Number(item.status) === selectedStatus.value) &&
     (selectedFinishDate.value === '' || item.real_finish_date === selectedFinishDate.value) &&
     (item.weekly_goal?.toLowerCase().includes(searchLower) ||
-    item.executor?.toLowerCase().includes(searchLower))
+      item.executor?.toLowerCase().includes(searchLower))
   )
 })
 
@@ -371,22 +330,22 @@ const importData = ref([]);
 const selectedWeek = ref('');
 const executorList = ref([]);
 
-const countryOptions = ref([ 
-  { value: 'OA', label: 'OA系统' }, 
-  { value: 'US1', label: '美国1' }, 
-  { value: 'US2', label: '美国2' }, 
-  { value: 'BR1', label: '巴西1' }, 
-  { value: 'BR2', label: '巴西2' }, 
-  { value: 'MX', label: '墨西哥' }, 
-  { value: 'PE', label: '秘鲁' }, 
-  { value: 'CL', label: '智利' }, 
-  { value: 'AU', label: '澳大利亚' }, 
-  { value: 'PH', label: '菲律宾' }, 
-  { value: 'YW', label: '运维' }, 
-  { value: 'CW', label: '财务' }, 
-  { value: 'TF', label: '投放' }, 
+const countryOptions = ref([
+  { value: 'OA', label: 'OA系统' },
+  { value: 'US1', label: '美国1' },
+  { value: 'US2', label: '美国2' },
+  { value: 'BR1', label: '巴西1' },
+  { value: 'BR2', label: '巴西2' },
+  { value: 'MX', label: '墨西哥' },
+  { value: 'PE', label: '秘鲁' },
+  { value: 'CL', label: '智利' },
+  { value: 'AU', label: '澳大利亚' },
+  { value: 'PH', label: '菲律宾' },
+  { value: 'YW', label: '运维' },
+  { value: 'CW', label: '财务' },
+  { value: 'TF', label: '投放' },
   { value: 'DF', label: '支付' },
-  { value: 'QT', label: '其它' }, 
+  { value: 'QT', label: '其它' },
 
 ])
 
@@ -399,10 +358,10 @@ const form = ref({
   status: 1,
   mondayDate: mondayDate.value,
   pre_finish_date: '',
-  real_finish_date:'',
+  real_finish_date: '',
   remark: '',
-  country:'OA',
-  version:''
+  country: 'OA',
+  version: ''
 })
 
 const importForm = ref({
@@ -436,11 +395,11 @@ const mondayOptions = ref([])
 
 function generateMondayOptions() {
   const currentMonday = new Date();
-  currentMonday.setHours(0,0,0,0);
+  currentMonday.setHours(0, 0, 0, 0);
   const day = currentMonday.getDay();
   const diff = currentMonday.getDate() - day + (day === 0 ? -6 : 1);
   currentMonday.setDate(diff);
-  
+
   return [-14, -7, 0, 7].map(offset => {
     const date = new Date(currentMonday);
     date.setDate(date.getDate() + offset);
@@ -452,9 +411,9 @@ function generateMondayOptions() {
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
     const value = `${yyyy}${mm}${dd}`;
-    
+
     let label = '';
-    switch(offset) {
+    switch (offset) {
       case -14: label = '前两周周一'; break;
       case -7: label = '上一周周一'; break;
       case 0: label = '当前周周一'; break;
@@ -497,8 +456,8 @@ const showDialog = (mode, row) => {
     const executorIds = executorNames
       .map(name => users.value.find(u => u.partner_name === name)?.id)
       .filter(id => id !== undefined);
-    
-    form.value = { 
+
+    form.value = {
       ...row,
       executor_id: executorIds.length > 0 ? executorIds : [row.executor_id]
     }
@@ -509,7 +468,7 @@ const showDialog = (mode, row) => {
       id: null,
       executor: '',
       weekly_goal: '',
-      priority:9,
+      priority: 9,
       is_new_goal: 0,
       mondayDate: mondayDate.value,
       status: 1
@@ -524,20 +483,20 @@ const handleImport = async () => {
 };
 
 // 提交表单
-const submitFormSimple = async ( row ,type) => {
-  if(type == 0){
-    if(selectedDepartmentId.value == 2 || selectedDepartmentId.value == 3){
+const submitFormSimple = async (row, type) => {
+  if (type == 0) {
+    if (selectedDepartmentId.value == 2 || selectedDepartmentId.value == 3) {
       row.status = 3
-    }else{
+    } else {
       row.status = 5
     }
 
     row.real_finish_date = getTodayDate()
-    
-  }else if(type == 1){
+
+  } else if (type == 1) {
     row.mondayDate = mondayOptions.value[3].value
     row.status = 1
-  }else{
+  } else {
     ElMessage.error('请选择操作类型')
     return
   }
@@ -547,7 +506,7 @@ const submitFormSimple = async ( row ,type) => {
     };
     await http.get('WeekGoalAPI.php', {
       params: {
-        action:'update',
+        action: 'update',
         ...submitData
       }
     })
@@ -569,7 +528,7 @@ const submitForm = async () => {
       department_id: localStorage.getItem('department_id_cache') || 2
     };
 
-    if (submitData.remark === 'undefined' ||  submitData.remark === null || submitData.remark == '') {
+    if (submitData.remark === 'undefined' || submitData.remark === null || submitData.remark == '') {
       submitData.remark = '无';
     }
 
@@ -604,17 +563,17 @@ const deleteGoal = async (row) => {
 // 行样式处理
 const rowClassName = ({ row }) => {
 
-  if (row.pre_finish_date != null && parseInt(row.status) != 3 && parseInt(row.status) != 5 && parseInt(row.status) != 4 ) {
+  if (row.pre_finish_date != null && parseInt(row.status) != 3 && parseInt(row.status) != 5 && parseInt(row.status) != 4) {
     const curDate = parseInt(getTodayDate());
-    if(parseInt(row.pre_finish_date) === curDate) {
+    if (parseInt(row.pre_finish_date) === curDate) {
       return 'pre-finish-today';
-    }else if(parseInt(row.pre_finish_date) < curDate) {
+    } else if (parseInt(row.pre_finish_date) < curDate) {
       return 'pre-finish-overdue';
     }
   }
 
 
-  switch (parseInt(row.status)  ) {
+  switch (parseInt(row.status)) {
     case 1:
       return 'status-in-progress';
     case 2:
@@ -639,8 +598,8 @@ const initUsers = () => {
   try {
     const cache = localStorage.getItem('departments_user_cache')
     users.value = cache ? JSON.parse(cache) : []
-    
-    if(users.value.length === 0) {
+
+    if (users.value.length === 0) {
       // ElMessage.error('用户数据未加载，请刷新页面')
       // setTimeout(() => location.reload(), 2000) // 2秒后自动刷新
     }
@@ -655,22 +614,22 @@ const initUsers = () => {
 }
 
 const getPriorityLabel = (value) => {
-  if(value === 10) return 'S'
-  if(value === 9) return 'A'
-  if(value === 8) return 'B'
-  if(value === 7) return 'C'
-  if(value === 6) return 'C'
-  if(value === 5) return 'C'
-  if(value === 4) return 'C'
-  if(value === 3) return 'C'
-  if(value === 2) return 'C'
-  return  value
+  if (value === 10) return 'S'
+  if (value === 9) return 'A'
+  if (value === 8) return 'B'
+  if (value === 7) return 'C'
+  if (value === 6) return 'C'
+  if (value === 5) return 'C'
+  if (value === 4) return 'C'
+  if (value === 3) return 'C'
+  if (value === 2) return 'C'
+  return value
 };
 
 const uploadAll = async () => {
   try {
     const departmentId = localStorage.getItem('department_id_cache') || 2;
-    
+
     const transformedData = importData.value.map((item, index) => {
       // 精确匹配执行人
       const executorNames = item.executor.split('/').map(name => name.trim());
@@ -684,15 +643,15 @@ const uploadAll = async () => {
 
       let selectedWeek = importForm.value.selectedWeek;
       if (selectedWeek === '') {
-        throw new Error(`必须选择正确的周期范围`);      
+        throw new Error(`必须选择正确的周期范围`);
       }
 
 
       return {
         weekly_goal: item.weekly_goal,
         executor_id: matchedUsers.map(u => u.id).join('/'),
-        executor:item.executor,
-        priority:getPriorityLabel(item.priority),
+        executor: item.executor,
+        priority: getPriorityLabel(item.priority),
         is_new_goal: 0,
         status: importForm.value.status,
         mondayDate: importForm.value.selectedWeek,
@@ -702,14 +661,14 @@ const uploadAll = async () => {
     });
 
     // 添加超时和错误处理
-await http.post('WeekGoalAPI.php', transformedData, {
-  params: { action: 'batch_create' },
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'multipart/form-data'
-  }
-});
-    
+    await http.post('WeekGoalAPI.php', transformedData, {
+      params: { action: 'batch_create' },
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
     ElMessage.success('批量导入成功');
     importDialogVisible.value = false;
     loadData();
@@ -723,8 +682,8 @@ await http.post('WeekGoalAPI.php', transformedData, {
 const selectFile = async (e) => {
   try {
     const file = e.target.files[0];
-    
-    const parsedData = await parseExcelFile(file,'weekly');
+
+    const parsedData = await parseExcelFile(file, 'weekly');
     importData.value = parsedData.map(item => ({
       id: item.id,
       priority: item.priority,
@@ -748,7 +707,7 @@ const readExcel = (file) => {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, {type: 'array'});
+        const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         resolve(XLSX.utils.sheet_to_json(sheet));
       } catch (e) {
@@ -770,6 +729,7 @@ const readExcel = (file) => {
 .text-line-through {
   text-decoration: line-through;
 }
+
 .green-row {
   background-color: #A9D08D !important;
 }
@@ -793,7 +753,7 @@ const readExcel = (file) => {
   border-radius: 0 0 10px 10px;
 }
 
-.dialog-toolbar{
+.dialog-toolbar {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -820,28 +780,33 @@ const readExcel = (file) => {
 }
 
 .status-in-progress {
-  background-color: #fff  !important;
+  background-color: #fff !important;
 }
+
 .status-testing {
   background-color: #e8f5e9 !important;
 }
+
 .status-online {
   background-color: #A9D08D !important;
 }
+
 .status-paused {
   background-color: #b0abab !important;
 }
+
 .status-not-started {
-  background-color: #f3e5f5  !important;
+  background-color: #f3e5f5 !important;
 }
 
 .pre-finish-today {
-  background-color: #fff3ce!important;
+  background-color: #fff3ce !important;
 }
 
-.pre-finish-overdue{
+.pre-finish-overdue {
   background-color: #e2adad !important;
 }
+
 /* 设置该列的字体大小 */
 .custom-column .cell {
   font-size: 12px;
