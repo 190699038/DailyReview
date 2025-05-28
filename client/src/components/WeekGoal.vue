@@ -117,7 +117,7 @@
               <el-button size="small" type="warning" @click="showDialog('edit', row)">修改</el-button>
               <el-button size="small" type="danger" @click="deleteGoal(row)">删除</el-button>
             </div>
-            <div v-if="row.status != 3" style="margin-top: 5px;">
+            <div v-if="row.status != 3 && row.status != 5" style="margin-top: 5px;">
               <el-button size="small" type="primary" @click="submitFormSimple( row, 1)">移动</el-button>
               <el-button size="small"  type="success" @click="submitFormSimple( row , 0)">完成</el-button>
             </div>
@@ -523,7 +523,14 @@ const handleImport = async () => {
 // 提交表单
 const submitFormSimple = async ( row ,type) => {
   if(type == 0){
-    row.status = 3
+    if(selectedDepartmentId.value == 2 || selectedDepartmentId.value == 3){
+      row.status = 3
+    }else{
+      row.status = 5
+    }
+
+    row.real_finish_date = getTodayDate()
+    
   }else if(type == 1){
     row.mondayDate = mondayOptions.value[3].value
     row.status = 1
@@ -594,7 +601,7 @@ const deleteGoal = async (row) => {
 // 行样式处理
 const rowClassName = ({ row }) => {
 
-  if (row.pre_finish_date != null && parseInt(row.status) != 3 && parseInt(row.status) != 5 ) {
+  if (row.pre_finish_date != null && parseInt(row.status) != 3 && parseInt(row.status) != 5 && parseInt(row.status) != 4 ) {
     const curDate = parseInt(getTodayDate());
     if(parseInt(row.pre_finish_date) === curDate) {
       return 'pre-finish-today';
@@ -819,7 +826,7 @@ const readExcel = (file) => {
   background-color: #A9D08D !important;
 }
 .status-paused {
-  background-color: #fbe9e7 !important;
+  background-color: #b0abab !important;
 }
 .status-not-started {
   background-color: #f3e5f5  !important;
