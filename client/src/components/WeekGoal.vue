@@ -86,10 +86,9 @@
           }}
         </template>
       </el-table-column> -->
-      <el-table-column prop="department_name" label="部门" width="100" align="center" header-align="center" border/>
-
+      <!-- <el-table-column prop="department_name" label="部门" width="100" align="center" header-align="center" border/> -->
+      <el-table-column prop="version" label="版本" width="100" align="center" header-align="center" border/>
       <el-table-column prop="executor" label="负责人" width="150" align="center" header-align="center" border/>
-
       <el-table-column label="优先级" width="80" align="center" header-align="center" border>
         <template #default="{ row }">
           {{ 
@@ -162,6 +161,9 @@
 
         <el-form-item label="周目标" required>
           <el-input v-model="form.weekly_goal" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item label="版本">
+          <el-input v-model="form.version"  />
         </el-form-item>
         <el-form-item label="新增需求">
           <el-select v-model="form.is_new_goal">
@@ -399,7 +401,8 @@ const form = ref({
   pre_finish_date: '',
   real_finish_date:'',
   remark: '',
-  country:'OA'
+  country:'OA',
+  version:''
 })
 
 const importForm = ref({
