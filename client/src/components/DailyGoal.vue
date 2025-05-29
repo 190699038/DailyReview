@@ -411,7 +411,7 @@ const initActiveTab = async () => {
   };
   activeTab.value = weekdays[localWeekday];
 
-  obj.tabIndex = parseInt(activeTab.value)
+  obj.tabIndex = parseInt(activeTab.value) - 1
 
   for (let index = 0; index < weekDays.length; index++) {
     weekDays[index].date = getDateByWeekday(index + 1);
