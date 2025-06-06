@@ -7,6 +7,12 @@ export default (app) => {
     autoImportComponents: true,
     icons: {
       autoImport: true
+    },
+    sanitizer: {
+      allowedAttributes: {
+        span: ['style'],
+        // 添加其他需要允许的标签属性
+      }
     }
   })
   app.config.globalProperties.$message = ElMessage

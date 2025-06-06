@@ -71,7 +71,7 @@
 
                   <el-table-column prop="day_goal" label="目标" header-align="center" />
                   <el-table-column prop="task_content" label="拆解任务" header-align="center" />
-                  <el-table-column prop="time_spent" label="预估耗时(小时)" width="120" align="center"
+                  <el-table-column prop="time_spent"  :label="`预估耗时(${constTotalTime}小时)`" width="140" align="center"
                     header-align="center" />
                   <el-table-column prop="progress" label="进度" width="90" align="center" header-align="center" />
 
@@ -92,7 +92,7 @@
 
                   <el-table-column prop="day_goal" label="目标" header-align="center" />
                   <el-table-column prop="task_content" label="拆解任务" header-align="center" />
-                  <el-table-column prop="time_spent" label="实际耗时(小时)" width="120" align="center"
+                  <el-table-column prop="time_spent" :label="`实际耗时(${constTotalTimeReal}小时)`" width="140" align="center"
                     header-align="center" />
                   <el-table-column prop="progress" label="进度" width="90" align="center" header-align="center" />
                   <!-- <el-table-column label="操作" width="100" header-align="center" align="center">
@@ -158,7 +158,7 @@
 <script setup>
 import { ref, onMounted, defineEmits } from 'vue'
 import http from '@/utils/http'
-import { ElMessage } from 'element-plus'
+// import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { parseExcelFile } from '@/utils/excelParser'
 import { getDailyPlanWithExecutorId } from '@/utils/dailyPlanAsync'
@@ -198,6 +198,8 @@ const rules = {
 const dailyGoals = ref([]);
 const dailyTasks = ref([]);
 const dailyTodayTasks = ref([]);
+const constTotalTime = ref(0)
+const constTotalTimeReal = ref(0)
 
 const tableKey = ref(0);
 const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
@@ -336,6 +338,23 @@ const drawTable = () => {
   dailyGoals.value = dailyGoal;
   dailyTasks.value = [...dailyTask];
   dailyTodayTasks.value = [...dailyTaskToday];
+  // 计算总耗时
+  //task.time_spent
+  // constTotalTime.value = dailyTodayTasks.value.reduce((total, task) => total + parseFloat(task.time_spent) > 0 ? parseFloat(task.time_spent) : 0, 0);
+  constTotalTime.value = 0;
+  for (let i = 0; i < dailyTodayTasks.value.length; i++) {
+    const task = dailyTodayTasks.value[i];
+    const time = parseFloat(task.time_spent);
+    constTotalTime.value += time > 0 ? time : 0;
+  }
+
+
+  constTotalTimeReal.value = 0;
+  for (let i = 0; i < dailyTasks.value.length; i++) {
+    const task = dailyTasks.value[i];
+    const time = parseFloat(task.time_spent);
+    constTotalTimeReal.value += time > 0? time : 0;
+  }
   tableKey.value += 1;
   console.log(dailyGoal)
   console.log(dailyTask)
@@ -688,6 +707,7 @@ const handleDepartmentChange = (val) => {
     &.selected {
       background-color: #409eff;
       color: white;
+      
     }
   }
 }

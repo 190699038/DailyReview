@@ -9,6 +9,8 @@ app.use(router)
 app.mount('#app')
 console.log('Environment:', import.meta.env.MODE);
 
+
+
 app.config.errorHandler = (err, vm, info) => {
     console.error('[Global Error]', err, info);
   };
