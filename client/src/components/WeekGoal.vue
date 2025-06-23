@@ -1,11 +1,10 @@
 <template>
   <div class="page-container" style="width: 86%;margin-left: 7%;">
     <h2>项目组周目标</h2>
-    <el-button type="primary" @click="showDialog('add')">新增周目标</el-button>
     <!-- <el-button type="success" @click="handleImport">导入Excel</el-button> -->
 
     <el-select v-model="mondayDate" @change="loadData" placeholder="选择周范围"
-      style="max-width: 200px;margin-left: 10px;margin-right: 10px;">
+      style="max-width: 200px;margin-right: 10px;">
       <el-option width="200" v-for="option in mondayOptions" :key="option.value" :label="option.label"
         :value="option.value" />
     </el-select>
@@ -18,6 +17,12 @@
       <el-option v-for="dept in departments" :key="dept.id" :label="dept.department_name" :value="dept.id" />
     </el-select>
 
+    <el-select v-model="selectedExecutor" placeholder="请选择负责人" 
+      style="max-width: 200px">
+      <el-option label="全部" value="全部" />
+      <el-option v-for="dept in users" :key="dept.partner_name" :label="dept.partner_name" :value="dept.partner_name" />
+    </el-select>
+
     <el-select v-model="selectedStatus" placeholder="完成进度" style="max-width: 200px;margin-left:8px">
       <el-option label="全部" :value="0" />
       <el-option label="进行中" :value="1" />
@@ -27,20 +32,25 @@
     </el-select>
 
     <!-- 新增截止日期选择器 -->
-    <!-- <el-date-picker
+    <el-date-picker
         v-model="selectedDate"
         type="date"
         placeholder="选择截止日期"
         format="YYYYMMDD"
         value-format="YYYYMMDD"
         style="margin-left: 8px; max-width: 200px;"
-      /> -->
+      />
     <el-date-picker v-model="selectedFinishDate" type="date" placeholder="选择完成日期" format="YYYYMMDD"
       value-format="YYYYMMDD" style="margin-left: 8px; max-width: 200px;" />
+
+    <div style="margin-top: 15px;">
+      <el-button type="primary" @click="showDialog('add')">新增周目标</el-button>
+    <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
     <el-button type="primary" style="margin-left: 8px;" @click="copytaskSimple()">简单复制</el-button>
     <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
 
 
+    </div>
     <el-table :data="filteredGoals" border :row-class-name="rowClassName">
       <!-- <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/> -->
       <el-table-column label="序号" width="90" align="center" header-align="center" border>
@@ -212,6 +222,7 @@ import { getTodayDate } from '@/utils/dateUtils'
 const searchText = ref('')
 const departments = ref([])
 const selectedDepartmentId = ref(null)
+const selectedExecutor = ref(null)
 
 const fetchDepartments = async () => {
   try {
@@ -299,29 +310,19 @@ const dialogVisible = ref(false)
 
 // 修改状态变量初始值
 const selectedStatus = ref(0)  // 从null改为0，对应'全部'选项
-// const selectedDate = ref('')
+const selectedDate = ref('')
 // // 修正过滤条件逻辑
-// let filteredGoals = computed(() => {
-//   const searchLower = searchText.value.toLowerCase()
-//   return goals.value.filter(item => 
-//     (selectedStatus.value === 0 || Number(item.status) === selectedStatus.value) &&
-//     (selectedDate.value === '' || item.pre_finish_date === selectedDate.value) &&
-//     (item.weekly_goal?.toLowerCase().includes(searchLower) ||
-//     item.executor?.toLowerCase().includes(searchLower))
-//   )
-// })
-
-const selectedFinishDate = ref('')
-// 修正过滤条件逻辑
-const filteredGoals = computed(() => {
+let filteredGoals = computed(() => {
   const searchLower = searchText.value.toLowerCase()
-  return goals.value.filter(item =>
+  return goals.value.filter(item => 
     (selectedStatus.value === 0 || Number(item.status) === selectedStatus.value) &&
-    (selectedFinishDate.value === '' || item.real_finish_date === selectedFinishDate.value) &&
+    (selectedDate.value === '' || item.pre_finish_date === selectedDate.value) &&
     (item.weekly_goal?.toLowerCase().includes(searchLower) ||
-      item.executor?.toLowerCase().includes(searchLower))
+    item.executor?.toLowerCase().includes(searchLower))
   )
 })
+
+const selectedFinishDate = ref('')
 
 
 const dialogType = ref('add')
@@ -436,7 +437,11 @@ const loadData = async () => {
       params: {
         action: 'get',
         mondayDate: mondayDate.value,
-        department_id: departmentId
+        department_id: departmentId,
+        executor:selectedExecutor.value == '全部' ? '':selectedExecutor.value,
+        real_finish_date:selectedFinishDate.value,
+        pre_finish_date:selectedDate.value,
+        status:selectedStatus.value,
       }
     })
     goals.value = res
@@ -520,30 +525,57 @@ const submitFormSimple = async (row, type) => {
 
 // 提交表单
 const submitForm = async () => {
-  try {
-    const submitData = {
-      ...form.value,
-      executor_id: form.value.executor_id.join('/'),
-      executor: form.value.executor_id.map(id => users.value.find(u => u.id === id)?.partner_name).join('/'),
-      department_id: localStorage.getItem('department_id_cache') || 2
-    };
-
+  const submitData = {
+        ...form.value,
+        executor_id: form.value.executor_id.join('/'),
+        executor: form.value.executor_id.map(id => users.value.find(u => u.id === id)?.partner_name).join('/'),
+        department_id: localStorage.getItem('department_id_cache') || 2
+      };
     if (submitData.remark === 'undefined' || submitData.remark === null || submitData.remark == '') {
       submitData.remark = '无';
     }
-
-    await http.get('WeekGoalAPI.php', {
-      params: {
-        action: dialogType.value === 'add' ? 'create' : 'update',
-        ...submitData
-      }
-    })
+  if(dialogType.value === 'update'){
+    const p = {
+      action:'update',
+      ... submitData
+    }
+    createAndUpdate(p)
     dialogVisible.value = false
     loadData()
-  } catch (error) {
-    console.error('保存失败:', error)
+  }else{
+
+    const contents = submitData.weekly_goal.split('\n');
+    if(contents.length > 0){
+      for(let i =0 ;i < contents.length;i++){
+        if(contents[i].trim() != ''){
+          submitData.weekly_goal = contents[i];
+          const p = {
+                action:'create', 
+            ... submitData
+          }
+          await createAndUpdate(p)
+        }
+      }
+
+
+    }
+
+    dialogVisible.value = false
+    loadData()
+
   }
+
 }
+
+const createAndUpdate = async(params) =>{
+  try {
+      await http.get('WeekGoalAPI.php', {
+        params
+      })
+    } catch (error) {
+      console.error('保存失败:', error)
+    }
+  }
 
 // 删除目标
 const deleteGoal = async (row) => {
