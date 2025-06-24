@@ -534,14 +534,16 @@ const submitForm = async () => {
     if (submitData.remark === 'undefined' || submitData.remark === null || submitData.remark == '') {
       submitData.remark = '无';
     }
-  if(dialogType.value === 'update'){
+  if(dialogType.value === 'edit'){
     const p = {
       action:'update',
       ... submitData
     }
     createAndUpdate(p)
     dialogVisible.value = false
-    loadData()
+    setTimeout(() => {
+      loadData()
+    }, 300);
   }else{
 
     const contents = submitData.weekly_goal.split('\n');
