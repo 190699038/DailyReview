@@ -341,11 +341,15 @@ const countryOptions = ref([
   { value: 'PE', label: '秘鲁' },
   { value: 'CL', label: '智利' },
   { value: 'AU', label: '澳大利亚' },
+  { value: 'CA', label: '加拿大' },
   { value: 'PH', label: '菲律宾' },
+  { value: 'ALL', label: '所有地区' },
   { value: 'YW', label: '运维' },
   { value: 'CW', label: '财务' },
   { value: 'TF', label: '投放' },
   { value: 'DF', label: '支付' },
+  { value: 'QSDY', label: '奇胜-调研' },
+  { value: 'QSLL', label: '奇胜-流量' },
   { value: 'QT', label: '其它' },
 
 ])
