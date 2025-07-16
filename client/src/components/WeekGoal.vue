@@ -32,6 +32,9 @@
     </el-select>
 
     <!-- 新增截止日期选择器 -->
+       <el-date-picker v-model="selectedCreateDate" type="date" placeholder="选择创建日期" format="YYYYMMDD"
+      value-format="YYYYMMDD" style="margin-left: 8px; max-width: 200px;" />
+
     <el-date-picker
         v-model="selectedDate"
         type="date"
@@ -313,17 +316,23 @@ const selectedStatus = ref(0)  // 从null改为0，对应'全部'选项
 const selectedDate = ref('')
 // // 修正过滤条件逻辑
 let filteredGoals = computed(() => {
-  const searchLower = searchText.value.toLowerCase()
-  return goals.value.filter(item => 
+  return filterData()
+})
+
+const filterData = () =>{
+const searchLower = searchText.value.toLowerCase()
+  let objs =  goals.value.filter(item => 
     (selectedStatus.value === 0 || Number(item.status) === selectedStatus.value) &&
-    (selectedDate.value === '' || item.pre_finish_date === selectedDate.value) &&
+    (selectedDate.value === null || selectedDate.value === '' || item.pre_finish_date === selectedDate.value) &&
     (item.weekly_goal?.toLowerCase().includes(searchLower) ||
     item.executor?.toLowerCase().includes(searchLower))
   )
-})
+
+  return objs
+}
 
 const selectedFinishDate = ref('')
-
+const selectedCreateDate = ref('')
 
 const dialogType = ref('add')
 const importDialogVisible = ref(false);
@@ -446,9 +455,12 @@ const loadData = async () => {
         real_finish_date:selectedFinishDate.value,
         pre_finish_date:selectedDate.value,
         status:selectedStatus.value,
+        createdate:selectedCreateDate.value,
       }
     })
     goals.value = res
+    // filteredGoals.value = filterData()
+    console.log(filteredGoals.value)
   } catch (error) {
     console.error('获取数据失败:', error)
   }
