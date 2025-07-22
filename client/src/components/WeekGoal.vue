@@ -13,23 +13,37 @@
     <!-- 新增负责人下拉框 -->
  
     <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange"
-      style="max-width: 200px">
+      style="max-width: 120px;margin-left:8px">
       <el-option v-for="dept in departments" :key="dept.id" :label="dept.department_name" :value="dept.id" />
     </el-select>
 
     <el-select v-model="selectedExecutor" placeholder="请选择负责人" 
-      style="max-width: 200px">
+      style="max-width: 150px;margin-left:8px">
       <el-option label="全部" value="全部" />
       <el-option v-for="dept in users" :key="dept.partner_name" :label="dept.partner_name" :value="dept.partner_name" />
     </el-select>
 
-    <el-select v-model="selectedStatus" placeholder="完成进度" style="max-width: 200px;margin-left:8px">
-      <el-option label="全部" :value="0" />
+    <el-select v-model="selectedStatus" placeholder="状态" style="max-width: 100px;margin-left:8px">
+      <el-option label="全部状态" :value="0" />
       <el-option label="进行中" :value="1" />
       <el-option label="测试中" :value="2" />
       <el-option label="已上线" :value="3" />
       <el-option label="已暂停" :value="4" />
     </el-select>
+
+    <el-select v-model="selectedPriority" placeholder="优先级" style="max-width: 125px;margin-left:8px">
+      <el-option label="优先级-ALL" value="ALL" />
+      <el-option v-for="option in statusPriorityOptions" :key="option.value" :label="option.label"
+        :value="option.value" />
+    </el-select>
+
+
+    <!-- 新增地区选择器 -->
+    <el-select v-model="selectedCountry" placeholder="地区" style="max-width: 100px;margin-left:8px">
+      <el-option v-for="option in countryOptions" :key="option.value" :label="option.label"
+        :value="option.value" />
+    </el-select>
+
 
     <!-- 新增截止日期选择器 -->
        <el-date-picker v-model="selectedCreateDate" type="date" placeholder="选择创建日期" format="YYYYMMDD"
@@ -82,7 +96,7 @@
       <el-table-column label="优先级" width="80" align="center" header-align="center" border>
         <template #default="{ row }">
           {{
-            { 10: 'S', 9: 'A', 8: 'B', 7: 'C', 6: 'C', 5: 'C', 4: 'C', 3: 'C', 2: 'C' }[row.priority]
+            { 10: 'S', 9: 'A', 8: 'B', 7: 'C' }[row.priority]
           }}
         </template>
       </el-table-column>
@@ -204,7 +218,7 @@
       <el-table :data="importData" height="400">
         <el-table-column prop="id" label="序号" width="100px" />
         <el-table-column prop="priority" label="优先级" width="100px">
-          <template #default="{ row }">{{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C', 6: 'C', 5: 'C', 4: 'C', 3: 'C', 2: 'C' }[row.priority]
+          <template #default="{ row }">{{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C' }[row.priority]
             }}</template>
         </el-table-column>
         <el-table-column prop="weekly_goal" label="任务内容" />
@@ -225,7 +239,7 @@ import { getTodayDate } from '@/utils/dateUtils'
 const searchText = ref('')
 const departments = ref([])
 const selectedDepartmentId = ref(null)
-const selectedExecutor = ref(null)
+const selectedExecutor = ref('全部')
 
 const fetchDepartments = async () => {
   try {
@@ -272,7 +286,7 @@ const handleDepartmentChange = (val) => {
 const copytask = async () => {
   try {
     const text = filteredGoals.value
-      .map((goal, index) => `${index + 1}、${goal.weekly_goal} - ${goal.department_name}- ${countryOptions.value.find(opt => opt.value === goal.country)?.label} - ${goal.executor} - ${goal.status == 1 ? '进行中' : (goal.status == 2 ? '测试中' : (goal.status == 3 ? '已上线' : (goal.status == 4 ? '已暂停' : (goal.status == 5 ? '已完成' : '未知状态'))))}`)
+      .map((goal, index) => `${index + 1}、${goal.priority == 10 ? '【S】' : (goal.priority == 9 ? '【A】' : (goal.priority == 8 ? '【B】' : '【C】'))} ${goal.weekly_goal} - ${countryOptions.value.find(opt => opt.value === goal.country)?.label} - ${goal.executor} - ${goal.status == 1 ? '进行中' : (goal.status == 2 ? '测试中' : (goal.status == 3 ? '已上线' : (goal.status == 4 ? '已暂停' : (goal.status == 5 ? '已完成' : '未知状态'))))}`)
       .join('\n');
 
     await navigator.clipboard.writeText(text);
@@ -286,7 +300,7 @@ const copytask = async () => {
 const copytaskSimple = async () => {
   try {
     const text = filteredGoals.value
-      .map((goal, index) => `${index + 1}、${goal.weekly_goal} `)
+      .map((goal, index) => `${index + 1}、${goal.priority == 10 ? '【S】' : (goal.priority == 9 ? '【A】' : (goal.priority == 8 ? '【B】' : '【C】'))} ${countryOptions.value.find(opt => opt.value === goal.country)?.label}-${goal.weekly_goal} `)
       .join('\n');
 
     await navigator.clipboard.writeText(text);
@@ -314,6 +328,8 @@ const dialogVisible = ref(false)
 // 修改状态变量初始值
 const selectedStatus = ref(0)  // 从null改为0，对应'全部'选项
 const selectedDate = ref('')
+const selectedPriority = ref('优先级-ALL')
+const selectedCountry = ref('ALL')
 // // 修正过滤条件逻辑
 let filteredGoals = computed(() => {
   return filterData()
@@ -361,6 +377,13 @@ const countryOptions = ref([
   { value: 'QSLL', label: '奇胜-流量' },
   { value: 'QT', label: '其它' },
 
+])
+//{ 10: 'S', 9: 'A', 8: 'B', 7: 'C'}
+const statusPriorityOptions = ref([
+  { label: '优先级【S】', value: 10 },
+  { label: '优先级【A】', value: 9 },
+  { label: '优先级【B】', value: 8 },
+  { label: '优先级【C】', value: 7 },
 ])
 
 const form = ref({
@@ -455,6 +478,8 @@ const loadData = async () => {
         real_finish_date:selectedFinishDate.value,
         pre_finish_date:selectedDate.value,
         status:selectedStatus.value,
+        country:selectedCountry.value == 'ALL' ? '':selectedCountry.value,
+        priority:selectedPriority.value == '优先级-ALL' ? '':selectedPriority.value,
         createdate:selectedCreateDate.value,
       }
     })
