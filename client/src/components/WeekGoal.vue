@@ -479,7 +479,7 @@ const loadData = async () => {
         pre_finish_date:selectedDate.value,
         status:selectedStatus.value,
         country:selectedCountry.value == 'ALL' ? '':selectedCountry.value,
-        priority:selectedPriority.value == '优先级-ALL' ? '':selectedPriority.value,
+        priority:selectedPriority.value == 'ALL' ? '':selectedPriority.value,
         createdate:selectedCreateDate.value,
       }
     })
