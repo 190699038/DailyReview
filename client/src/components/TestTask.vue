@@ -6,17 +6,32 @@
     </el-tab-pane>
 
     <el-tab-pane label="新增任务" name="newTask">
-     <el-upload
-      class="upload-demo"
-      :auto-upload="false"
-      :show-file-list="false"
-      :on-change="handleFileChange"
-      accept=".xlsx, .xls"
-    >
-      <template #trigger>
-        <el-button type="primary">选择Excel文件</el-button>
-      </template>
-    </el-upload>
+      <div style="display: flex;flex-direction: row;">
+        <el-upload
+          class="upload-demo"
+          :auto-upload="false"
+          :show-file-list="false"
+          :on-change="handleFileChange"
+          accept=".xlsx, .xls"
+        >
+          <template #trigger>
+            <el-button type="primary">选择Excel文件</el-button>
+          </template>
+        </el-upload>
+
+        <!-- <el-date-picker
+        v-model="selectedDate"
+        type="date"
+        placeholder="测试任务日期"
+        format="YYYYMMDD"
+        value-format="YYYYMMDD"
+        style="margin-left: 8px; max-width: 200px;"
+      /> -->
+
+        <el-button type="primary" style="margin-left: 8px;" @click="updateTestList()">更新列表测试任务</el-button>
+      </div>
+
+
 
     <!-- 数据表格 -->
     <el-table 
@@ -52,9 +67,13 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ref, reactive,onMounted } from 'vue';
+import { ElMessage,ElLoading } from 'element-plus';
 import * as XLSX from 'xlsx';
+import http from '@/utils/http'
+
+const containerRef = ref();
+const loading = ref(null);
 
 // 响应式数据
 const activeTab = ref('history');
@@ -73,6 +92,7 @@ const tableHeaders = ref([
 
 const tableData = ref([]);
 const mergeMap = ref({}); // 存储合并单元格信息
+const selectedDate = ref('');
 
 // 处理文件上传
 const handleFileChange = async (file) => {
@@ -133,6 +153,8 @@ const handleFileChange = async (file) => {
         });
         return item;
       });
+
+      console.log(tableData.value)
 
     } catch (error) {
       ElMessage.error(`解析失败: ${error.message}`);
@@ -304,6 +326,72 @@ const submitTask = () => {
   newTaskForm.name = '';
   newTaskForm.priority = '';
 };
+
+// 获取昨日日期并格式化为 YYYYMMDD
+function getYesterdayFormatted() {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1); // 减去一天得到昨日日期 [2,4](@ref)
+  
+  // 格式化年、月、日（补零）
+  const year = yesterday.getFullYear();
+  const month = String(yesterday.getMonth() + 1).padStart(2, '0'); // 月份从0开始需+1 [8](@ref)
+  const day = String(yesterday.getDate()).padStart(2, '0');
+  
+  return `${year}${month}${day}`; // 组合为 YYYYMMDD
+}
+
+const updateTestList = async () => {
+loading.value = ElLoading.service({
+    lock: true,
+    text: '上传任务中...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  });
+
+  try{
+      for(let i = 0; i < tableData.value.length; i++){
+        const item = tableData.value[i];
+        if(item['测试内容（需求链接）'] == null || item['测试内容（需求链接）'] == '' || item['负责人'] == null || item['负责人'] == ''){
+          continue;
+        }
+        let formData = {}
+        formData.responsible_person = item['负责人']
+        formData.priority = item['优先级'] == null ? 'C':item['优先级']
+        formData.product = item['产品']
+        formData.test_content = item['测试内容（需求链接）']
+        formData.test_status = item['测试状态']
+        formData.test_progress = item['测试进度']
+        formData.submission_time = item['提测时间']
+        formData.planned_online_time = item['预计上线时间']
+        formData.actual_online_time = item['实际上线时间']
+        formData.actual_time_spent = item['实际耗时（h）'] == null ? 0:item['实际耗时（h）']
+        formData.creation_date = selectedDate.value
+
+        await http.post('TestTask.php', formData, {
+          params: { action: 'create' },
+          timeout: 30000,
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+    }
+  } catch (error) {
+    console.error('修改失败:', error);
+    ElMessage.error(`修改失败: ${error.response?.data?.message || '服务器异常'}`);
+  }finally{
+    loading.value.close();
+  }
+
+    
+};
+
+
+// 组件挂载时设置默认值
+onMounted(() => {
+  selectedDate.value = getYesterdayFormatted();
+  
+});
+
 
 </script>
 
