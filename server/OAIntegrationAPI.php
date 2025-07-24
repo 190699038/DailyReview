@@ -134,7 +134,13 @@ function handleSync($isToday) {
                         }
                         
                         $task['day_goal'] = $obj['d_describe'];
+                        if($task['day_goal'] == null){
+                            $task['day_goal'] = 'null';
+                        }
                         $task['task_content'] = $obj['p_describe'];
+                        if($task['task_content'] == null){
+                            $task['task_content'] = 'null';
+                        }
                         $task['mondayDate'] = getMondayDate($obj['createdAt']);
                         $task['oa_task_id'] = $obj['id'];
 
@@ -180,7 +186,7 @@ function handleSync($isToday) {
             }else{
                 $checkStmt = $conn->prepare("SELECT id FROM daily_tasks WHERE oa_taskid = ?");
                 foreach ($oa_dailytask as $item) {
-                    echo('oa_task_id = '.$item['oa_task_id']).'|';
+                    echo('oa_task_id = '.$item['oa_task_id'].' executor_id = '.$item['executor_id']).'|';
 
                     $checkStmt->execute([$item['oa_task_id']]);
                     if ($checkStmt->fetch()) {

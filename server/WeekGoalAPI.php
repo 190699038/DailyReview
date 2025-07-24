@@ -19,7 +19,7 @@ try {
     switch ($action) {
         case 'get':
             // 参数白名单和验证
-            $allowedParams = ['mondayDate', 'department_id', 'executor', 'real_finish_date', 'pre_finish_date'];
+            $allowedParams = ['mondayDate', 'department_id', 'executor', 'real_finish_date','status', 'pre_finish_date','createdate','country','priority'];
             $conditions = [];
             $params = [];
 
@@ -49,12 +49,20 @@ try {
                             break;
                         case 'real_finish_date':
                         case 'pre_finish_date':
+                        case 'createdate':
                             if (!preg_match('/^\d{8}$/', $_REQUEST[$param])) {
                                 throw new Exception($param.'格式错误，应为YYYYMMDD');
                             }
                             $conditions[] = $param.' = ?';
                             $params[] = $_REQUEST[$param];
                             break;
+                        case 'country':
+                        case 'priority':
+                            $conditions[] = $param.' = ?';
+                            $params[] = $_REQUEST[$param];
+                            break;
+                            break;
+
                     }
                 }
             }
@@ -72,6 +80,8 @@ try {
             
             $sql .= ' ORDER BY priority DESC, version DESC';
 
+
+            // echo($sql);
             // 合并查询参数
             $queryParams = array_merge([$mondayDate], $params);
             

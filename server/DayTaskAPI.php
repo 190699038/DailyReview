@@ -72,6 +72,18 @@ try {
             $stmt->execute([$id]);
             echo json_encode(['deleted' => $stmt->rowCount()]);
             break;
+        case 'getUserTodayTask':
+                $uids = $_POST['uids'] ?? '';
+                $start_date = $_POST['start_date'] ?? '';
+                $end_date = $_POST['end_date'] ?? '';
+                
+                $sql = 'SELECT t.*, w.department_name,w.executor_name FROM daily_tasks_today t left join watch_user w on  w.executor_id = t.executor_id where  t.createdate >=' .$start_date.' and t.createdate <= '.$end_date.' and t.executor_id in ('.$uids.') order by  t.createdate desc , t.executor_id desc';
+                // echo($sql);
+                $stmt = $conn->prepare($sql);
+
+                $stmt->execute([]);
+                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+                break;
         case 'getUserGoalAndTasks':
                 $date_str = $_POST['dates'] ?? '';
                 $monday_date = $_POST['monday_date'] ?? '';

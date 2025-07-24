@@ -23,6 +23,13 @@ try {
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(['data' => $users]);
             break;
+        case 'get_watch_users':
+            // 4.1 查询部门用户（联表查询部门名称）
+            $stmt = $conn->prepare("SELECT * FROM watch_user WHERE status = 1");
+            $stmt->execute();
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['data' => $users]);
+            break;
         case 'get_users':
             // 4.1 查询部门用户（联表查询部门名称）
             $departmentId = $_REQUEST['department_id'];
@@ -77,7 +84,7 @@ try {
 
         case 'get_departments':
             // 4.4 查询所有部门
-            $stmt = $conn->query("SELECT * FROM departments");
+            $stmt = $conn->query("SELECT * FROM departments order by sort");
             $departments = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(['data' => $departments]);
             break;
