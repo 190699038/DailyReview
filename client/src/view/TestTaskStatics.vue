@@ -44,7 +44,7 @@
           <el-col :span="12">
             <el-card>
               <div slot="header">
-                <h3>任务分布饼图</h3>
+                <h3>总体任务分布饼图</h3>
               </div>
               <div ref="pieChartRef" style="width: 100%; height: 400px;"></div>
             </el-card>
@@ -55,6 +55,26 @@
                 <h3>每日任务完成趋势</h3>
               </div>
               <div ref="lineChartRef" style="width: 100%; height: 400px;"></div>
+            </el-card>
+          </el-col>
+        </el-row>
+        
+        <!-- 按个人分析的图表 -->
+        <el-row :gutter="20" style="margin-top: 20px;">
+          <el-col :span="12">
+            <el-card>
+              <div slot="header">
+                <h3>个人任务分布对比</h3>
+              </div>
+              <div ref="personBarChartRef" style="width: 100%; height: 400px;"></div>
+            </el-card>
+          </el-col>
+          <el-col :span="12">
+            <el-card>
+              <div slot="header">
+                <h3>个人工作量分布</h3>
+              </div>
+              <div ref="personPieChartRef" style="width: 100%; height: 400px;"></div>
             </el-card>
           </el-col>
         </el-row>
@@ -156,8 +176,12 @@ const groupedData = ref({});
 // 图表引用
 const pieChartRef = ref();
 const lineChartRef = ref();
+const personBarChartRef = ref();
+const personPieChartRef = ref();
 let pieChart = null;
 let lineChart = null;
+let personBarChart = null;
+let personPieChart = null;
 
     // 优先级类型映射
     const priorityTypeMap = {
@@ -191,7 +215,7 @@ const loadData = async () => {
       taskData.value = res.data;
       processData();
       // 如果图表已初始化，则更新图表数据
-      if (pieChart && lineChart) {
+      if (pieChart && lineChart && personBarChart && personPieChart) {
         await nextTick();
         updateCharts();
       }
@@ -211,12 +235,20 @@ const initCharts = () => {
   if (lineChartRef.value && !lineChart) {
     lineChart = echarts.init(lineChartRef.value);
   }
+  if (personBarChartRef.value && !personBarChart) {
+    personBarChart = echarts.init(personBarChartRef.value);
+  }
+  if (personPieChartRef.value && !personPieChart) {
+    personPieChart = echarts.init(personPieChartRef.value);
+  }
 };
 
 // 更新图表数据
 const updateCharts = () => {
   updatePieChart();
   updateLineChart();
+  updatePersonBarChart();
+  updatePersonPieChart();
 };
 
 // 更新饼图
@@ -335,6 +367,126 @@ const updateLineChart = () => {
   };
   
   lineChart.setOption(option);
+};
+
+// 更新个人任务分布对比柱状图
+const updatePersonBarChart = () => {
+  if (!personBarChart) return;
+  
+  const persons = Object.keys(groupedData.value);
+  const completedData = persons.map(person => groupedData.value[person].completedTasks);
+  const inProgressData = persons.map(person => groupedData.value[person].inProgressTasks);
+  const notStartedData = persons.map(person => groupedData.value[person].notStartedTasks);
+  
+  const option = {
+    title: {
+      text: '',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    legend: {
+      data: ['已完成', '进行中', '未提测']
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: persons
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '已完成',
+        type: 'bar',
+        stack: 'total',
+        data: completedData,
+        itemStyle: {
+          color: '#67C23A'
+        }
+      },
+      {
+        name: '进行中',
+        type: 'bar',
+        stack: 'total',
+        data: inProgressData,
+        itemStyle: {
+          color: '#E6A23C'
+        }
+      },
+      {
+        name: '未提测',
+        type: 'bar',
+        stack: 'total',
+        data: notStartedData,
+        itemStyle: {
+          color: '#909399'
+        }
+      }
+    ]
+  };
+  
+  personBarChart.setOption(option);
+};
+
+// 更新个人工作量分布饼图
+const updatePersonPieChart = () => {
+  if (!personPieChart) return;
+  
+  const data = Object.keys(groupedData.value).map(person => ({
+    value: groupedData.value[person].totalTimeSpent.toFixed(2),
+    name: person
+  }));
+  
+  const option = {
+    title: {
+      text: '个人工作量分布（小时）',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c}小时 ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left'
+    },
+    series: [
+      {
+        name: '工作量',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: '18',
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: data
+      }
+    ]
+  };
+  
+  personPieChart.setOption(option);
 };
 
 const getProgressPercentage = (test_progress) => {
