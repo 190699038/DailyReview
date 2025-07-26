@@ -88,7 +88,7 @@
               <template #default="scope">
                 <el-progress 
                   :percentage="getProgressPercentage(scope.row.test_progress)" 
-                  stroke-width="6"
+                  :stroke-width="6"
                   :status="getProgressStatus(scope.row.test_progress)"
                 ></el-progress>
               </template>
@@ -106,6 +106,8 @@
                 <span v-else>-</span>
               </template>
             </el-table-column>
+          <el-table-column prop="creation_date" label="创建日期" width="100"></el-table-column>
+
           </el-table>
         </el-collapse-item>
       </el-collapse>
@@ -171,7 +173,7 @@ const getProgressPercentage = (test_progress) => {
   if(test_progress == null){
     return 0
   }
-  console.log(typeof(test_progress)+'  process = '+test_progress)
+//   console.log(typeof(test_progress)+'  process = '+test_progress)
   return test_progress 
 }
 
@@ -203,6 +205,8 @@ onMounted(() => {
   const startMonth = String(sevenDaysAgo.getMonth() + 1).padStart(2, '0');
   const startDay = String(sevenDaysAgo.getDate()).padStart(2, '0');
   startDate.value = `${startYear}${startMonth}${startDay}`;
+
+  loadData()
 });
 
 
@@ -229,12 +233,15 @@ onMounted(() => {
         // 累加耗时
         result[person].totalTimeSpent += parseFloat(task.actual_time_spent) || 0;
         task.test_progress = parseInt(task.test_progress == null ? 0 : task.test_progress)
-        result[person].tasks.push(task);
+    
         
         // 统计任务状态
         if (task.test_status === '已上线' || task.test_status === '已完成') {
          result[person].completedTasksDic[task.task_id] = task
           result[person].completedTasks++;
+          if(task.test_progress == null || task.test_progress == 0){
+            task.test_progress = 100;
+          }
         } else if (task.test_status === '测试中') {
           result[person].inProgressTasksDic[task.task_id] = task
           result[person].inProgressTasks++;
@@ -242,6 +249,9 @@ onMounted(() => {
           result[person].notStartedTasksDic[task.task_id] = task
           result[person].notStartedTasks++;
         }
+
+                result[person].tasks.push(task);
+
       });
       
       //未提测任务处理
@@ -425,7 +435,7 @@ onMounted(() => {
     // 辅助方法：获取进度状态
     const getProgressStatus = (progress) => {
       if (progress >= 100) return 'success';
-      if (progress > 0) return 'processing';
+      if (progress > 0) return '';
       return 'warning';
     };
     
