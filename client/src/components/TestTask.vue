@@ -2,9 +2,8 @@
  <div class="container">
   <el-tabs v-model="activeTab" type="card">
     <el-tab-pane label="历史数据" name="history">
-      
+      <TestTaskStatics></TestTaskStatics>
     </el-tab-pane>
-
     <el-tab-pane label="新增任务" name="newTask">
       <div style="display: flex;flex-direction: row;">
         <el-upload
@@ -19,14 +18,14 @@
           </template>
         </el-upload>
 
-        <!-- <el-date-picker
+        <el-date-picker
         v-model="selectedDate"
         type="date"
         placeholder="测试任务日期"
         format="YYYYMMDD"
         value-format="YYYYMMDD"
         style="margin-left: 8px; max-width: 200px;"
-      /> -->
+      />
 
         <el-button type="primary" style="margin-left: 8px;" @click="updateTestList()">更新列表测试任务</el-button>
       </div>
@@ -71,6 +70,7 @@ import { ref, reactive,onMounted } from 'vue';
 import { ElMessage,ElLoading } from 'element-plus';
 import * as XLSX from 'xlsx';
 import http from '@/utils/http'
+import TestTaskStatics from '@/view/TestTaskStatics.vue';
 
 const containerRef = ref();
 const loading = ref(null);
@@ -367,13 +367,17 @@ loading.value = ElLoading.service({
         formData.actual_time_spent = item['实际耗时（h）'] == null ? 0:item['实际耗时（h）']
         formData.creation_date = selectedDate.value
 
-        await http.post('TestTask.php', formData, {
+        const response = await http.post('TestTask.php', formData, {
           params: { action: 'create' },
           timeout: 30000,
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
+        if(response.error != null){
+            ElMessage.error(`修改失败: ${response.error}`);
+             break
+        }
     }
   } catch (error) {
     console.error('修改失败:', error);

@@ -68,21 +68,25 @@ try {
             
             if ($info_record) {
                 // 如果存在，执行更新操作
-                $stmt = $conn->prepare("
-                    UPDATE test_tasks_info SET 
-                    responsible_person = ?, priority = ?, product = ?, test_content = ?, 
-                    test_status = ?, test_progress = ?, submission_time = ?, 
-                    planned_online_time = ?, actual_online_time = ?, actual_time_spent = ?, 
-                    remarks = ? 
-                    WHERE task_id = ? AND creation_date = ?
-                ");
-                $stmt->execute([
-                    $responsible_person, $priority, $product, $test_content,
-                    $test_status, $test_progress, $submission_time,
-                    $planned_online_time, $actual_online_time, $actual_time_spent,
-                    $remarks, $task_id, $creation_date
-                ]);
-                echo json_encode(['success' => true, 'task_id' => $task_id, 'action' => 'updated', 'affected_rows' => $stmt->rowCount()]);
+                // $stmt = $conn->prepare("
+                //     UPDATE test_tasks_info SET 
+                //     responsible_person = ?, priority = ?, product = ?, test_content = ?, 
+                //     test_status = ?, test_progress = ?, submission_time = ?, 
+                //     planned_online_time = ?, actual_online_time = ?, actual_time_spent = ?, 
+                //     remarks = ? 
+                //     WHERE task_id = ? AND creation_date = ?
+                // ");
+                // $stmt->execute([
+                //     $responsible_person, $priority, $product, $test_content,
+                //     $test_status, $test_progress, $submission_time,
+                //     $planned_online_time, $actual_online_time, $actual_time_spent,
+                //     $remarks, $task_id, $creation_date
+                // ]);
+                // echo json_encode(['success' => true, 'task_id' => $task_id, 'action' => 'updated', 'affected_rows' => $stmt->rowCount()]);
+                echo json_encode(['error' => $creation_date.' 当前日期的测试任务已经存在了，不要重复创建']);
+                break;
+
+
             } else {
                 // 如果不存在，插入新记录
                 $stmt = $conn->prepare("
