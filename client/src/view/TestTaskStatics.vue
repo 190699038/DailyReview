@@ -46,7 +46,7 @@
               <div slot="header">
                 <h3>总体任务分布饼图</h3>
               </div>
-              <div ref="pieChartRef" style="width: 100%; height: 400px;"></div>
+              <div ref="pieChartRef" style="width: 100%; height: 250px;"></div>
             </el-card>
           </el-col>
           <el-col :span="12">
@@ -54,7 +54,7 @@
               <div slot="header">
                 <h3>每日任务完成趋势</h3>
               </div>
-              <div ref="lineChartRef" style="width: 100%; height: 400px;"></div>
+              <div ref="lineChartRef" style="width: 100%; height: 250px;"></div>
             </el-card>
           </el-col>
         </el-row>
@@ -66,7 +66,7 @@
               <div slot="header">
                 <h3>个人任务分布对比</h3>
               </div>
-              <div ref="personBarChartRef" style="width: 100%; height: 400px;"></div>
+              <div ref="personBarChartRef" style="width: 100%; height: 250px;"></div>
             </el-card>
           </el-col>
           <el-col :span="12">
@@ -74,7 +74,7 @@
               <div slot="header">
                 <h3>个人工作量分布</h3>
               </div>
-              <div ref="personPieChartRef" style="width: 100%; height: 400px;"></div>
+              <div ref="personPieChartRef" style="width: 100%; height: 250px;"></div>
             </el-card>
           </el-col>
         </el-row>
