@@ -38,6 +38,28 @@
         </div>
       </div>
 
+      <!-- 图表展示区域 -->
+      <div class="charts-container" style="margin: 20px 0;">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-card>
+              <div slot="header">
+                <h3>任务分布饼图</h3>
+              </div>
+              <div ref="pieChartRef" style="width: 100%; height: 400px;"></div>
+            </el-card>
+          </el-col>
+          <el-col :span="12">
+            <el-card>
+              <div slot="header">
+                <h3>每日任务完成趋势</h3>
+              </div>
+              <div ref="lineChartRef" style="width: 100%; height: 400px;"></div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </div>
+
       <!-- 负责人列表 -->
       <el-collapse v-model="activeNames">
         <el-collapse-item 
@@ -117,18 +139,25 @@
 </template>
 
 <script setup>
-import { defineComponent, ref, onMounted, computed} from 'vue';
+import { defineComponent, ref, onMounted, computed, nextTick} from 'vue';
 import { ElMessage,ElCard, ElDescriptions, ElDescriptionsItem, ElCollapse, ElCollapseItem, ElRow, ElCol, ElStatistic, ElTable, ElTableColumn, ElTag, ElProgress } from 'element-plus';
 import * as XLSX from 'xlsx';
+import * as echarts from 'echarts';
 import http from '@/utils/http'
 
 const containerRef = ref();
 const loading = ref(null);
 const startDate = ref('');
 const endDate = ref('');
-    const activeNames = ref(['王雪斌']); // 默认展开第一个负责人
-    const taskData = ref([]);
-    const groupedData = ref({});
+const activeNames = ref(['王雪斌']); // 默认展开第一个负责人
+const taskData = ref([]);
+const groupedData = ref({});
+
+// 图表引用
+const pieChartRef = ref();
+const lineChartRef = ref();
+let pieChart = null;
+let lineChart = null;
 
     // 优先级类型映射
     const priorityTypeMap = {
@@ -160,7 +189,12 @@ const loadData = async () => {
     }else{
 
       taskData.value = res.data;
-      processData()
+      processData();
+      // 如果图表已初始化，则更新图表数据
+      if (pieChart && lineChart) {
+        await nextTick();
+        updateCharts();
+      }
     }
   } catch (error) {
     console.error('查询失败:', error);
@@ -168,6 +202,140 @@ const loadData = async () => {
   }finally{
   }
 }
+
+// 初始化图表
+const initCharts = () => {
+  if (pieChartRef.value && !pieChart) {
+    pieChart = echarts.init(pieChartRef.value);
+  }
+  if (lineChartRef.value && !lineChart) {
+    lineChart = echarts.init(lineChartRef.value);
+  }
+};
+
+// 更新图表数据
+const updateCharts = () => {
+  updatePieChart();
+  updateLineChart();
+};
+
+// 更新饼图
+const updatePieChart = () => {
+  if (!pieChart) return;
+  
+  const data = [
+    { value: totalCompletedTasks.value, name: '已完成任务' },
+    { value: totalInProgressTasks.value, name: '进行中任务' },
+    { value: totalNotStartedTasks.value, name: '未提测任务' }
+  ];
+  
+  const option = {
+    title: {
+      text: '任务状态分布',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'item'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left'
+    },
+    series: [
+      {
+        name: '任务状态',
+        type: 'pie',
+        radius: '50%',
+        data: data,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }
+    ]
+  };
+  
+  pieChart.setOption(option);
+};
+
+// 更新折线图
+const updateLineChart = () => {
+  if (!lineChart) return;
+  
+  // 按日期统计任务完成情况
+  const dateStats = {};
+  taskData.value.forEach(task => {
+    const date = task.creation_date;
+    if (!dateStats[date]) {
+      dateStats[date] = { completed: 0, inProgress: 0, notStarted: 0 };
+    }
+    
+    if (task.test_status === '已上线' || task.test_status === '已完成') {
+      dateStats[date].completed++;
+    } else if (task.test_status === '测试中') {
+      dateStats[date].inProgress++;
+    } else if (task.test_status === '未提测') {
+      dateStats[date].notStarted++;
+    }
+  });
+  
+  const dates = Object.keys(dateStats).sort();
+  const completedData = dates.map(date => dateStats[date].completed);
+  const inProgressData = dates.map(date => dateStats[date].inProgress);
+  const notStartedData = dates.map(date => dateStats[date].notStarted);
+  
+  const option = {
+    title: {
+      text: '',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis'
+    },
+    legend: {
+      data: ['已完成', '进行中', '未提测']
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dates
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '已完成',
+        type: 'line',
+        stack: 'Total',
+        data: completedData
+      },
+      {
+        name: '进行中',
+        type: 'line',
+        stack: 'Total',
+        data: inProgressData
+      },
+      {
+        name: '未提测',
+        type: 'line',
+        stack: 'Total',
+        data: notStartedData
+      }
+    ]
+  };
+  
+  lineChart.setOption(option);
+};
 
 const getProgressPercentage = (test_progress) => {
   if(test_progress == null){
@@ -190,7 +358,7 @@ const getPersonInfo = (personData,type) => {
 }
 
 // 组件挂载时设置默认值
-onMounted(() => {
+onMounted(async () => {
   // 设置endDate为今天日期
   const today = new Date();
   const year = today.getFullYear();
@@ -206,7 +374,12 @@ onMounted(() => {
   const startDay = String(sevenDaysAgo.getDate()).padStart(2, '0');
   startDate.value = `${startYear}${startMonth}${startDay}`;
 
-  loadData()
+  await loadData();
+  
+  // 初始化图表
+  await nextTick();
+  initCharts();
+  updateCharts();
 });
 
 

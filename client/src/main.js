@@ -5,7 +5,7 @@ import installElementPlus from './plugins/element'
 import ElementPlus from 'element-plus';
 
 const app = createApp(App)
-installElementPlus(app)
+// installElementPlus(app)
 app.use(router)
 app.mount('#app')
 console.log('Environment:', import.meta.env.MODE);
