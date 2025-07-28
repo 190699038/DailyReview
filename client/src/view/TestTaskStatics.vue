@@ -103,10 +103,10 @@
             style="width: 100%;"
             :default-sort="{ prop: 'test_status', order: 'ascending' }"
           >
-            <el-table-column prop="task_id" label="任务ID" width="80"></el-table-column>
-            <el-table-column prop="product" label="产品" width="120"></el-table-column>
+            <el-table-column prop="task_id" label="任务ID" width="80" header-align="center" align="center"></el-table-column>
+            <el-table-column prop="product" label="产品" width="120" header-align="center" align="center"></el-table-column>
             <el-table-column prop="test_content" label="测试内容"></el-table-column>
-            <el-table-column prop="priority" label="优先级" width="80">
+            <el-table-column prop="priority" label="优先级" width="80" header-align="center" align="center">
               <template #default="scope">
                 <el-tag 
                   :type="priorityTypeMap[scope.row.priority]"
@@ -116,7 +116,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="test_status" label="状态" width="100">
+            <el-table-column prop="test_status" label="状态" width="100" header-align="center" align="center">
               <template #default="scope">
                 <el-tag 
                   :type="statusTypeMap[scope.row.test_status]"
@@ -126,7 +126,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="test_progress" label="进度" width="100">
+            <el-table-column prop="test_progress" label="进度" width="100" header-align="center" align="center">
               <template #default="scope">
                 <el-progress 
                   :percentage="getProgressPercentage(scope.row.test_progress)" 
@@ -135,8 +135,8 @@
                 ></el-progress>
               </template>
             </el-table-column>
-            <el-table-column prop="actual_time_spent" label="耗时(小时)" width="100"></el-table-column>
-            <el-table-column label="提测时间状态" width="140">
+            <el-table-column prop="actual_time_spent" label="耗时(小时)" header-align="center" align="center" width="100"></el-table-column>
+            <el-table-column label="上线时间状态" width="140" header-align="center" align="center">
               <template #default="scope">
                 <el-tag 
                   v-if="hasOnlineTime(scope.row)"
@@ -148,7 +148,10 @@
                 <span v-else>-</span>
               </template>
             </el-table-column>
-          <el-table-column prop="creation_date" label="创建日期" width="100"></el-table-column>
+          <el-table-column prop="planned_online_time" label="预计上线日期" width="100" header-align="center" align="center"></el-table-column>
+          <el-table-column prop="submission_time" label="提测日期" width="100" header-align="center" align="center"></el-table-column>
+          <el-table-column prop="actual_online_time" label="实际上线日期" width="100" header-align="center" align="center"></el-table-column>
+          <el-table-column prop="creation_date" label="创建日期" width="100" header-align="center" align="center"></el-table-column>
 
           </el-table>
         </el-collapse-item>
@@ -754,7 +757,7 @@ onMounted(async () => {
       const planned = new Date(task.planned_online_time);
       const actual = new Date(task.actual_online_time);
       
-      return actual <= planned ? '按时提测' : '延期提测';
+      return actual <= planned ? '按时上线' : '延期上线';
     };
     
     // 辅助方法：获取进度状态
