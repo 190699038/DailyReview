@@ -194,6 +194,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="preFinshData">一键完成</el-button>
         <el-button type="primary" @click="submitForm">保存</el-button>
       </template>
     </el-dialog>
@@ -563,6 +564,23 @@ const submitFormSimple = async (row, type) => {
   }
 }
 
+
+const preFinshData = () =>{
+   //状态 
+    if (selectedDepartmentId.value == 2 || selectedDepartmentId.value == 3) {
+      form.value.status = 3
+    } else {
+      form.value.status = 5
+    }
+
+    //截止日期
+    if (form.value.pre_finish_date == null || form.value.real_finish_date == '') {
+      form.value.pre_finish_date = getTodayDate()
+    } 
+
+    form.value.real_finish_date = getTodayDate()
+
+}
 
 // 提交表单
 const submitForm = async () => {
