@@ -282,6 +282,10 @@ const updatePieChart = () => {
         type: 'pie',
         radius: '50%',
         data: data,
+        label: {
+          show: true,
+          formatter: '{b}: {c}\n({d}%)'
+        },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -352,19 +356,31 @@ const updateLineChart = () => {
         name: '已完成',
         type: 'line',
         stack: 'Total',
-        data: completedData
+        data: completedData,
+        label: {
+          show: true,
+          position: 'top'
+        }
       },
       {
         name: '进行中',
         type: 'line',
         stack: 'Total',
-        data: inProgressData
+        data: inProgressData,
+        label: {
+          show: true,
+          position: 'top'
+        }
       },
       {
         name: '未提测',
         type: 'line',
         stack: 'Total',
-        data: notStartedData
+        data: notStartedData,
+        label: {
+          show: true,
+          position: 'top'
+        }
       }
     ]
   };
@@ -416,6 +432,13 @@ const updatePersonBarChart = () => {
         data: completedData,
         itemStyle: {
           color: '#67C23A'
+        },
+        label: {
+          show: true,
+          position: 'inside',
+          formatter: function(params) {
+            return params.value > 0 ? params.value : '';
+          }
         }
       },
       {
@@ -425,6 +448,13 @@ const updatePersonBarChart = () => {
         data: inProgressData,
         itemStyle: {
           color: '#E6A23C'
+        },
+        label: {
+          show: true,
+          position: 'inside',
+          formatter: function(params) {
+            return params.value > 0 ? params.value : '';
+          }
         }
       },
       {
@@ -434,6 +464,13 @@ const updatePersonBarChart = () => {
         data: notStartedData,
         itemStyle: {
           color: '#909399'
+        },
+        label: {
+          show: true,
+          position: 'inside',
+          formatter: function(params) {
+            return params.value > 0 ? params.value : '';
+          }
         }
       }
     ]
@@ -471,8 +508,8 @@ const updatePersonPieChart = () => {
         radius: ['40%', '70%'],
         avoidLabelOverlap: false,
         label: {
-          show: false,
-          position: 'center'
+          show: true,
+          formatter: '{b}\n{c}h\n({d}%)'
         },
         emphasis: {
           label: {
@@ -482,7 +519,7 @@ const updatePersonPieChart = () => {
           }
         },
         labelLine: {
-          show: false
+          show: true
         },
         data: data
       }
