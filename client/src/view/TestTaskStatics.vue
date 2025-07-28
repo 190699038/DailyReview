@@ -148,9 +148,9 @@
                 <span v-else>-</span>
               </template>
             </el-table-column>
-          <el-table-column prop="planned_online_time" label="预计上线日期" width="100" header-align="center" align="center"></el-table-column>
-          <el-table-column prop="submission_time" label="提测日期" width="100" header-align="center" align="center"></el-table-column>
-          <el-table-column prop="actual_online_time" label="实际上线日期" width="100" header-align="center" align="center"></el-table-column>
+          <el-table-column prop="submission_time" label="提测日期" width="110" header-align="center" align="center"></el-table-column>
+          <el-table-column prop="planned_online_time" label="预计上线日期" width="110" header-align="center" align="center"></el-table-column>
+          <el-table-column prop="actual_online_time" label="实际上线日期" width="110" header-align="center" align="center"></el-table-column>
           <el-table-column prop="creation_date" label="创建日期" width="100" header-align="center" align="center"></el-table-column>
 
           </el-table>
@@ -780,8 +780,8 @@ onMounted(async () => {
     const getOnlineTimeStatus = (task) => {
       if (!task.planned_online_time || !task.actual_online_time) return 'info';
       
-      const planned = new Date(task.planned_online_time);
-      const actual = new Date(task.actual_online_time);
+      const planned = new Date(task.planned_online_time.substring(0, 10));
+      const actual = new Date(task.actual_online_time.substring(0, 10));
       
       return actual <= planned ? 'success' : 'warning';
     };
@@ -791,8 +791,8 @@ onMounted(async () => {
       if (!task.planned_online_time) return '无计划时间';
       if (!task.actual_online_time) return '未提测';
       
-      const planned = new Date(task.planned_online_time);
-      const actual = new Date(task.actual_online_time);
+      const planned = new Date(task.planned_online_time.substring(0, 10));
+      const actual = new Date(task.actual_online_time.substring(0, 10));
       
       return actual <= planned ? '按时上线' : '延期上线';
     };
