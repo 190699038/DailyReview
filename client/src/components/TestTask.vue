@@ -107,18 +107,25 @@ const handleFileChange = async (file) => {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      
-      // 转换为二维数组（跳过标题行）
-      // const dataSheet = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: true, skip: 1 });
-//       const dataSheet =  XLSX.utils.sheet_to_json(firstSheet, {
-//   header: 1,
-//   raw: false,            // 必须关闭原始值模式
-//   skip: 1,
-//   dateNF: 'yyyy/mm/dd hh:mm:ss'  // 显式声明格式
-// });
+  
+      const dataSheet = XLSX.utils.sheet_to_json(firstSheet, { header: 1, skip: 1 ,raw: false,});
 
-            const dataSheet = XLSX.utils.sheet_to_json(firstSheet, { header: 1, skip: 1 ,raw: false,});
+     // 2. 获取合并区域
+    const mergeInfo = firstSheet['!merges'] || [];
 
+    // 3. 标记合并单元格
+    mergeInfo.forEach(merge => {
+      const { s, e } = merge; // s: 起始位置, e: 结束位置
+      const mainValue = dataSheet[s.r][s.c]; // 主单元格的值
+
+      // 遍历合并区域内的所有单元格
+      for (let row = s.r; row <= e.r; row++) {
+        for (let col = s.c; col <= e.c; col++) {
+          if (row === s.r && col === s.c) continue; // 跳过主单元格
+          dataSheet[row][col] = mainValue
+        }
+      }
+    }); 
 
       const jsonData = dataSheet.slice(1)
       jsonData.forEach(row => {
@@ -133,7 +140,9 @@ const handleFileChange = async (file) => {
         });
     });
       // 处理负责人列合并逻辑
-      processResponsibleColumn(jsonData);
+      // processResponsibleColumn(jsonData);
+      // processProductColumn(jsonData);
+      // processPlanOlineColumn(jsonData);
 
       // 映射为表格数据
       tableData.value = jsonData.map(row => {
@@ -240,6 +249,31 @@ const processResponsibleColumn = (data) => {
     }
   }
 };
+
+const processProductColumn = (data) => {
+  let lastValidValue = '';
+  for (let i = 0; i < data.length; i++) {
+    if (data[i][2]) {
+      lastValidValue = data[i][2];
+    } else if (lastValidValue) {
+      data[i][2] = lastValidValue; // 填充空产品
+    }
+  }
+};
+
+
+const processPlanOlineColumn = (data) => {
+  let lastValidValue = '';
+  for (let i = 0; i < data.length; i++) {
+    if (data[i][7]) {
+      lastValidValue = data[i][7];
+    } else if (lastValidValue) {
+      data[i][7] = lastValidValue; // 填充空计划上线
+    }
+  }
+};
+
+
 
 // 合并单元格处理
 const handleSpanMethod = ({ row, column, rowIndex }) => {

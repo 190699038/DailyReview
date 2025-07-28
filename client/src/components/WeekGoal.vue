@@ -380,10 +380,10 @@ const countryOptions = ref([
 ])
 //{ 10: 'S', 9: 'A', 8: 'B', 7: 'C'}
 const statusPriorityOptions = ref([
-  { label: '优先级【S】', value: 10 },
-  { label: '优先级【A】', value: 9 },
-  { label: '优先级【B】', value: 8 },
-  { label: '优先级【C】', value: 7 },
+  { label: '优先级【S】', value: '10' },
+  { label: '优先级【A】', value: '9' },
+  { label: '优先级【B】', value: '8' },
+  { label: '优先级【C】', value: '7' },
 ])
 
 const form = ref({
