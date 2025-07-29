@@ -1,6 +1,5 @@
 <template>
   <div class="page-container" style="width: 86%;margin-left: 7%;">
-    <h2>项目组周目标</h2>
     <!-- <el-button type="success" @click="handleImport">导入Excel</el-button> -->
 
     <el-select v-model="mondayDate" @change="loadData" placeholder="选择周范围"

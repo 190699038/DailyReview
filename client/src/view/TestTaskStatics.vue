@@ -21,6 +21,9 @@
 
 
     <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
+    <el-button type="info" style="margin-left: 8px;" @click="setDateRange(3)">近三天</el-button>
+    <el-button type="info" style="margin-left: 8px;" @click="setDateRange(7)">近一周</el-button>
+    <el-button type="info" style="margin-left: 8px;" @click="setDateRange(30)">近一个月</el-button>
 
 
     </div>
@@ -218,6 +221,26 @@ const loadData = async () => {
   }finally{
   }
 }
+
+// 设置日期范围并查询数据
+const setDateRange = async (days) => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  endDate.value = `${year}${month}${day}`;
+  
+  // 计算开始日期
+  const startDateObj = new Date();
+  startDateObj.setDate(today.getDate() - days + 1); // +1是因为包含今天
+  const startYear = startDateObj.getFullYear();
+  const startMonth = String(startDateObj.getMonth() + 1).padStart(2, '0');
+  const startDay = String(startDateObj.getDate()).padStart(2, '0');
+  startDate.value = `${startYear}${startMonth}${startDay}`;
+  
+  // 自动调用查询
+  await loadData();
+};
 
 // 初始化图表
 const initCharts = () => {
