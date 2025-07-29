@@ -511,8 +511,10 @@ const initView = async() =>{
 
   await initActiveTab()
   mondayOptions.value = generateMondayOptions()
-  executorId.value = userList.value[0].id
-  await loadTaskData(executorId.value, mondayDate.value, true)
+  if (userList.value && userList.value.length > 0) {
+    executorId.value = userList.value[0].id
+    await loadTaskData(executorId.value, mondayDate.value, true)
+  }
   await getDailyGoal()
 }
 
@@ -612,16 +614,16 @@ const handleDepartmentChange = (val) => {
   if(val == 0) {
     http.get(`UserInfoAPI.php?action=get_all_users`)
     .then(res => {
-      userList.value = res.data
-      localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+      userList.value = res.data || []
+      localStorage.setItem('departments_user_cache', JSON.stringify(res.data || []))
       initView()
 
     })
   }else{
     http.get(`UserInfoAPI.php?action=get_users&department_id=${val}`)
     .then(res => {
-      userList.value = res.data
-      localStorage.setItem('departments_user_cache', JSON.stringify(res.data))
+      userList.value = res.data || []
+      localStorage.setItem('departments_user_cache', JSON.stringify(res.data || []))
       initView()
     })
   }

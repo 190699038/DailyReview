@@ -54,8 +54,8 @@ const goals = ref([])
 const fetchDepartments = async () => {
   try {
     const res = await http.get('UserInfoAPI.php?action=get_departments')
-    let obj = [{ 'department_name': '全部', 'id': 0, 'group_id': 0 }]
-    departments.value = [...obj, ...res.data]
+    // let obj = [{ 'department_name': '全部', 'id': 0, 'group_id': 0 }]
+    departments.value = res.data//[...obj, ...res.data]
     localStorage.setItem('departments_cache', JSON.stringify(departments.value))
   } catch (error) {
     console.error('获取部门列表失败:', error)
