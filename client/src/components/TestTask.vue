@@ -87,7 +87,7 @@ const newTaskForm = reactive({
 const tableHeaders = ref([
   '负责人', '优先级', '产品', '测试内容（需求链接）', 
   '测试状态', '测试进度', '提测时间', '预计上线时间', 
-  '实际上线时间', '实际耗时（h）', '备注'
+  '实际上线时间', '实际耗时（h）', '用例耗时（h）','备注'
 ]);
 
 const tableData = ref([]);
@@ -143,6 +143,7 @@ const handleFileChange = async (file) => {
       // processResponsibleColumn(jsonData);
       // processProductColumn(jsonData);
       // processPlanOlineColumn(jsonData);
+      // processTimetColumn(jsonData)
 
       // 映射为表格数据
       tableData.value = jsonData.map(row => {
@@ -250,28 +251,17 @@ const processResponsibleColumn = (data) => {
   }
 };
 
-const processProductColumn = (data) => {
+const processTimetColumn = (data) => {
   let lastValidValue = '';
   for (let i = 0; i < data.length; i++) {
-    if (data[i][2]) {
-      lastValidValue = data[i][2];
-    } else if (lastValidValue) {
-      data[i][2] = lastValidValue; // 填充空产品
-    }
+     let testtime = data[i][9] == null ? 0 : data[i][9]
+     let yltime = data[i][10] == null ? 0 : data[i][10]
+     data[i][9] = parseFloat(testtime) + parseFloat(yltime)
   }
 };
 
 
-const processPlanOlineColumn = (data) => {
-  let lastValidValue = '';
-  for (let i = 0; i < data.length; i++) {
-    if (data[i][7]) {
-      lastValidValue = data[i][7];
-    } else if (lastValidValue) {
-      data[i][7] = lastValidValue; // 填充空计划上线
-    }
-  }
-};
+
 
 
 
@@ -399,6 +389,7 @@ loading.value = ElLoading.service({
         formData.planned_online_time = item['预计上线时间']
         formData.actual_online_time = item['实际上线时间']
         formData.actual_time_spent = item['实际耗时（h）'] == null ? 0:item['实际耗时（h）']
+        formData.actual_yl_time = item['用例耗时（h）'] == null ? 0:item['用例耗时（h）']
         formData.creation_date = selectedDate.value
 
         const response = await http.post('TestTask.php', formData, {

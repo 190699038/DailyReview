@@ -135,19 +135,8 @@
                 ></el-progress>
               </template>
             </el-table-column>
-            <el-table-column prop="actual_time_spent" label="耗时(小时)" header-align="center" align="center" width="100"></el-table-column>
-            <el-table-column label="上线时间状态" width="140" header-align="center" align="center">
-              <template #default="scope">
-                <el-tag 
-                  v-if="hasOnlineTime(scope.row)"
-                  :type="getOnlineTimeStatus(scope.row)"
-                  size="small"
-                >
-                  {{ getOnlineTimeStatusText(scope.row) }}
-                </el-tag>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
+            <el-table-column prop="totalTime" label="耗时(小时)" header-align="center" align="center" width="100"></el-table-column>
+          
           <el-table-column prop="submission_time" label="提测日期" width="110" header-align="center" align="center"></el-table-column>
           <el-table-column prop="planned_online_time" label="预计上线日期" width="110" header-align="center" align="center"></el-table-column>
           <el-table-column prop="actual_online_time" label="实际上线日期" width="110" header-align="center" align="center"></el-table-column>
@@ -490,7 +479,7 @@ const updatePersonPieChart = () => {
   
   const option = {
     title: {
-      text: '个人工作量分布（小时）',
+      text: '',
       left: 'center'
     },
     tooltip: {
@@ -596,7 +585,7 @@ onMounted(async () => {
         }
         
         // 累加耗时
-        result[person].totalTimeSpent += parseFloat(task.actual_time_spent) || 0;
+        result[person].totalTimeSpent += parseFloat(task.totalTime) || 0;
         task.test_progress = parseInt(task.test_progress == null ? 0 : task.test_progress)
     
         
@@ -661,21 +650,21 @@ onMounted(async () => {
         personData.tasks.forEach(task => {
           const taskId = task.task_id;
           const currentPriority = statusPriority[task.test_status] || 999;
-          const currentTimeSpent = parseFloat(task.actual_time_spent) || 0;
+          const currentTimeSpent = parseFloat(task.totalTime) || 0;
           
           if (!taskMap[taskId]) {
             // 首次遇到该task_id，直接添加
             taskMap[taskId] = { ...task };
           } else {
             // 已存在该task_id，累加耗时
-            const existingTimeSpent = parseFloat(taskMap[taskId].actual_time_spent) || 0;
-            taskMap[taskId].actual_time_spent = (existingTimeSpent + currentTimeSpent).toString();
+            const existingTimeSpent = parseFloat(taskMap[taskId].totalTime) || 0;
+            taskMap[taskId].totalTime = (existingTimeSpent + currentTimeSpent).toString();
             
             // 如果当前任务优先级更高，更新任务信息（但保留累加的耗时）
             if (statusPriority[taskMap[taskId].test_status] > currentPriority) {
-              const accumulatedTime = taskMap[taskId].actual_time_spent;
+              const accumulatedTime = taskMap[taskId].totalTime;
               taskMap[taskId] = { ...task };
-              taskMap[taskId].actual_time_spent = accumulatedTime;
+              taskMap[taskId].totalTime = accumulatedTime;
             }
           }
         });
@@ -699,7 +688,7 @@ onMounted(async () => {
     // 计算总耗时
     const totalTimeSpent = computed(() => {
       return taskData.value.reduce((sum, task) => {
-        return sum + (parseFloat(task.actual_time_spent) || 0);
+        return sum + (parseFloat(task.totalTime) || 0);
       }, 0);
     });
     
