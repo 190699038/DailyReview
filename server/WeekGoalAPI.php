@@ -17,6 +17,58 @@ $action = $_REQUEST['action'] ?? '';
 
 try {
     switch ($action) {
+        case 'list':
+            // 参数白名单和验证
+            $allowedParams = ['department_id', 'startDate', 'endDate','country'];
+            
+            // 验证必传参数
+            if (!isset($_REQUEST['startDate']) || empty($_REQUEST['startDate'])) {
+                throw new Exception('startDate参数必传');
+            }
+            if (!isset($_REQUEST['endDate']) || empty($_REQUEST['endDate'])) {
+                throw new Exception('endDate参数必传');
+            }
+            
+            $startDate = $_REQUEST['startDate'];
+            $endDate = $_REQUEST['endDate'];
+            
+            // 构建查询条件
+            $conditions = [];
+            $params = [];
+            
+            // department_id 如果为0则不参与查询
+            if (isset($_REQUEST['department_id']) && $_REQUEST['department_id'] != 0) {
+                $conditions[] = 'wg.department_id = ?';
+                $params[] = $_REQUEST['department_id'];
+            }
+            
+            // country 如果为空则不参与查询
+            if (isset($_REQUEST['country']) && !empty($_REQUEST['country'])) {
+                $conditions[] = 'wg.country = ?';
+                $params[] = $_REQUEST['country'];
+            }
+            
+            // 基础SQL
+            $sql = "SELECT wg.*, d.department_name 
+                   FROM weekly_goals wg 
+                   INNER JOIN departments d ON wg.department_id = d.id 
+                   WHERE wg.createdate BETWEEN ? AND ?";
+            
+            // 添加startDate和endDate参数
+            $queryParams = [$startDate, $endDate];
+            
+            // 添加其他动态条件
+            if (!empty($conditions)) {
+                $sql .= ' AND ' . implode(' AND ', $conditions);
+                $queryParams = array_merge($queryParams, $params);
+            }
+            
+            $sql .= ' ORDER BY wg.createdate DESC';
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->execute($queryParams);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
         case 'get':
             // 参数白名单和验证
             $allowedParams = ['mondayDate', 'department_id', 'executor', 'real_finish_date','status', 'pre_finish_date','createdate','country','priority'];
