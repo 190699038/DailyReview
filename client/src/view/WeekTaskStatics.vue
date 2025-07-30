@@ -587,21 +587,54 @@ const processLineChartData = () => {
     // 按月统计
     const monthData = {}
     
+    // 找到最小和最大日期
+    let minDate = null
+    let maxDate = null
+    
     taskStats.value.forEach(task => {
-      if (!task.mondayDate) return // 跳过没有week_start_date的任务
-      const monthKey = task.mondayDate.substring(0, 7) // YYYY-MM
-      if (!monthData[monthKey]) {
-        monthData[monthKey] = { completed: 0, uncompleted: 0 }
+      if (!task.createdate) return
+      const createDate = task.createdate
+      if (!minDate || createDate < minDate) {
+        minDate = createDate
       }
-      
-      if (parseInt(task.status) === 5 || parseInt(task.status) === 3) {
-        monthData[monthKey].completed++
-      } else {
-        monthData[monthKey].uncompleted++
+      if (!maxDate || createDate > maxDate) {
+        maxDate = createDate
       }
     })
     
-    // 按日期排序
+    // 如果有数据，生成月份范围
+    if (minDate && maxDate) {
+      const minYear = parseInt(minDate.substring(0, 4))
+      const minMonth = parseInt(minDate.substring(4, 6))
+      const maxYear = parseInt(maxDate.substring(0, 4))
+      const maxMonth = parseInt(maxDate.substring(4, 6))
+      
+      // 生成所有月份标签
+      for (let year = minYear; year <= maxYear; year++) {
+        const startMonth = year === minYear ? minMonth : 1
+        const endMonth = year === maxYear ? maxMonth : 12
+        
+        for (let month = startMonth; month <= endMonth; month++) {
+          const monthKey = `${year}${month.toString().padStart(2, '0')}`
+          monthData[monthKey] = { completed: 0, uncompleted: 0 }
+        }
+      }
+    }
+    
+    // 统计任务数据
+    taskStats.value.forEach(task => {
+      if (!task.createdate) return
+      const monthKey = task.createdate.substring(0, 6) // YYYYMM
+      if (monthData[monthKey]) {
+        if (parseInt(task.status) === 5 || parseInt(task.status) === 3) {
+          monthData[monthKey].completed++
+        } else {
+          monthData[monthKey].uncompleted++
+        }
+      }
+    })
+    
+    // 按日期排序并生成图表数据
     const sortedMonths = Object.keys(monthData).sort()
     sortedMonths.forEach(month => {
       categories.push(month)
@@ -639,6 +672,29 @@ const formatWeekLabel = (weekStartDate) => {
   }
 }
 
+// 格式化月标签
+const formatMonthLabel = (mondayDate) => {
+  // 处理 "20250708" 格式的日期字符串
+  let dateStr = mondayDate
+  if (mondayDate.length === 8 && /^\d{8}$/.test(mondayDate)) {
+    // 将 "20250708" 转换为 "2025-07-08" 格式
+    dateStr = `${mondayDate.substring(0, 4)}-${mondayDate.substring(4, 6)}-${mondayDate.substring(6, 8)}`
+  }
+  
+  const startDate = new Date(dateStr)
+  const year = startDate.getFullYear()
+  const month = startDate.getMonth() + 1
+  
+  // 计算该月的开始和结束日期
+  const monthStart = new Date(year, startDate.getMonth(), 1)
+  const monthEnd = new Date(year, startDate.getMonth() + 1, 0)
+  
+  const startDay = monthStart.getDate()
+  const endDay = monthEnd.getDate()
+  
+  return `${year}年${month}月(${startDay}-${endDay}日)`
+}
+
 // 更新优先级饼图
 const updatePriorityPieChart = () => {
   if (!priorityPieChart) return
@@ -659,7 +715,7 @@ const updatePriorityPieChart = () => {
   
   const option = {
     title: {
-      text: 'S、A、B、C类任务分布',
+      text: '',
       left: 'center'
     },
     tooltip: {
@@ -708,7 +764,7 @@ const updateStatusPieChart = () => {
   
   const option = {
     title: {
-      text: '任务状态分布',
+      text: '',
       left: 'center'
     },
     tooltip: {
