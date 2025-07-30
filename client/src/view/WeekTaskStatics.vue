@@ -258,9 +258,8 @@ const loadData = async () => {
     const mondayDates = getMondaysInRange(startDate.value, endDate.value)
     console.log('日期区间内的周一日期:', mondayDates)
     
-    // 判断是否跨周（超过一周）
-    const isMultiWeek = mondayDates.length > 1
-    showLineChart.value = isMultiWeek
+    // 始终显示折线图
+    showLineChart.value = true
     
     const departmentId = selectedDepartmentId.value
     const res = await http.get('WeekGoalAPI.php', {
@@ -279,14 +278,12 @@ const loadData = async () => {
     await nextTick()
     updateCharts()
     
-    // 如果跨周，初始化并更新折线图
-    if (isMultiWeek) {
-      await nextTick()
-      setTimeout(() => {
-        initLineChart()
-        updateLineChart()
-      }, 100)
-    }
+    // 初始化并更新折线图
+    await nextTick()
+    setTimeout(() => {
+      initLineChart()
+      updateLineChart()
+    }, 100)
   } catch (error) {
     console.error('获取数据失败:', error)
     ElMessage.error('获取数据失败')
@@ -594,12 +591,16 @@ const processLineChartData = () => {
     
     taskStats.value.forEach(task => {
       if (!task.createdate) return
-      const dayKey = task.createdate // YYYYMMDD格式
+      const dayKey = task.real_finish_date // YYYYMMDD格式
       if (!dayData[dayKey]) {
         dayData[dayKey] = { completed: 0, uncompleted: 0 }
       }
       
-      if (parseInt(task.status) === 5 || parseInt(task.status) === 3) {
+      // 完成任务的标准：状态等于2或3，并且完成日期（real_finish_date）是当天
+      const status = parseInt(task.status)
+      const isCompleted = (status === 5 || status === 3) && task.real_finish_date === dayKey
+      console.log('任务状态:', status, '完成日期:', task.real_finish_date, '当天日期:', dayKey, '是否完成:', isCompleted)
+      if (isCompleted) {
         dayData[dayKey].completed++
       } else {
         dayData[dayKey].uncompleted++
