@@ -564,6 +564,9 @@ const showTaskDialogByStatus = (statusName) => {
     case '已上线':
       statusValue = [3]
       break
+    case '已完成':
+      statusValue = [5] // 已完成状态
+      break
     case '已暂停':
       statusValue = [4]
       break
@@ -571,7 +574,7 @@ const showTaskDialogByStatus = (statusName) => {
       return
   }
   
-  dialogTasks.value = taskStats.value.filter(task => statusValue.includes(task.status))
+  dialogTasks.value = taskStats.value.filter(task => statusValue.includes(parseInt(task.status)))
   dialogTitle.value = `${statusName}任务列表`
   dialogVisible.value = true
 }
