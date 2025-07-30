@@ -590,23 +590,56 @@ const processLineChartData = () => {
     const dayData = {}
     
     taskStats.value.forEach(task => {
-      if (!task.createdate) return
+      if (!task.real_finish_date) return
       const dayKey = task.real_finish_date // YYYYMMDD格式
       if (!dayData[dayKey]) {
-        dayData[dayKey] = { completed: 0, uncompleted: 0 }
+        dayData[dayKey] = { completed: 0, uncompleted: 0 ,finishTotal:0,mondayDate:task.mondayDate}
       }
-      
-      // 完成任务的标准：状态等于2或3，并且完成日期（real_finish_date）是当天
+      // 完成任务的标准：状态等于5或3，并且完成日期（real_finish_date）是当天
       const status = parseInt(task.status)
       const isCompleted = (status === 5 || status === 3) && task.real_finish_date === dayKey
       console.log('任务状态:', status, '完成日期:', task.real_finish_date, '当天日期:', dayKey, '是否完成:', isCompleted)
       if (isCompleted) {
         dayData[dayKey].completed++
-      } else {
-        dayData[dayKey].uncompleted++
+      } 
+    })
+
+    let mondayDatas = {}
+    taskStats.value.forEach(task => {
+          if(mondayDatas[task.mondayDate] == null ){
+            mondayDatas[task.mondayDate] = 1
+          }else{
+            mondayDatas[task.mondayDate]++
+          }
+      })
+
+    let lastDate = null
+    let lastMonday = null
+    Object.keys(dayData).forEach(dayKey => {
+      let monday_date = dayData[dayKey].mondayDate
+      let weekTaskTotal = mondayDatas[monday_date] ? mondayDatas[monday_date] : 0
+      if(lastDate == null || lastMonday == null){
+        dayData[dayKey].finishTotal = dayData[dayKey].completed
+        dayData[dayKey].uncompleted = weekTaskTotal - dayData[dayKey].completed
+      }else{
+        if(lastMonday == monday_date){
+          dayData[dayKey].finishTotal = dayData[lastDate].finishTotal + dayData[dayKey].completed
+          dayData[dayKey].uncompleted = weekTaskTotal - dayData[dayKey].finishTotal
+        }else{
+            dayData[dayKey].finishTotal = dayData[dayKey].completed
+            dayData[dayKey].uncompleted = weekTaskTotal - dayData[dayKey].completed
+        }
       }
+
+      lastDate = dayKey
+      lastMonday = monday_date
+
+
+
     })
     
+    console.log(dayData)
+
     // 按日期排序
     const sortedDays = Object.keys(dayData).sort()
     sortedDays.forEach(day => {
