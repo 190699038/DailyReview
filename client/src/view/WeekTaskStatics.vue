@@ -90,6 +90,7 @@
               <div slot="header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h3>任务完成趋势</h3>
                 <el-radio-group v-model="chartType" @change="updateLineChart">
+                   <el-radio-button value="day">按日</el-radio-button>
                    <el-radio-button value="week">按周</el-radio-button>
                    <el-radio-button value="month">按月</el-radio-button>
                  </el-radio-group>
@@ -163,7 +164,7 @@ let statusPieChart = null
 let lineChart = null
 
 // 折线图相关
-const chartType = ref('week') // 'week' 或 'month'
+const chartType = ref('day') // 'day', 'week' 或 'month'
 const showLineChart = ref(false) // 是否显示折线图
 
 // 弹窗相关
@@ -516,7 +517,7 @@ const updateLineChart = () => {
   
   const option = {
     title: {
-      text: chartType.value === 'week' ? '周任务完成趋势' : '月任务完成趋势',
+      text: chartType.value === 'day' ? '日任务完成趋势' : chartType.value === 'week' ? '周任务完成趋势' : '月任务完成趋势',
       left: 'center'
     },
     tooltip: {
@@ -587,7 +588,33 @@ const processLineChartData = () => {
   const completed = []
   const uncompleted = []
   
-  if (chartType.value === 'week') {
+  if (chartType.value === 'day') {
+    // 按日统计
+    const dayData = {}
+    
+    taskStats.value.forEach(task => {
+      if (!task.createdate) return
+      const dayKey = task.createdate // YYYYMMDD格式
+      if (!dayData[dayKey]) {
+        dayData[dayKey] = { completed: 0, uncompleted: 0 }
+      }
+      
+      if (parseInt(task.status) === 5 || parseInt(task.status) === 3) {
+        dayData[dayKey].completed++
+      } else {
+        dayData[dayKey].uncompleted++
+      }
+    })
+    
+    // 按日期排序
+    const sortedDays = Object.keys(dayData).sort()
+    sortedDays.forEach(day => {
+      const dayLabel = formatDayLabel(day)
+      categories.push(dayLabel)
+      completed.push(dayData[day].completed)
+      uncompleted.push(dayData[day].uncompleted)
+    })
+  } else if (chartType.value === 'week') {
     // 按周统计
     const weekData = {}
     
@@ -674,6 +701,18 @@ const processLineChartData = () => {
   }
   
   return { categories, completed, uncompleted }
+}
+
+// 格式化日标签
+const formatDayLabel = (dayDate) => {
+  // 处理 "20250708" 格式的日期字符串
+  if (dayDate.length === 8 && /^\d{8}$/.test(dayDate)) {
+    const year = dayDate.substring(0, 4)
+    const month = dayDate.substring(4, 6)
+    const day = dayDate.substring(6, 8)
+    return `${parseInt(month)}月${parseInt(day)}日`
+  }
+  return dayDate
 }
 
 // 格式化周标签
