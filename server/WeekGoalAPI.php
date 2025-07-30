@@ -19,18 +19,18 @@ try {
     switch ($action) {
         case 'list':
             // 参数白名单和验证
-            $allowedParams = ['department_id', 'startDate', 'endDate','country'];
+            $allowedParams = ['department_id', 'startDate', 'endDate','country','mondayDates'];
             
             // 验证必传参数
-            if (!isset($_REQUEST['startDate']) || empty($_REQUEST['startDate'])) {
-                throw new Exception('startDate参数必传');
-            }
-            if (!isset($_REQUEST['endDate']) || empty($_REQUEST['endDate'])) {
-                throw new Exception('endDate参数必传');
+            if (!isset($_REQUEST['mondayDates']) || empty($_REQUEST['mondayDates'])) {
+                throw new Exception('mondayDates参数必传');
             }
             
-            $startDate = $_REQUEST['startDate'];
-            $endDate = $_REQUEST['endDate'];
+            $mondayDates = $_REQUEST['mondayDates'];
+            
+            
+            // 构建IN查询的占位符
+            $placeholders = $mondayDates;
             
             // 构建查询条件
             $conditions = [];
@@ -52,10 +52,10 @@ try {
             $sql = "SELECT wg.*, d.department_name 
                    FROM weekly_goals wg 
                    INNER JOIN departments d ON wg.department_id = d.id 
-                   WHERE wg.createdate BETWEEN ? AND ?";
+                   WHERE wg.mondayDate IN ($placeholders)";
             
-            // 添加startDate和endDate参数
-            $queryParams = [$startDate, $endDate];
+            // 添加mondayDates参数
+            $queryParams = [];
             
             // 添加其他动态条件
             if (!empty($conditions)) {
@@ -63,7 +63,7 @@ try {
                 $queryParams = array_merge($queryParams, $params);
             }
             
-            $sql .= ' ORDER BY wg.createdate DESC';
+            $sql .= ' ORDER BY wg.mondayDate DESC';
             
             $stmt = $conn->prepare($sql);
             $stmt->execute($queryParams);
