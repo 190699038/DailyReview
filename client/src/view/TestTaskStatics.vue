@@ -150,12 +150,47 @@
       </el-collapse>
     </el-card>
   </div>
+
+  <!-- 任务详情弹窗 -->
+  <el-dialog
+    v-model="dialogVisible"
+    title="任务详情"
+    width="80%"
+    :before-close="handleClose"
+  >
+    <el-table
+      :data="dialogTaskData"
+      border
+      style="width: 100%;"
+      max-height="400"
+    >
+      <el-table-column prop="task_id" label="任务ID" width="80" header-align="center" align="center"></el-table-column>
+      <el-table-column prop="product" label="产品" width="120" header-align="center" align="center"></el-table-column>
+      <el-table-column prop="test_content" label="测试内容" min-width="200"></el-table-column>
+      <el-table-column prop="test_status" label="状态" width="100" header-align="center" align="center">
+        <template #default="scope">
+          <el-tag 
+            :type="statusTypeMap[scope.row.test_status]"
+            size="small"
+          >
+            {{ scope.row.test_status }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="totalTime" label="耗时(小时)" header-align="center" align="center" width="100"></el-table-column>
+    </el-table>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dialogVisible = false">关闭</el-button>
+      </span>
+    </template>
+  </el-dialog>
 </div>
 </template>
 
 <script setup>
 import { defineComponent, ref, onMounted, computed, nextTick} from 'vue';
-import { ElMessage,ElCard, ElDescriptions, ElDescriptionsItem, ElCollapse, ElCollapseItem, ElRow, ElCol, ElStatistic, ElTable, ElTableColumn, ElTag, ElProgress } from 'element-plus';
+import { ElMessage,ElCard, ElDescriptions, ElDescriptionsItem, ElCollapse, ElCollapseItem, ElRow, ElCol, ElStatistic, ElTable, ElTableColumn, ElTag, ElProgress, ElDialog, ElButton } from 'element-plus';
 import * as XLSX from 'xlsx';
 import * as echarts from 'echarts';
 import http from '@/utils/http'
@@ -167,6 +202,10 @@ const endDate = ref('');
 const activeNames = ref(['王雪斌']); // 默认展开第一个负责人
 const taskData = ref([]);
 const groupedData = ref({});
+
+// 弹窗相关
+const dialogVisible = ref(false);
+const dialogTaskData = ref([]);
 
 // 图表引用
 const pieChartRef = ref();
@@ -242,20 +281,106 @@ const setDateRange = async (days) => {
   await loadData();
 };
 
+// 弹窗关闭处理
+const handleClose = () => {
+  dialogVisible.value = false;
+  dialogTaskData.value = [];
+};
+
+// 显示任务详情弹窗
+const showTaskDetails = (tasks, title) => {
+  dialogTaskData.value = tasks;
+  dialogVisible.value = true;
+};
+
 // 初始化图表
 const initCharts = () => {
   if (pieChartRef.value && !pieChart) {
     pieChart = echarts.init(pieChartRef.value);
+    // 添加点击事件
+    pieChart.on('click', handlePieChartClick);
   }
   if (lineChartRef.value && !lineChart) {
     lineChart = echarts.init(lineChartRef.value);
+    // 添加点击事件
+    lineChart.on('click', handleLineChartClick);
   }
   if (personBarChartRef.value && !personBarChart) {
     personBarChart = echarts.init(personBarChartRef.value);
+    // 添加点击事件
+    personBarChart.on('click', handlePersonBarChartClick);
   }
   if (personPieChartRef.value && !personPieChart) {
     personPieChart = echarts.init(personPieChartRef.value);
+    // 添加点击事件
+    personPieChart.on('click', handlePersonPieChartClick);
   }
+};
+
+// 饼图点击事件处理
+const handlePieChartClick = (params) => {
+  const status = params.name;
+  let filteredTasks = [];
+  
+  if (status === '已完成任务') {
+    filteredTasks = taskData.value.filter(task => 
+      task.test_status === '已上线' || task.test_status === '已完成'
+    );
+  } else if (status === '进行中任务') {
+    filteredTasks = taskData.value.filter(task => task.test_status === '测试中');
+  } else if (status === '未提测任务') {
+    filteredTasks = taskData.value.filter(task => task.test_status === '未提测');
+  }
+  
+  showTaskDetails(filteredTasks, status);
+};
+
+// 折线图点击事件处理
+const handleLineChartClick = (params) => {
+  const date = params.name;
+  const seriesName = params.seriesName;
+  
+  let filteredTasks = taskData.value.filter(task => task.creation_date === date);
+  
+  if (seriesName === '已完成') {
+    filteredTasks = filteredTasks.filter(task => 
+      task.test_status === '已上线' || task.test_status === '已完成'
+    );
+  } else if (seriesName === '进行中') {
+    filteredTasks = filteredTasks.filter(task => task.test_status === '测试中');
+  } else if (seriesName === '未提测') {
+    filteredTasks = filteredTasks.filter(task => task.test_status === '未提测');
+  }
+  
+  showTaskDetails(filteredTasks, `${date} - ${seriesName}`);
+};
+
+// 个人柱状图点击事件处理
+const handlePersonBarChartClick = (params) => {
+  const person = params.name;
+  const seriesName = params.seriesName;
+  
+  let filteredTasks = taskData.value.filter(task => task.responsible_person === person);
+  
+  if (seriesName === '已完成') {
+    filteredTasks = filteredTasks.filter(task => 
+      task.test_status === '已上线' || task.test_status === '已完成'
+    );
+  } else if (seriesName === '进行中') {
+    filteredTasks = filteredTasks.filter(task => task.test_status === '测试中');
+  } else if (seriesName === '未提测') {
+    filteredTasks = filteredTasks.filter(task => task.test_status === '未提测');
+  }
+  
+  showTaskDetails(filteredTasks, `${person} - ${seriesName}`);
+};
+
+// 个人饼图点击事件处理
+const handlePersonPieChartClick = (params) => {
+  const person = params.name;
+  const filteredTasks = taskData.value.filter(task => task.responsible_person === person);
+  
+  showTaskDetails(filteredTasks, `${person} - 所有任务`);
 };
 
 // 更新图表数据
