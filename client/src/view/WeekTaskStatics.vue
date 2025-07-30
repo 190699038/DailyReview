@@ -83,6 +83,20 @@
               </el-card>
             </el-col>
           </el-row>
+          
+          <!-- 折线图区域 -->
+          <div v-if="showLineChart" style="margin-top: 20px;">
+            <el-card>
+              <div slot="header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>任务完成趋势</h3>
+                <el-radio-group v-model="chartType" @change="updateLineChart">
+                   <el-radio-button value="week">按周</el-radio-button>
+                   <el-radio-button value="month">按月</el-radio-button>
+                 </el-radio-group>
+              </div>
+              <div ref="lineChartRef" style="width: 100%; height: 400px;"></div>
+            </el-card>
+          </div>
         </div>
       </el-card>
     </div>
@@ -143,8 +157,14 @@ const goals = ref([])
 // 图表相关
 const priorityPieChartRef = ref()
 const statusPieChartRef = ref()
+const lineChartRef = ref()
 let priorityPieChart = null
 let statusPieChart = null
+let lineChart = null
+
+// 折线图相关
+const chartType = ref('week') // 'week' 或 'month'
+const showLineChart = ref(false) // 是否显示折线图
 
 // 弹窗相关
 const dialogVisible = ref(false)
@@ -238,6 +258,10 @@ const loadData = async () => {
     const mondayDates = getMondaysInRange(startDate.value, endDate.value)
     console.log('日期区间内的周一日期:', mondayDates)
     
+    // 判断是否跨周（超过一周）
+    const isMultiWeek = mondayDates.length > 1
+    showLineChart.value = isMultiWeek
+    
     const departmentId = selectedDepartmentId.value
     const res = await http.get('WeekGoalAPI.php', {
       params: {
@@ -254,6 +278,12 @@ const loadData = async () => {
     // 更新图表
     await nextTick()
     updateCharts()
+    
+    // 如果跨周，初始化并更新折线图
+    if (isMultiWeek) {
+      initLineChart()
+      updateLineChart()
+    }
   } catch (error) {
     console.error('获取数据失败:', error)
     ElMessage.error('获取数据失败')
@@ -312,6 +342,10 @@ onMounted(async () => {
 onActivated(async () => {
   await nextTick()
   resizeCharts()
+  // 如果折线图存在，也需要resize
+  if (lineChart && showLineChart.value) {
+    lineChart.resize()
+  }
 })
 
 
@@ -431,6 +465,177 @@ const resizeCharts = () => {
   }
   if (statusPieChart) {
     statusPieChart.resize()
+  }
+  if (lineChart) {
+    lineChart.resize()
+  }
+}
+
+// 初始化折线图
+const initLineChart = () => {
+  if (lineChartRef.value && !lineChart) {
+    lineChart = echarts.init(lineChartRef.value)
+  }
+}
+
+// 更新折线图
+const updateLineChart = () => {
+  if (!lineChart || !taskStats.value.length) return
+  
+  const lineData = processLineChartData()
+  
+  const option = {
+    title: {
+      text: chartType.value === 'week' ? '周任务完成趋势' : '月任务完成趋势',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+        let result = params[0].name + '<br/>'
+        params.forEach(param => {
+          result += param.marker + param.seriesName + ': ' + param.value + '个<br/>'
+        })
+        return result
+      }
+    },
+    legend: {
+      data: ['已完成', '未完成'],
+      bottom: '5%'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: lineData.categories
+    },
+    yAxis: {
+      type: 'value',
+      minInterval: 1
+    },
+    series: [
+      {
+        name: '已完成',
+        type: 'line',
+        data: lineData.completed,
+        itemStyle: { color: '#67C23A' },
+        lineStyle: { color: '#67C23A' },
+        symbol: 'circle',
+        symbolSize: 6,
+        label: {
+          show: true,
+          position: 'top'
+        }
+      },
+      {
+        name: '未完成',
+        type: 'line',
+        data: lineData.uncompleted,
+        itemStyle: { color: '#F56C6C' },
+        lineStyle: { color: '#F56C6C' },
+        symbol: 'circle',
+        symbolSize: 6,
+        label: {
+          show: true,
+          position: 'top'
+        }
+      }
+    ]
+  }
+  
+  lineChart.setOption(option)
+}
+
+// 处理折线图数据
+const processLineChartData = () => {
+  const categories = []
+  const completed = []
+  const uncompleted = []
+  
+  if (chartType.value === 'week') {
+    // 按周统计
+    const weekData = {}
+    
+    taskStats.value.forEach(task => {
+      if (!task.mondayDate) return // 跳过没有week_start_date的任务
+      const weekKey = task.mondayDate
+      if (!weekData[weekKey]) {
+        weekData[weekKey] = { completed: 0, uncompleted: 0 }
+      }
+      
+      if (parseInt(task.status) === 5 || parseInt(task.status) === 3) {
+        weekData[weekKey].completed++
+      } else {
+        weekData[weekKey].uncompleted++
+      }
+    })
+    
+    // 按日期排序
+    const sortedWeeks = Object.keys(weekData).sort()
+    sortedWeeks.forEach((week, index) => {
+      const weekLabel = formatWeekLabel(week)
+      categories.push(weekLabel)
+      completed.push(weekData[week].completed)
+      uncompleted.push(weekData[week].uncompleted)
+    })
+  } else {
+    // 按月统计
+    const monthData = {}
+    
+    taskStats.value.forEach(task => {
+      if (!task.mondayDate) return // 跳过没有week_start_date的任务
+      const monthKey = task.mondayDate.substring(0, 7) // YYYY-MM
+      if (!monthData[monthKey]) {
+        monthData[monthKey] = { completed: 0, uncompleted: 0 }
+      }
+      
+      if (parseInt(task.status) === 5 || parseInt(task.status) === 3) {
+        monthData[monthKey].completed++
+      } else {
+        monthData[monthKey].uncompleted++
+      }
+    })
+    
+    // 按日期排序
+    const sortedMonths = Object.keys(monthData).sort()
+    sortedMonths.forEach(month => {
+      categories.push(month)
+      completed.push(monthData[month].completed)
+      uncompleted.push(monthData[month].uncompleted)
+    })
+  }
+  
+  return { categories, completed, uncompleted }
+}
+
+// 格式化周标签
+const formatWeekLabel = (weekStartDate) => {
+  // 处理 "20250708" 格式的日期字符串
+  let dateStr = weekStartDate
+  if (weekStartDate.length === 8 && /^\d{8}$/.test(weekStartDate)) {
+    // 将 "20250708" 转换为 "2025-07-08" 格式
+    dateStr = `${weekStartDate.substring(0, 4)}-${weekStartDate.substring(4, 6)}-${weekStartDate.substring(6, 8)}`
+  }
+  
+  const date = new Date(dateStr)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  
+  // 计算周结束日期
+  const endDate = new Date(date)
+  endDate.setDate(date.getDate() + 6)
+  const endMonth = endDate.getMonth() + 1
+  const endDay = endDate.getDate()
+  
+  if (month === endMonth) {
+    return `${month}月${day}-${endDay}日`
+  } else {
+    return `${month}月${day}日-${endMonth}月${endDay}日`
   }
 }
 
