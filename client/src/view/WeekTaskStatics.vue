@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container" style="width: 86%;margin-left: 7%;">
+  <div class="page-container">
     <!-- 查询条件区域 -->
     <div class="query-section">
       <el-date-picker
@@ -211,7 +211,6 @@ const handleDepartmentChange = (val) => {
       })
   }
 
-  loadData()
 }
 
 
@@ -281,8 +280,11 @@ const loadData = async () => {
     
     // 如果跨周，初始化并更新折线图
     if (isMultiWeek) {
-      initLineChart()
-      updateLineChart()
+      await nextTick()
+      setTimeout(() => {
+        initLineChart()
+        updateLineChart()
+      }, 100)
     }
   } catch (error) {
     console.error('获取数据失败:', error)
@@ -346,6 +348,7 @@ onActivated(async () => {
   if (lineChart && showLineChart.value) {
     lineChart.resize()
   }
+
 })
 
 
@@ -429,6 +432,15 @@ const statusStats = computed(() => {
 // 初始化图表
 const initCharts = () => {
   if (priorityPieChartRef.value && !priorityPieChart) {
+    // 检查DOM元素是否有正确的尺寸
+    const element = priorityPieChartRef.value
+    if (element.clientWidth === 0 || element.clientHeight === 0) {
+      // console.warn('优先级饼图容器尺寸为0，延迟初始化')
+      setTimeout(() => {
+        initCharts()
+      }, 200)
+      return
+    }
     priorityPieChart = echarts.init(priorityPieChartRef.value)
     // 添加点击事件
     priorityPieChart.on('click', (params) => {
@@ -444,6 +456,15 @@ const initCharts = () => {
     })
   }
   if (statusPieChartRef.value && !statusPieChart) {
+    // 检查DOM元素是否有正确的尺寸
+    const element = statusPieChartRef.value
+    if (element.clientWidth === 0 || element.clientHeight === 0) {
+      // console.warn('状态饼图容器尺寸为0，延迟初始化')
+      setTimeout(() => {
+        initCharts()
+      }, 200)
+      return
+    }
     statusPieChart = echarts.init(statusPieChartRef.value)
     // 添加点击事件
     statusPieChart.on('click', (params) => {
@@ -474,6 +495,15 @@ const resizeCharts = () => {
 // 初始化折线图
 const initLineChart = () => {
   if (lineChartRef.value && !lineChart) {
+    // 检查DOM元素是否有正确的尺寸
+    const element = lineChartRef.value
+    if (element.clientWidth === 0 || element.clientHeight === 0) {
+      // console.warn('折线图容器尺寸为0，延迟初始化')
+      setTimeout(() => {
+        initLineChart()
+      }, 200)
+      return
+    }
     lineChart = echarts.init(lineChartRef.value)
   }
 }
@@ -885,12 +915,19 @@ const getStatusTagType = (status) => {
   const typeMap = { 1: 'warning', 2: 'primary', 3: 'success', 4: 'info', 0: 'info' }
   return typeMap[status] || 'info'
 }
+
+// 暴露方法给父组件调用
+defineExpose({
+  loadData
+})
 </script>
 
 
 <style scoped>
 .page-container {
   padding: 20px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .query-section {

@@ -1,12 +1,12 @@
 <template>
 
  <div class="container">
-  <el-tabs v-model="activeTab" type="card">
+  <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
     <el-tab-pane label="周目标" name="week-task">
       <WeekTask></WeekTask>
     </el-tab-pane>
     <el-tab-pane label="数据统计" name="week-task-statics">
-      <WeekTaskStatics></WeekTaskStatics>
+      <WeekTaskStatics ref="weekTaskStaticsRef"></WeekTaskStatics>
     </el-tab-pane>
   </el-tabs> 
 
@@ -23,14 +23,27 @@ import WeekTask from '@/view/WeekTask.vue';
 import WeekTaskStatics from '@/view/WeekTaskStatics.vue';
 
 const activeTab = ref('week-task');
+const weekTaskStaticsRef = ref(null);
 
 export default {
   components: {
     WeekTask,WeekTaskStatics
   },
   setup() {
+    // 处理TAB切换事件
+    const handleTabChange = (tabName) => {
+      if (tabName === 'week-task-statics' && weekTaskStaticsRef.value) {
+        // 通知WeekTaskStatics组件刷新数据
+        if (weekTaskStaticsRef.value.loadData) {
+          weekTaskStaticsRef.value.loadData();
+        }
+      }
+    };
+
     return {
-      activeTab
+      activeTab,
+      weekTaskStaticsRef,
+      handleTabChange
     }
   }
 }

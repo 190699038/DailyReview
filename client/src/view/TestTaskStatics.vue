@@ -54,8 +54,13 @@
           </el-col>
           <el-col :span="12">
             <el-card>
-              <div slot="header">
-                <h3>每日任务完成趋势</h3>
+              <div slot="header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>任务完成趋势</h3>
+                <el-radio-group v-model="trendViewType" size="small" @change="updateLineChart">
+                  <el-radio-button value="day">按日</el-radio-button>
+                  <el-radio-button value="week">按周</el-radio-button>
+                  <el-radio-button value="month">按月</el-radio-button>
+                </el-radio-group>
               </div>
               <div ref="lineChartRef" style="width: 100%; height: 250px;"></div>
             </el-card>
@@ -178,6 +183,8 @@
         </template>
       </el-table-column>
       <el-table-column prop="totalTime" label="耗时(小时)" header-align="center" align="center" width="100"></el-table-column>
+            <el-table-column prop="creation_date" label="创建日期" header-align="center" align="center" width="100"></el-table-column>
+
     </el-table>
     <template #footer>
       <span class="dialog-footer">
@@ -190,7 +197,7 @@
 
 <script setup>
 import { defineComponent, ref, onMounted, computed, nextTick} from 'vue';
-import { ElMessage,ElCard, ElDescriptions, ElDescriptionsItem, ElCollapse, ElCollapseItem, ElRow, ElCol, ElStatistic, ElTable, ElTableColumn, ElTag, ElProgress, ElDialog, ElButton } from 'element-plus';
+import { ElMessage,ElCard, ElDescriptions, ElDescriptionsItem, ElCollapse, ElCollapseItem, ElRow, ElCol, ElStatistic, ElTable, ElTableColumn, ElTag, ElProgress, ElDialog, ElButton, ElRadioGroup, ElRadioButton } from 'element-plus';
 import * as XLSX from 'xlsx';
 import * as echarts from 'echarts';
 import http from '@/utils/http'
@@ -206,6 +213,9 @@ const groupedData = ref({});
 // 弹窗相关
 const dialogVisible = ref(false);
 const dialogTaskData = ref([]);
+
+// 趋势图视图类型
+const trendViewType = ref('day');
 
 // 图表引用
 const pieChartRef = ref();
@@ -330,6 +340,8 @@ const handlePieChartClick = (params) => {
     filteredTasks = taskData.value.filter(task => task.test_status === '测试中');
   } else if (status === '未提测任务') {
     filteredTasks = taskData.value.filter(task => task.test_status === '未提测');
+  }else if (status === '暂停任务') {
+    filteredTasks = taskData.value.filter(task => task.test_status === '暂停');
   }
   
   showTaskDetails(filteredTasks, status);
@@ -398,7 +410,8 @@ const updatePieChart = () => {
   const data = [
     { value: totalCompletedTasks.value, name: '已完成任务' },
     { value: totalInProgressTasks.value, name: '进行中任务' },
-    { value: totalNotStartedTasks.value, name: '未提测任务' }
+    { value: totalNotStartedTasks.value, name: '未提测任务' },
+    { value: totalPausedTasks.value, name: '暂停任务' }
   ];
   
   const option = {
@@ -441,27 +454,90 @@ const updatePieChart = () => {
 const updateLineChart = () => {
   if (!lineChart) return;
   
-  // 按日期统计任务完成情况
-  const dateStats = {};
-  taskData.value.forEach(task => {
-    const date = task.creation_date;
-    if (!dateStats[date]) {
-      dateStats[date] = { completed: 0, inProgress: 0, notStarted: 0 };
-    }
-    
-    if (task.test_status === '已上线' || task.test_status === '已完成') {
-      dateStats[date].completed++;
-    } else if (task.test_status === '测试中') {
-      dateStats[date].inProgress++;
-    } else if (task.test_status === '未提测') {
-      dateStats[date].notStarted++;
-    }
-  });
+  let dateStats = {};
+  let dates = [];
+  let completedData = [];
+  let inProgressData = [];
+  let notStartedData = [];
+  let pausedData = [];
   
-  const dates = Object.keys(dateStats).sort();
-  const completedData = dates.map(date => dateStats[date].completed);
-  const inProgressData = dates.map(date => dateStats[date].inProgress);
-  const notStartedData = dates.map(date => dateStats[date].notStarted);
+  if (trendViewType.value === 'day') {
+    // 按日统计
+    taskData.value.forEach(task => {
+      const date = task.creation_date;
+      if (!dateStats[date]) {
+        dateStats[date] = { completed: 0, inProgress: 0, notStarted: 0 ,paused: 0};
+      }
+      
+      if (task.test_status === '已上线' || task.test_status === '已完成') {
+        dateStats[date].completed++;
+      } else if (task.test_status === '测试中') {
+        dateStats[date].inProgress++;
+      } else if (task.test_status === '未提测') {
+        dateStats[date].notStarted++;
+      }else if (task.test_status === '暂停') {
+        dateStats[date].paused++;
+      }
+    });
+    
+    dates = Object.keys(dateStats).sort();
+    completedData = dates.map(date => dateStats[date].completed);
+    inProgressData = dates.map(date => dateStats[date].inProgress);
+    notStartedData = dates.map(date => dateStats[date].notStarted);
+    pausedData = dates.map(date => dateStats[date].paused);
+  } else if (trendViewType.value === 'week') {
+    // 按周统计
+    taskData.value.forEach(task => {
+      const date = new Date(task.creation_date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
+      const weekStart = getWeekStart(date);
+      const weekKey = formatDate(weekStart);
+      
+      if (!dateStats[weekKey]) {
+        dateStats[weekKey] = { completed: 0, inProgress: 0, notStarted: 0,paused: 0 };
+      }
+      
+      if (task.test_status === '已上线' || task.test_status === '已完成') {
+        dateStats[weekKey].completed++;
+      } else if (task.test_status === '测试中') {
+        dateStats[weekKey].inProgress++;
+      } else if (task.test_status === '未提测') {
+        dateStats[weekKey].notStarted++;
+      } else if (task.test_status === '暂停') {
+        dateStats[weekKey].paused++;
+      }
+    });
+    
+    dates = Object.keys(dateStats).sort();
+    completedData = dates.map(date => dateStats[date].completed);
+    inProgressData = dates.map(date => dateStats[date].inProgress);
+    notStartedData = dates.map(date => dateStats[date].notStarted);
+    pausedData = dates.map(date => dateStats[date].paused);
+  } else if (trendViewType.value === 'month') {
+    // 按月统计
+    taskData.value.forEach(task => {
+      const monthKey = task.creation_date.substring(0, 6); // YYYYMM
+      
+      if (!dateStats[monthKey]) {
+        dateStats[monthKey] = { completed: 0, inProgress: 0, notStarted: 0,paused: 0 };
+      }
+      
+      if (task.test_status === '已上线' || task.test_status === '已完成') {
+        dateStats[monthKey].completed++;
+      } else if (task.test_status === '测试中') {
+        dateStats[monthKey].inProgress++;
+      } else if (task.test_status === '未提测') {
+        dateStats[monthKey].notStarted++;
+      } else if (task.test_status === '暂停') {
+        dateStats[monthKey].paused++;
+      }
+    });
+    
+    dates = Object.keys(dateStats).sort();
+    completedData = dates.map(date => dateStats[date].completed);
+    inProgressData = dates.map(date => dateStats[date].inProgress);
+    notStartedData = dates.map(date => dateStats[date].notStarted);
+    pausedData = dates.map(date => dateStats[date].paused);
+  }
   
   const option = {
     title: {
@@ -472,7 +548,7 @@ const updateLineChart = () => {
       trigger: 'axis'
     },
     legend: {
-      data: ['已完成', '进行中', '未提测']
+      data: ['已完成', '进行中', '未提测', '暂停']
     },
     grid: {
       left: '3%',
@@ -492,7 +568,6 @@ const updateLineChart = () => {
       {
         name: '已完成',
         type: 'line',
-        stack: 'Total',
         data: completedData,
         label: {
           show: true,
@@ -502,7 +577,6 @@ const updateLineChart = () => {
       {
         name: '进行中',
         type: 'line',
-        stack: 'Total',
         data: inProgressData,
         label: {
           show: true,
@@ -512,8 +586,16 @@ const updateLineChart = () => {
       {
         name: '未提测',
         type: 'line',
-        stack: 'Total',
         data: notStartedData,
+        label: {
+          show: true,
+          position: 'top'
+        }
+      },
+      {
+        name: '暂停',
+        type: 'line',
+        data: pausedData,
         label: {
           show: true,
           position: 'top'
@@ -525,6 +607,21 @@ const updateLineChart = () => {
   lineChart.setOption(option);
 };
 
+// 获取周的开始日期（周一）
+const getWeekStart = (date) => {
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // 调整为周一开始
+  return new Date(date.setDate(diff));
+};
+
+// 格式化日期为YYYYMMDD
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}${month}${day}`;
+};
+
 // 更新个人任务分布对比柱状图
 const updatePersonBarChart = () => {
   if (!personBarChart) return;
@@ -533,6 +630,7 @@ const updatePersonBarChart = () => {
   const completedData = persons.map(person => groupedData.value[person].completedTasks);
   const inProgressData = persons.map(person => groupedData.value[person].inProgressTasks);
   const notStartedData = persons.map(person => groupedData.value[person].notStartedTasks);
+  const pausedData = persons.map(person => groupedData.value[person].pausedTasks);
   
   const option = {
     title: {
@@ -546,7 +644,7 @@ const updatePersonBarChart = () => {
       }
     },
     legend: {
-      data: ['已完成', '进行中', '未提测']
+      data: ['已完成', '进行中', '未提测', '暂停']
     },
     grid: {
       left: '3%',
@@ -601,6 +699,22 @@ const updatePersonBarChart = () => {
         data: notStartedData,
         itemStyle: {
           color: '#909399'
+        },
+        label: {
+          show: true,
+          position: 'inside',
+          formatter: function(params) {
+            return params.value > 0 ? params.value : '';
+          }
+        }
+      },
+      {
+        name: '暂停',
+        type: 'bar',
+        stack: 'total',
+        data: pausedData,
+        itemStyle: {
+          color: '#F56C6C'
         },
         label: {
           show: true,
@@ -683,6 +797,8 @@ const getPersonInfo = (personData,type) => {
         return personData.inProgressTasks
     }else if(type == 4){
         return personData.notStartedTasks
+    }else if(type == 5){
+        return personData.pausedTasks
     }
 }
 
@@ -725,10 +841,12 @@ onMounted(async () => {
             completedTasks: 0,
             inProgressTasks: 0,
             notStartedTasks: 0,
+            pausedTasks: 0,
             tasks: [],
             completedTasksDic:{},
             inProgressTasksDic:{},
-            notStartedTasksDic:{}
+            notStartedTasksDic:{},
+            pausedTasksDic:{}
           };
         }
         
@@ -750,6 +868,9 @@ onMounted(async () => {
         } else if (task.test_status === '未提测') {
           result[person].notStartedTasksDic[task.task_id] = task
           result[person].notStartedTasks++;
+        } else if (task.test_status === '暂停') {
+          result[person].pausedTasksDic[task.task_id] = task
+          result[person].pausedTasks++;
         }
 
                 result[person].tasks.push(task);
@@ -763,10 +884,11 @@ onMounted(async () => {
       Object.keys(result).forEach(person => {
         const personData = result[person];
         
-        // 重新计算未提测任务数，排除已有其他状态的任务
+        // 重新计算任务数，排除已有其他状态的任务
         const notStartedTaskIds = Object.keys(personData.notStartedTasksDic);
         const completedTaskIds = Object.keys(personData.completedTasksDic);
         const inProgressTaskIds = Object.keys(personData.inProgressTasksDic);
+        const pausedTaskIds = Object.keys(personData.pausedTasksDic);
         
         // 过滤掉已完成或进行中的任务ID
         const filteredNotStartedTaskIds = notStartedTaskIds.filter(taskId => 
@@ -782,16 +904,23 @@ onMounted(async () => {
         );
         personData.inProgressTasks = filteredInProgressTaskIds.length;
         
+        // 处理暂停任务，排除已完成的
+        const filteredPausedTaskIds = pausedTaskIds.filter(taskId => 
+          !completedTaskIds.includes(taskId)
+        );
+        personData.pausedTasks = filteredPausedTaskIds.length;
+        
         // 已完成任务保持不变（去重）
         personData.completedTasks = completedTaskIds.length;
         
-        // 对tasks数组进行去重，按优先级保留：已完成/已上线 > 测试中 > 未提测，同时累加耗时
+        // 对tasks数组进行去重，按优先级保留：已完成/已上线 > 测试中 > 暂停 > 未提测，同时累加耗时
         const taskMap = {};
         const statusPriority = {
           '已完成': 1,
           '已上线': 1,
           '测试中': 2,
-          '未提测': 3
+          '暂停': 3,
+          '未提测': 4
         };
         
         // 遍历所有任务，保留每个task_id的最高优先级任务并累加耗时
@@ -906,6 +1035,36 @@ onMounted(async () => {
       });
       
       return notStartedCount;
+    });
+    
+    // 计算总暂停任务数
+    const totalPausedTasks = computed(() => {
+      // 按task_id分组，检查每个task_id的所有状态
+      const taskStatusMap = {};
+      
+      // 收集每个task_id的所有状态
+      taskData.value.forEach(task => {
+        const taskId = task.task_id;
+        if (!taskStatusMap[taskId]) {
+          taskStatusMap[taskId] = [];
+        }
+        taskStatusMap[taskId].push(task.test_status);
+      });
+      
+      // 统计暂停的任务：如果task_id在任何一天出现已完成或已上线，就不算暂停
+      let pausedCount = 0;
+      Object.keys(taskStatusMap).forEach(taskId => {
+        const statuses = taskStatusMap[taskId];
+        const hasCompleted = statuses.some(status => status === '已完成' || status === '已上线');
+        const hasPaused = statuses.some(status => status === '暂停');
+        
+        // 只有当没有完成状态且有暂停状态时，才算作暂停任务
+        if (!hasCompleted && hasPaused) {
+          pausedCount++;
+        }
+      });
+      
+      return pausedCount;
     });
     
     // 辅助方法：判断是否有提测时间
