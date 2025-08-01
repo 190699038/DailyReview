@@ -267,7 +267,28 @@ function parseProduct() {
             $result['上线待复盘'][] = ($index + 1) . '、【' . $item['project'] . '】' . $item['requirement_name'] . ' (' . $item['online_time'] . ')';
         }
         
+        // 计算有效率
+        $validCount = 0;
+        $invalidCount = 0;
+        foreach ($reviewCompleted as $item) {
+            if ($item['review_status'] === '有效') {
+                $validCount++;
+            } elseif ($item['review_status'] === '无效') {
+                $invalidCount++;
+            }
+        }
+        
+        $totalValidInvalid = $validCount + $invalidCount;
+        $effectiveRate = $totalValidInvalid > 0 ? round(($validCount / $totalValidInvalid) * 100, 1) : 0;
+        
         $result['一个月内新功能有效性复盘'] = [];
+        
+        // 添加有效率统计
+        if ($totalValidInvalid > 0) {
+            $result['一个月内新功能有效性复盘'][] = "📊 有效率：{$effectiveRate}% (有效需求：{$validCount}个，无效需求：{$invalidCount}个)";
+            $result['一个月内新功能有效性复盘'][] = "";
+        }
+        
         foreach ($reviewCompleted as $index => $item) {
             if ($item['review_status'] === '其它') {
                 $result['一个月内新功能有效性复盘'][] = ($index + 1) . '、【' . $item['review_status'] . '】【' . $item['project'] . '】' . $item['requirement_name'] . ' 👉  (待复盘完成)';
@@ -295,10 +316,10 @@ function sendDingTalkMarkdown($data) {
     $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97';
     // $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=5d88fd617ede030a0d55e705d522a6b2242c07cdf16bd634e188f3db7a01cf29';
     // 增强版换行处理（合并连续换行+统一缩进）
+    // 增强版换行处理
     $processContent = function($items) {
         return array_map(function($item) {
-            // 合并连续换行并添加引用符号
-            return '' . str_replace(["\r\r\n", "\r\n", "\r","\n"], "  \n> ", 
+            return '> ' . str_replace(["\r\r\n", "\r\n", "\r","\n"], "  \n> ", 
                    preg_replace('/(\r\n|\n|\r){2,}/', "\n", $item));
         }, $items);
     };
@@ -308,47 +329,62 @@ function sendDingTalkMarkdown($data) {
         'msgtype' => 'markdown',
         'markdown' => [
             'title' => '产品需求记录表每日同步',
-            'text' => "### ⏰ **产品需求记录表每日同步**  \n" // 标题加粗
+            'text' => "### <font color=#2A5CAA>⏰ 产品需求记录表每日同步</font>  \n"
         ]
     ];
 
-    // 1. 上线待复盘（添加双换行间隔+标题加粗）
+    // 1. 上线待复盘
     if (!empty($data['上线待复盘'])) {
-        $markdown['markdown']['text'] .= "  \n  \n"; // 双换行间隔
-        $markdown['markdown']['text'] .= "#### **🔴 上线待复盘**  \n"; // 标题加粗
+        $markdown['markdown']['text'] .= "  \n  \n**<font color=#D43030>🔴 上线待复盘</font>**  \n";
         foreach ($processContent($data['上线待复盘']) as $item) {
-            $markdown['markdown']['text'] .= "- {$item}  \n"; // 统一列表符号
+            $markdown['markdown']['text'] .= "- 📌 {$item}  \n";
         }
+    } else {
+        $markdown['markdown']['text'] .= "  \n  \n**<font color=#D43030>🔴 上线待复盘</font>**  \n📭 无待复盘需求  \n";
     }
-    $markdown['markdown']['text'] .= "↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠\n";
-    // 2. 上线后用人组复核结果（同上优化）
+    
+    $markdown['markdown']['text'] .= "  \n---  \n";
+    
+    // 2. 功能有效性复盘
     if (!empty($data['一个月内新功能有效性复盘'])) {
-        $markdown['markdown']['text'] .= "  \n  \n";
-        $markdown['markdown']['text'] .= "#### **🟢 一个月内新功能有效性复盘**  \n";
+        $markdown['markdown']['text'] .= "**<font color=#1A9431>🟢 一个月内新功能有效性复盘</font>**  \n";
         foreach ($processContent($data['一个月内新功能有效性复盘']) as $item) {
             $icon = match(true) {
                 str_contains($item, '【有效】') => '✅',
                 str_contains($item, '【无效】') => '❌',
                 default => 'ℹ️'
             };
-            $markdown['markdown']['text'] .= "{$icon} {$item}  \n"; // 图标与内容合并
+            // 添加颜色和强调格式
+            $formattedItem = preg_replace([
+                '/【有效】/', '/【无效】/', '/【复盘完成】/'
+            ], [
+                '<font color=#1A9431>**【有效】**</font>', 
+                '<font color=#D43030>**【无效】**</font>',
+                '<font color=#FF8C00>**【复盘完成】**</font>'
+            ], $item);
+            
+            $markdown['markdown']['text'] .= "{$icon} {$formattedItem}  \n";
         }
+    } else {
+        $markdown['markdown']['text'] .= "**<font color=#1A9431>🟢 一个月内新功能有效性复盘</font>**  \n📭 无复盘数据  \n";
     }
-    $markdown['markdown']['text'] .= "↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠\n";
-    // 3. 昨日上线内容（固定显示）
-    $markdown['markdown']['text'] .= "  \n  \n";
-    $markdown['markdown']['text'] .= "#### **🟡 昨日上线内容**  \n";
+    
+    $markdown['markdown']['text'] .= "  \n---  \n";
+    
+    // 3. 昨日上线内容
+    $markdown['markdown']['text'] .= "**<font color=#EEBA1E>🟡 昨日上线内容</font>**  \n";
     if (!empty($data['昨日上线内容'])) {
         foreach ($data['昨日上线内容'] as $item) {
-            $markdown['markdown']['text'] .= "🚀 {$item}  \n"; // 简化符号
+            $markdown['markdown']['text'] .= "🚀 {$item}  \n";
         }
     } else {
         $markdown['markdown']['text'] .= "📭 无新上线内容  \n";
     }
-
+    
+    $markdown['markdown']['text'] .= "  \n---  \n";
+    
     // 4. 提醒事项
-    $markdown['markdown']['text'] .= "↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠↠\n";
-    $markdown['markdown']['text'] .= "#### **🔔 提醒事项**  \n";
+    $markdown['markdown']['text'] .= "**<font color=#2A5CAA>🔔 提醒事项</font>**  \n";
     $markdown['markdown']['text'] .= "⚠️ **{$data['提醒']}**";
 
     // 发送请求
