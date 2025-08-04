@@ -260,7 +260,6 @@ const fetchDepartments = async () => {
 
 const handleDepartmentChange = (val) => {
   localStorage.setItem('department_id_cache', val)
-
   if (val == 0) {
     http.get(`UserInfoAPI.php?action=get_all_users`)
       .then(res => {
@@ -319,8 +318,39 @@ onMounted(async () => {
   const cachedId = localStorage.getItem('department_id_cache') || 2
   const dept = departments.value.find(d => d.id == cachedId)
   selectedDepartmentId.value = dept ? dept.id : departments.value[0]?.id || 2
+
+
+
   loadData()
 })
+
+const setDefaultCountry = (dpid)=>{
+  if(typeof dpid == 'string'){
+    dpid = parseInt(dpid)
+  }
+  if(dpid == 2 || dpid == 5){
+    form.value.country = 'US2'
+  }else if(dpid == 3){
+    form.value.country = 'QSJS'
+  }else if(dpid == 15){
+    form.value.country = 'QSDY'
+  }else if(dpid == 16){
+    form.value.country = 'QSLL'
+  }else if(dpid == 4){
+    form.value.country = 'TF'
+  }else if(dpid == 1){
+    form.value.country = 'YW'
+  }else if(dpid == 13){
+    form.value.country = 'DF'
+  }else if(dpid == 7){
+    form.value.country = 'YR'
+  }else if(dpid == 6){
+    form.value.country = 'XR'
+  }else if(dpid == 8){
+    form.value.country = 'CW'
+  }
+}
+
 const goals = ref([])
 const mondayDate = ref(getCurrentMonday())
 const dialogVisible = ref(false)
@@ -369,12 +399,18 @@ const countryOptions = ref([
   { value: 'CA', label: '加拿大' },
   { value: 'PH', label: '菲律宾' },
   { value: 'ALL', label: '所有地区' },
+  { value: 'QSJS', label: '奇胜-技术' },
+  { value: 'QSDY', label: '奇胜-调研' },
+  { value: 'QSLL', label: '奇胜-流量' },
+  { value: 'XR', label: '选人' },
+  { value: 'YR', label: '用人' },
   { value: 'YW', label: '运维' },
+  { value: 'FK', label: '风控' },
+  { value: 'MVP', label: 'MVP' },
   { value: 'CW', label: '财务' },
   { value: 'TF', label: '投放' },
   { value: 'DF', label: '支付' },
-  { value: 'QSDY', label: '奇胜-调研' },
-  { value: 'QSLL', label: '奇胜-流量' },
+
   { value: 'QT', label: '其它' },
 
 ])
@@ -397,7 +433,16 @@ const form = ref({
   pre_finish_date: '',
   real_finish_date: '',
   remark: '',
-  country: 'OA',
+  country: selectedDepartmentId.value === 2 || selectedDepartmentId.value === 5 ? 'US2' : 
+    selectedDepartmentId.value === 3 ? 'QSJS' : 
+    selectedDepartmentId.value === 15 ? 'QSDY' :
+    selectedDepartmentId.value === 16 ? 'QSLL' :
+    selectedDepartmentId.value === 4 ? 'TF' :
+    selectedDepartmentId.value === 1 ? 'YW' :
+    selectedDepartmentId.value === 13 ? 'DF' :
+    selectedDepartmentId.value === 7 ? 'YR' :
+    selectedDepartmentId.value === 6 ? 'XR' :
+    selectedDepartmentId.value === 8 ? 'CW' : 'OA',
   version: ''
 })
 
@@ -519,6 +564,8 @@ const showDialog = (mode, row) => {
       mondayDate: mondayDate.value,
       status: 1
     }
+    setDefaultCountry(selectedDepartmentId.value)
+
   }
   dialogVisible.value = true
 }
