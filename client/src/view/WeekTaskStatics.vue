@@ -517,7 +517,7 @@ const updateLineChart = () => {
   if (!lineChart || !taskStats.value.length) return
   
   const lineData = processLineChartData()
-  
+  console.log(lineData)
   const option = {
     title: {
       text: chartType.value === 'day' ? '日任务完成趋势' : chartType.value === 'week' ? '周任务完成趋势' : '月任务完成趋势',
@@ -556,7 +556,7 @@ const updateLineChart = () => {
       {
         name: '已完成',
         type: 'line',
-        data: lineData.completed,
+        data: lineData.finishTotal,//lineData.completed,
         itemStyle: { color: '#67C23A' },
         lineStyle: { color: '#67C23A' },
         symbol: 'circle',
@@ -590,7 +590,7 @@ const processLineChartData = () => {
   const categories = []
   const completed = []
   const uncompleted = []
-  
+  const finishTotal = []
   if (chartType.value === 'day') {
     // 按日统计
     const dayData = {}
@@ -644,7 +644,7 @@ const processLineChartData = () => {
 
     })
     
-    console.log(dayData)
+    // console.log(dayData)
 
     // 按日期排序
     const sortedDays = Object.keys(dayData).sort()
@@ -653,6 +653,7 @@ const processLineChartData = () => {
       categories.push(dayLabel)
       completed.push(dayData[day].completed)
       uncompleted.push(dayData[day].uncompleted)
+      finishTotal.push(dayData[day].finishTotal)
     })
   } else if (chartType.value === 'week') {
     // 按周统计
@@ -662,7 +663,7 @@ const processLineChartData = () => {
       if (!task.mondayDate) return // 跳过没有week_start_date的任务
       const weekKey = task.mondayDate
       if (!weekData[weekKey]) {
-        weekData[weekKey] = { completed: 0, uncompleted: 0 }
+        weekData[weekKey] = { completed: 0, uncompleted: 0, finishTotal: 0 }
       }
       
       if (parseInt(task.status) === 5 || parseInt(task.status) === 3) {
@@ -671,14 +672,17 @@ const processLineChartData = () => {
         weekData[weekKey].uncompleted++
       }
     })
+
+    // console.log(weekData)
     
     // 按日期排序
     const sortedWeeks = Object.keys(weekData).sort()
     sortedWeeks.forEach((week, index) => {
       const weekLabel = formatWeekLabel(week)
       categories.push(weekLabel)
-      completed.push(weekData[week].completed)
+      // completed.push(weekData[week].completed)
       uncompleted.push(weekData[week].uncompleted)
+      finishTotal.push(weekData[week].completed)
     })
   } else {
     // 按月统计
@@ -737,10 +741,12 @@ const processLineChartData = () => {
       categories.push(month)
       completed.push(monthData[month].completed)
       uncompleted.push(monthData[month].uncompleted)
+      finishTotal.push(monthData[month].completed)
+
     })
   }
   
-  return { categories, completed, uncompleted }
+  return { categories, completed, uncompleted , finishTotal}
 }
 
 // 格式化日标签
