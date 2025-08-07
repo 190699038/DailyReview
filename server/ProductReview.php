@@ -160,12 +160,15 @@ function parseProduct() {
         // ① 筛选出上线待复盘的内容项目
         // var_dump($allProductData);
         $waitingReview = [];
+        $reviewCompletedIds = [];
+
         foreach ($allProductData as $item) {
             // 假设数据是数组格式，按列索引访问
             if (is_array($item) && count($item) >= 21) {
                 $progress = $item[7] ; // 第8列（索引7）- 进度
                 $progress = is_array($progress) ? '' : (string)$progress;
-                if (strpos($progress, '上线待复盘') !== false) {
+                if (strpos($progress, '复盘中') !== false) {
+                    $id = $item[0] ?? 0; // 第1列 - 需求ID
                     $requirementName = $item[1] ?? ''; // 第2列 - 需求名称
                     $requirementName = is_array($requirementName) ? '' : (string)$requirementName;
                     $project = $item[3] ?? ''; // 第4列 - 项目
@@ -173,8 +176,9 @@ function parseProduct() {
                     $onlineTime = $item[16] ?? ''; // 第17列 - 上线时间
                     $onlineTime = is_array($onlineTime) ? '' : (string)$onlineTime;
                     $onlineTime = convertExcelDate($onlineTime); // 转换Excel日期格式
-                    
+                    $reviewCompletedIds[$id] = $id;
                     $waitingReview[] = [
+                        'id' => $id,
                         'project' => $project,
                         'requirement_name' => $requirementName,
                         'online_time' => '上线时间:'.$onlineTime
@@ -185,7 +189,11 @@ function parseProduct() {
         
 
         // ② 已上线时间计算，近一个月内状态为'完成复盘'的数据
-        $oneMonthAgo = date('Y-m-d', strtotime('-1 month'));
+        $oneMonthAgo = date('Y-m-d', strtotime('-2 month'));
+        //并且日期必须大于2025-07-01
+        if($oneMonthAgo < '2025-07-01') {
+            $oneMonthAgo = '2025-07-01';
+        }
         $reviewCompleted = [];
         
         foreach ($allProductData as $item) {
@@ -197,30 +205,35 @@ function parseProduct() {
                 $onlineTime = convertExcelDate($onlineTime); // 转换Excel日期格式
                 
                 if (strpos($progress, '完成复盘') !== false && $onlineTime >= $oneMonthAgo) {
+                    $id = $item[0] ?? 0; // 第1列 - 需求ID
                     $requirementName = $item[1] ?? ''; // 第2列 - 需求名称
                     $requirementName = is_array($requirementName) ? '' : (string)$requirementName;
                     $project = $item[3] ?? ''; // 第4列 - 项目
                     $project = is_array($project) ? '' : (string)$project;
-                    $onlineEffect = $item[18] ?? ''; // 第19列 - 上线效果
+                    $onlineEffect = $item[19] ?? ''; // 第19列 - 上线效果
                     $onlineEffect = is_array($onlineEffect) ? '' : (string)$onlineEffect;
-                    $userReview = $item[19] ?? ''; // 第20列 - 用人组复核
+                    $next_step = $item[20] ?? '';//下一步
+                    
+                    $userReview = $item[21] ?? ''; // 第20列 - 用人组复核
                     $userReview = is_array($userReview) ? '' : (string)$userReview;
                     
                     // 判断用人组复核状态
-                    $reviewStatus = '其它';
+                    $reviewStatus = '未知';
                     if (strpos($userReview, '有效') !== false) {
                         $reviewStatus = '有效';
                     } elseif (strpos($userReview, '无效') !== false) {
                         $reviewStatus = '无效';
                     } elseif (empty($userReview) || strpos($userReview, '未知') !== false) {
-                        $reviewStatus = '其它';
+                        $reviewStatus = '未知';
                     }
                     
                     $reviewCompleted[] = [
+                        'id' => $id,
                         'review_status' => $reviewStatus,
                         'project' => $project,
                         'requirement_name' => $requirementName,
-                        'online_effect' => $onlineEffect
+                        'online_effect' => $onlineEffect,
+                        'next_step' => $next_step
                     ];
                 }
             }
@@ -228,7 +241,7 @@ function parseProduct() {
         
         // 按有效-无效-其它排序
          usort($reviewCompleted, function($a, $b) {
-             $order = ['有效' => 1, '无效' => 2, '其它' => 3];
+             $order = ['有效' => 1, '无效' => 2, '未知' => 3];
              $aOrder = $order[$a['review_status']] ?? 3;
              $bOrder = $order[$b['review_status']] ?? 3;
              return $aOrder - $bOrder;
@@ -262,9 +275,9 @@ function parseProduct() {
         }
         
         // 3. 格式化输出
-        $result['上线待复盘'] = [];
+        $result['复盘中'] = [];
         foreach ($waitingReview as $index => $item) {
-            $result['上线待复盘'][] = ($index + 1) . '、【' . $item['project'] . '】' . $item['requirement_name'] . ' (' . $item['online_time'] . ')';
+            $result['复盘中'][] = ($index + 1) . '、【' . $item['project'] . '】' . $item['requirement_name'] . ' (' . $item['online_time'] . ')';
         }
         
         // 计算有效率
@@ -281,19 +294,22 @@ function parseProduct() {
         $totalValidInvalid = $validCount + $invalidCount;
         $effectiveRate = $totalValidInvalid > 0 ? round(($validCount / $totalValidInvalid) * 100, 1) : 0;
         
-        $result['一个月内新功能有效性复盘'] = [];
+        $result['两个月内新功能有效性复盘'] = [];
         
         // 添加有效率统计
         if ($totalValidInvalid > 0) {
-            $result['一个月内新功能有效性复盘'][] = "📊 有效率：{$effectiveRate}% (有效需求：{$validCount}个，无效需求：{$invalidCount}个)";
-            $result['一个月内新功能有效性复盘'][] = "";
+            $result['两个月内新功能有效性复盘'][] = "📊 有效率：**<font color=green>{$effectiveRate}%  </font>** (有效需求：：**<font color=green>{$validCount}</font>**个，无效需求：**<font color=red>{$invalidCount}</font>**个)";
+            $result['两个月内新功能有效性复盘'][] = "";
         }
         
         foreach ($reviewCompleted as $index => $item) {
-            if ($item['review_status'] === '其它') {
-                $result['一个月内新功能有效性复盘'][] = ($index + 1) . '、【' . $item['review_status'] . '】【' . $item['project'] . '】' . $item['requirement_name'] . ' 👉  (待复盘完成)';
-            } else {
-                $result['一个月内新功能有效性复盘'][] = ($index + 1) . '、【' . $item['review_status'] . '】【' . $item['project'] . '】' . $item['requirement_name'] . ' 👉  (' . $item['online_effect'] . ')';
+            if ($item['review_status'] === '未知') {
+                $result['两个月内新功能有效性复盘'][] = ($index + 1) . '、【' . $item['review_status'] . '】【' . $item['project'] . '】' . $item['requirement_name'] . ' 无下一步 🔍';
+            }elseif($item['review_status'] === '无效') {
+                $result['两个月内新功能有效性复盘'][] = ($index + 1) . '、【' . $item['review_status'] . '】【' . $item['project'] . '】' . $item['requirement_name'] . ' 😂 结论:(' . $item['online_effect'] . ')'. ' ➼ 下一步:〖**<font color=red>' . $item['next_step'] . '</font>** 〗';
+            }
+            else {
+                $result['两个月内新功能有效性复盘'][] = ($index + 1) . '、【' . $item['review_status'] . '】【' . $item['project'] . '】' . $item['requirement_name'] . ' 😀 结论:(' . $item['online_effect'] . ')';
             }
         }
         
@@ -313,13 +329,13 @@ function parseProduct() {
     }
 }
 function sendDingTalkMarkdown($data) {
-    $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97';
-    // $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=5d88fd617ede030a0d55e705d522a6b2242c07cdf16bd634e188f3db7a01cf29';
+    // $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97';
+    $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=5d88fd617ede030a0d55e705d522a6b2242c07cdf16bd634e188f3db7a01cf29';
     // 增强版换行处理（合并连续换行+统一缩进）
     // 增强版换行处理
     $processContent = function($items) {
         return array_map(function($item) {
-            return '> ' . str_replace(["\r\r\n", "\r\n", "\r","\n"], "  \n> ", 
+            return '' . str_replace(["\r\r\n", "\r\n", "\r","\n"], "  \n> ", 
                    preg_replace('/(\r\n|\n|\r){2,}/', "\n", $item));
         }, $items);
     };
@@ -334,21 +350,21 @@ function sendDingTalkMarkdown($data) {
     ];
 
     // 1. 上线待复盘
-    if (!empty($data['上线待复盘'])) {
-        $markdown['markdown']['text'] .= "  \n  \n**<font color=#D43030>🔴 上线待复盘</font>**  \n";
-        foreach ($processContent($data['上线待复盘']) as $item) {
+    if (!empty($data['复盘中'])) {
+        $markdown['markdown']['text'] .= "  \n  \n**<font color=#D43030>🔴 复盘中</font>**  \n";
+        foreach ($processContent($data['复盘中']) as $item) {
             $markdown['markdown']['text'] .= "- 📌 {$item}  \n";
         }
     } else {
-        $markdown['markdown']['text'] .= "  \n  \n**<font color=#D43030>🔴 上线待复盘</font>**  \n📭 无待复盘需求  \n";
+        $markdown['markdown']['text'] .= "  \n  \n**<font color=#D43030>🔴 复盘中</font>**  \n📭 无待复盘需求  \n";
     }
     
     $markdown['markdown']['text'] .= "  \n---  \n";
     
     // 2. 功能有效性复盘
-    if (!empty($data['一个月内新功能有效性复盘'])) {
-        $markdown['markdown']['text'] .= "**<font color=#1A9431>🟢 一个月内新功能有效性复盘</font>**  \n";
-        foreach ($processContent($data['一个月内新功能有效性复盘']) as $item) {
+    if (!empty($data['两个月内新功能有效性复盘'])) {
+        $markdown['markdown']['text'] .= "**<font color=#1A9431>🟢 两个月内新功能有效性复盘</font>**  \n";
+        foreach ($processContent($data['两个月内新功能有效性复盘']) as $item) {
             $icon = match(true) {
                 str_contains($item, '【有效】') => '✅',
                 str_contains($item, '【无效】') => '❌',
@@ -366,7 +382,7 @@ function sendDingTalkMarkdown($data) {
             $markdown['markdown']['text'] .= "{$icon} {$formattedItem}  \n";
         }
     } else {
-        $markdown['markdown']['text'] .= "**<font color=#1A9431>🟢 一个月内新功能有效性复盘</font>**  \n📭 无复盘数据  \n";
+        $markdown['markdown']['text'] .= "**<font color=#1A9431>🟢 两个月内新功能有效性复盘</font>**  \n📭 无复盘数据  \n";
     }
     
     $markdown['markdown']['text'] .= "  \n---  \n";
@@ -403,4 +419,4 @@ function sendDingTalkMarkdown($data) {
 
 
 
-?>
+?>ß
