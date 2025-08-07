@@ -48,16 +48,16 @@
           <el-col :span="12">
             <el-card>
               <div slot="header">
-                <h3>总体任务分布饼图</h3>
+                <!-- <h3>总体任务分布饼图</h3> -->
               </div>
-              <div ref="pieChartRef" style="width: 100%; height: 250px;"></div>
+              <div ref="pieChartRef" style="width: 100%; height: 300px;"></div>
             </el-card>
           </el-col>
           <el-col :span="12">
             <el-card>
               <div slot="header">
-                <h3>提测时间统计</h3>
-                <div ref="submitPieChartRef" style="width: 100%; height: 250px;"></div>
+                <!-- <h3>提测时间统计</h3> -->
+                <div ref="submitPieChartRef" style="width: 100%; height:300px;"></div>
                 
                 </div>
             </el-card>
@@ -195,7 +195,12 @@
         </template>
       </el-table-column>
       <el-table-column prop="totalTime" label="耗时(小时)" header-align="center" align="center" width="100"></el-table-column>
-            <el-table-column prop="creation_date" label="创建日期" header-align="center" align="center" width="100"></el-table-column>
+      
+  
+      <el-table-column v-if="showSubTime" prop="pre_submission_time" label="预计提测时间" header-align="center" align="center" width="110"></el-table-column>
+      <el-table-column v-if="showSubTime" prop="submission_time" label="实际提测时间" header-align="center" align="center" width="110"></el-table-column>
+
+      <el-table-column prop="creation_date" label="创建日期" header-align="center" align="center" width="100"></el-table-column>
 
     </el-table>
     <template #footer>
@@ -236,6 +241,7 @@ window.addEventListener('resize', () => {
 // 弹窗相关
 const dialogVisible = ref(false);
 const dialogTaskData = ref([]);
+const showSubTime = ref(false);
 
 // 趋势图视图类型
 const trendViewType = ref('day');
@@ -333,10 +339,10 @@ const handleClose = () => {
 // 获取任务提交状态
 const getSubmissionStatus = (item) => {
 if ( item.pre_submission_time == null || item.pre_submission_time == '') {
-      return 'normal';
+      return 'unknown';
     }else if(item.submission_time == null || item.submission_time == ''){
+      
       if(item.pre_submission_time != null && item.pre_submission_time != ''){
-
        //判断今日的日期是否大于预提测日期，如果是，则为延期
        const preStr = item.pre_submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
        const preDate = new Date(preStr);
@@ -348,8 +354,8 @@ if ( item.pre_submission_time == null || item.pre_submission_time == '') {
       return 'unknown';
     } else {
       // 统一日期格式为YYYY-MM-DD
-      const preStr = item.pre_submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
-      const subStr = item.submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+      const preStr = item.pre_submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3').substring(0,10);
+      const subStr = item.submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3').substring(0,10);
       const preDate = new Date(preStr);
       const subDate = new Date(subStr);
       if(subDate > preDate ) {
@@ -363,8 +369,14 @@ if ( item.pre_submission_time == null || item.pre_submission_time == '') {
 };
 
 const showTaskDetails = (tasks, title) => {
+  if(title != null && title == '提测统计'){
+    showSubTime.value = true;
+  }else{
+    showSubTime.value = false;
+  }
   dialogTaskData.value = tasks;
   dialogVisible.value = true;
+
 };
 
 // 初始化图表
@@ -495,7 +507,7 @@ const initSubmitPieChart = ( data ) => {
 
   (submitList.value || []).forEach(item => {
     if ( item.pre_submission_time == null || item.pre_submission_time == '') {
-      statusCount.normal++;
+      statusCount.unknown++;
     }else if(item.submission_time == null || item.submission_time == ''){
       let badd = false;
       if(item.pre_submission_time != null && item.pre_submission_time != ''){
@@ -513,8 +525,8 @@ const initSubmitPieChart = ( data ) => {
       }
     } else {
       // 统一日期格式为YYYY-MM-DD
-      const preStr = item.pre_submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
-      const subStr = item.submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+      const preStr = item.pre_submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3').substring(0,10);
+      const subStr = item.submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3').substring(0,10);
       const preDate = new Date(preStr);
       const subDate = new Date(subStr);
       // statusCount[subDate > preDate ? 'delay' : 'advance']++;
@@ -529,24 +541,27 @@ const initSubmitPieChart = ( data ) => {
   });
 
   const option = {
+     title: {
+      text: '提测时间统计',
+      left: 'left'
+    },
     tooltip: {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c} ({d}%)'
     },
     legend: {
       orient: 'vertical',
-      left: 'left'
+      left: 'right'
     },
     series: [{
       name: '提测状态',
       type: 'pie',
       radius: '50%',
       data: [
-        { value: statusCount.normal, name: '正常提测' },
-        { value: statusCount.delay, name: '延迟提测' },
-        { value: statusCount.advance, name: '提前提测' },
-        { value: statusCount.unknown, name: '未知' }
-
+        { value: statusCount.normal, name: `正常提测 ${statusCount.normal}次 (${((statusCount.normal/(statusCount.normal+statusCount.delay+statusCount.advance+statusCount.unknown))*100).toFixed(1)}%)`,tip:`正常提测` },
+        { value: statusCount.delay, name: `延迟提测 ${statusCount.delay}次 (${((statusCount.delay/(statusCount.normal+statusCount.delay+statusCount.advance+statusCount.unknown))*100).toFixed(1)}%)`,tip:`延迟提测` },
+        { value: statusCount.advance, name: `提前提测 ${statusCount.advance}次 (${((statusCount.advance/(statusCount.normal+statusCount.delay+statusCount.advance+statusCount.unknown))*100).toFixed(1)}%)`,tip:`提前提测` },
+        { value: statusCount.unknown, name: `未知 ${statusCount.unknown}次 (${((statusCount.unknown/(statusCount.normal+statusCount.delay+statusCount.advance+statusCount.unknown))*100).toFixed(1)}%)`,tip:`未知` }
       ],
       emphasis: {
         itemStyle: {
@@ -569,9 +584,9 @@ const initSubmitPieChart = ( data ) => {
     };
     const filteredTasks = submitList.value.filter(item => {
       const itemStatus = getSubmissionStatus(item);
-      return itemStatus === statusMap[params.name];
+      return itemStatus === statusMap[params.data.tip];
     });
-    showTaskDetails(filteredTasks, params.name);
+    showTaskDetails(filteredTasks, '提测统计');
   });
 };
 
@@ -597,14 +612,14 @@ const updatePieChart = () => {
   const option = {
     title: {
       text: '任务状态分布',
-      left: 'center'
+      left: 'left'
     },
     tooltip: {
       trigger: 'item'
     },
     legend: {
       orient: 'vertical',
-      left: 'left'
+      left: 'right'
     },
     series: [
       {
@@ -991,19 +1006,7 @@ onBeforeUnmount(() => {
 
 onMounted(async () => {
   // 设置endDate为今天日期
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  endDate.value = `${year}${month}${day}`;
-  
-  // 设置startDate为七天前日期
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(today.getDate() - 7);
-  const startYear = sevenDaysAgo.getFullYear();
-  const startMonth = String(sevenDaysAgo.getMonth() + 1).padStart(2, '0');
-  const startDay = String(sevenDaysAgo.getDate()).padStart(2, '0');
-  startDate.value = `${startYear}${startMonth}${startDay}`;
+ setDateRange('week')
 
   await loadData();
   
