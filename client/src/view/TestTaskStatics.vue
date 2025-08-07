@@ -55,15 +55,11 @@
           </el-col>
           <el-col :span="12">
             <el-card>
-              <div slot="header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>任务完成趋势</h3>
-                <el-radio-group v-model="trendViewType" size="small" @change="updateLineChart">
-                  <el-radio-button value="day">按日</el-radio-button>
-                  <el-radio-button value="week">按周</el-radio-button>
-                  <el-radio-button value="month">按月</el-radio-button>
-                </el-radio-group>
-              </div>
-              <div ref="lineChartRef" style="width: 100%; height: 250px;"></div>
+              <div slot="header">
+                <h3>提测时间统计</h3>
+                <div ref="submitPieChartRef" style="width: 100%; height: 250px;"></div>
+                
+                </div>
             </el-card>
           </el-col>
         </el-row>
@@ -87,6 +83,21 @@
             </el-card>
           </el-col>
         </el-row>
+      </div>
+
+
+      <div class="charts-container" style="margin: 20px 0;">
+        <el-card>
+              <div slot="header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>任务完成趋势</h3>
+                <el-radio-group v-model="trendViewType" size="small" @change="updateLineChart">
+                  <el-radio-button value="day">按日</el-radio-button>
+                  <el-radio-button value="week">按周</el-radio-button>
+                  <el-radio-button value="month">按月</el-radio-button>
+                </el-radio-group>
+              </div>
+              <div ref="lineChartRef" style="width: 100%; height: 250px;"></div>
+            </el-card>
       </div>
 
       <!-- 负责人列表 -->
@@ -197,7 +208,8 @@
 </template>
 
 <script setup>
-import { defineComponent, ref, onMounted, computed, nextTick} from 'vue';
+import { defineComponent, ref, onMounted, computed, nextTick, onBeforeUnmount } from 'vue';
+import dayjs from 'dayjs';
 import { ElMessage,ElCard, ElDescriptions, ElDescriptionsItem, ElCollapse, ElCollapseItem, ElRow, ElCol, ElStatistic, ElTable, ElTableColumn, ElTag, ElProgress, ElDialog, ElButton, ElRadioGroup, ElRadioButton } from 'element-plus';
 import * as XLSX from 'xlsx';
 import * as echarts from 'echarts';
@@ -209,7 +221,17 @@ const startDate = ref('');
 const endDate = ref('');
 const activeNames = ref(['王雪斌']); // 默认展开第一个负责人
 const taskData = ref([]);
+const submitList = ref([]);
 const groupedData = ref({});
+
+// 窗口resize监听
+window.addEventListener('resize', () => {
+  pieChart?.resize();
+  lineChart?.resize();
+  personBarChart?.resize();
+  personPieChart?.resize();
+  submitPieChart?.resize();
+});
 
 // 弹窗相关
 const dialogVisible = ref(false);
@@ -220,6 +242,8 @@ const trendViewType = ref('day');
 
 // 图表引用
 const pieChartRef = ref();
+const submitPieChartRef = ref();
+let submitPieChart = null;
 const lineChartRef = ref();
 const personBarChartRef = ref();
 const personPieChartRef = ref();
@@ -258,7 +282,9 @@ const loadData = async () => {
     }else{
 
       taskData.value = res.data;
+      const submitList = ref([]);
       processData();
+      initSubmitPieChart(res.data);
       // 如果图表已初始化，则更新图表数据
       if (pieChart && lineChart && personBarChart && personPieChart) {
         await nextTick();
@@ -304,6 +330,38 @@ const handleClose = () => {
 };
 
 // 显示任务详情弹窗
+// 获取任务提交状态
+const getSubmissionStatus = (item) => {
+if ( item.pre_submission_time == null || item.pre_submission_time == '') {
+      return 'normal';
+    }else if(item.submission_time == null || item.submission_time == ''){
+      if(item.pre_submission_time != null && item.pre_submission_time != ''){
+
+       //判断今日的日期是否大于预提测日期，如果是，则为延期
+       const preStr = item.pre_submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+       const preDate = new Date(preStr);
+       const today = new Date();
+       if(today > preDate) {
+        return 'delay';
+       }
+      }
+      return 'unknown';
+    } else {
+      // 统一日期格式为YYYY-MM-DD
+      const preStr = item.pre_submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+      const subStr = item.submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+      const preDate = new Date(preStr);
+      const subDate = new Date(subStr);
+      if(subDate > preDate ) {
+        return 'delay';
+      }else if(subDate < preDate) {
+        return 'advance';
+      }
+      return 'normal';
+    }
+
+};
+
 const showTaskDetails = (tasks, title) => {
   dialogTaskData.value = tasks;
   dialogVisible.value = true;
@@ -399,6 +457,122 @@ const handlePersonPieChartClick = (params) => {
   const filteredTasks = taskData.value.filter(task => task.responsible_person === person);
   
   showTaskDetails(filteredTasks, `${person} - 所有任务`);
+};
+
+// 初始化提测时间饼图
+const initSubmitPieChart = ( data ) => {
+  if (!submitPieChartRef.value) return;
+  
+  submitPieChart = echarts.init(submitPieChartRef.value);
+  
+ 
+  if (!submitPieChartRef.value) return;
+  
+  submitPieChart = echarts.init(submitPieChartRef.value);
+  
+  //深拷贝数组data 赋值给submitList.value
+   let list = JSON.parse(JSON.stringify(data));
+  // 通过task_id去重数据，保留日期creation_date最新的数据
+  let map = new Map();
+  list.forEach(item => {
+    if(map.has(item.task_id)){
+      let oldItem = map.get(item.task_id);
+      if(oldItem.creation_date < item.creation_date){
+        map.set(item.task_id, item);
+      }
+    }else{
+      map.set(item.task_id, item);
+    }
+  });
+  submitList.value = [...map.values()];
+
+  const statusCount = {
+    normal: 0,
+    delay: 0,
+    advance: 0,
+    unknown: 0
+  };
+
+  (submitList.value || []).forEach(item => {
+    if ( item.pre_submission_time == null || item.pre_submission_time == '') {
+      statusCount.normal++;
+    }else if(item.submission_time == null || item.submission_time == ''){
+      let badd = false;
+      if(item.pre_submission_time != null && item.pre_submission_time != ''){
+       //判断今日的日期是否大于预提测日期，如果是，则为延期
+       const preStr = item.pre_submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+       const preDate = new Date(preStr);
+       const today = new Date();
+       if(today > preDate) {
+        badd = true
+        statusCount.delay++;
+       }
+      }
+      if(!badd){
+        statusCount.unknown++;
+      }
+    } else {
+      // 统一日期格式为YYYY-MM-DD
+      const preStr = item.pre_submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+      const subStr = item.submission_time.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+      const preDate = new Date(preStr);
+      const subDate = new Date(subStr);
+      // statusCount[subDate > preDate ? 'delay' : 'advance']++;
+      if(subDate > preDate ) {
+        statusCount.delay++;
+      }else if(subDate < preDate) {
+        statusCount.advance++;
+      }else{
+        statusCount.normal++;
+      }
+    }
+  });
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left'
+    },
+    series: [{
+      name: '提测状态',
+      type: 'pie',
+      radius: '50%',
+      data: [
+        { value: statusCount.normal, name: '正常提测' },
+        { value: statusCount.delay, name: '延迟提测' },
+        { value: statusCount.advance, name: '提前提测' },
+        { value: statusCount.unknown, name: '未知' }
+
+      ],
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
+      }
+    }]
+  };
+
+  submitPieChart.setOption(option);
+ // 添加饼图点击事件
+  submitPieChart.on('click', (params) => {
+    const statusMap = {
+      '正常提测': 'normal',
+      '延迟提测': 'delay',
+      '提前提测': 'advance',
+      '未知': 'unknown'
+    };
+    const filteredTasks = submitList.value.filter(item => {
+      const itemStatus = getSubmissionStatus(item);
+      return itemStatus === statusMap[params.name];
+    });
+    showTaskDetails(filteredTasks, params.name);
+  });
 };
 
 // 更新图表数据
@@ -809,6 +983,12 @@ const getPersonInfo = (personData,type) => {
 }
 
 // 组件挂载时设置默认值
+onBeforeUnmount(() => {
+  if (submitPieChart) {
+    submitPieChart.dispose();
+  }
+});
+
 onMounted(async () => {
   // 设置endDate为今天日期
   const today = new Date();
