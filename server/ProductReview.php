@@ -190,6 +190,7 @@ function parseProduct() {
 
         // ② 已上线时间计算，近一个月内状态为'完成复盘'的数据
         $oneMonthAgo = date('Y-m-d', strtotime('-2 month'));
+        $oneMonthAgo = date('Y-m-d', strtotime('-2 month'));
         //并且日期必须大于2025-07-01
         if($oneMonthAgo < '2025-07-01') {
             $oneMonthAgo = '2025-07-01';
@@ -304,7 +305,10 @@ function parseProduct() {
         
         foreach ($reviewCompleted as $index => $item) {
             if ($item['review_status'] === '未知') {
-                $result['两个月内新功能有效性复盘'][] = ($index + 1) . '、【' . $item['review_status'] . '】【' . $item['project'] . '】' . $item['requirement_name'] . ' 无下一步 🔍';
+                if($item['requirement_name'] != null && $item['requirement_name'] != ''){
+                    $result['两个月内新功能有效性复盘'][] = ($index + 1) . '、【' . $item['review_status'] . '】【' . $item['project'] . '】' . $item['requirement_name'] .' ❓ 结论:(' . $item['online_effect'] . ')'.  '<font color="#FFA500"> 需要补充下一步 @张梁 </font>';
+                }
+                
             }elseif($item['review_status'] === '无效') {
                 $result['两个月内新功能有效性复盘'][] = ($index + 1) . '、【' . $item['review_status'] . '】【' . $item['project'] . '】' . $item['requirement_name'] . ' 😂 结论:(' . $item['online_effect'] . ')'. ' ➼ 下一步:〖**<font color=red>' . $item['next_step'] . '</font>** 〗';
             }
@@ -329,7 +333,7 @@ function parseProduct() {
     }
 }
 function sendDingTalkMarkdown($data) {
-    // $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97';
+    // $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97'; //钉钉测试群
     $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=5d88fd617ede030a0d55e705d522a6b2242c07cdf16bd634e188f3db7a01cf29';
     // 增强版换行处理（合并连续换行+统一缩进）
     // 增强版换行处理
@@ -351,7 +355,7 @@ function sendDingTalkMarkdown($data) {
 
     // 1. 上线待复盘
     if (!empty($data['复盘中'])) {
-        $markdown['markdown']['text'] .= "  \n  \n**<font color=#D43030>🔴 复盘中</font>**  \n";
+        $markdown['markdown']['text'] .= "  \n  \n**<font color=#D43030>🔵 复盘中</font>**  \n";
         foreach ($processContent($data['复盘中']) as $item) {
             $markdown['markdown']['text'] .= "- 📌 {$item}  \n";
         }
@@ -419,4 +423,4 @@ function sendDingTalkMarkdown($data) {
 
 
 
-?>ß
+?>
