@@ -26,10 +26,11 @@
       </el-select>
 
       <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
-     <el-button type="info" style="margin-left: 8px;" @click="setDateRange('week')">本周</el-button>
-      <el-button type="info" style="margin-left: 8px;" @click="setDateRange(3)">近三天</el-button>
-      <el-button type="info" style="margin-left: 8px;" @click="setDateRange(7)">近一周</el-button>
-      <el-button type="info" style="margin-left: 8px;" @click="setDateRange(30)">近一个月</el-button>
+    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('week')">本周</el-button>
+    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastWeek')">近一周</el-button>
+    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
+    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
+    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastFourWeeks')">近四周</el-button>
     </div>
 
     <!-- 统计数据展示区域 -->
@@ -296,22 +297,63 @@ const setDateRange = async (rangeType) => {
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  endDate.value = `${year}${month}${day}`;
-  
-  const startDateObj = new Date();
+  const day = String(today.getDate()).padStart(2, '0');  
+  let startDateObj = new Date();
+  let endDateObj = new Date();
   if (rangeType === 'week') {
+    // 本周：从本周一到今天
     const dayOfWeek = startDateObj.getDay();
     const diff = startDateObj.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     startDateObj.setDate(diff);
-  } else {
+    endDateObj = today;
+  } else if (rangeType === 'lastWeek') {
+    // 近一周：上周一到上周日
+    const dayOfWeek = today.getDay();
+    const daysToLastMonday = dayOfWeek === 0 ? 8 : dayOfWeek + 6; // 计算到上周一的天数
+    startDateObj.setDate(today.getDate() - daysToLastMonday);
+    endDateObj = new Date(startDateObj);
+    endDateObj.setDate(startDateObj.getDate() + 6); // 上周日
+  } else if (rangeType === 'lastTwoWeeks') {
+     // 近两周：上上周一到上周日
+     const dayOfWeek = today.getDay();
+     const daysToLastLastMonday = dayOfWeek === 0 ? 15 : dayOfWeek + 13; // 计算到上上周一的天数
+     startDateObj.setDate(today.getDate() - daysToLastLastMonday);
+     endDateObj = new Date(today);
+     const daysToLastSunday = dayOfWeek === 0 ? 1 : dayOfWeek; // 计算到上周日的天数
+     endDateObj.setDate(today.getDate() - daysToLastSunday);
+   } else if (rangeType === 'lastThreeWeeks') {
+     // 上三周：上上上周一到上周日
+     const dayOfWeek = today.getDay();
+     const daysToThreeWeeksAgoMonday = dayOfWeek === 0 ? 22 : dayOfWeek + 20; // 计算到上上上周一的天数
+     startDateObj.setDate(today.getDate() - daysToThreeWeeksAgoMonday);
+     endDateObj = new Date(today);
+     const daysToLastSunday = dayOfWeek === 0 ? 1 : dayOfWeek ; // 计算到上周日的天数
+     endDateObj.setDate(today.getDate() - daysToLastSunday);
+   } else if (rangeType === 'lastFourWeeks') {
+     // 上四周：上上上上周一到上周日
+     const dayOfWeek = today.getDay();
+     const daysToFourWeeksAgoMonday = dayOfWeek === 0 ? 29 : dayOfWeek + 27; // 计算到上上上上周一的天数
+     startDateObj.setDate(today.getDate() - daysToFourWeeksAgoMonday);
+     endDateObj = new Date(today);
+     const daysToLastSunday = dayOfWeek === 0 ? 1 : dayOfWeek ; // 计算到上周日的天数
+     endDateObj.setDate(today.getDate() - daysToLastSunday);
+   } else {
+    // 其他情况（如30天）
     const days = parseInt(rangeType);
     startDateObj.setDate(today.getDate() - days + 1);
+    endDateObj = today;
   }
+  // 格式化开始日期
   const startYear = startDateObj.getFullYear();
   const startMonth = String(startDateObj.getMonth() + 1).padStart(2, '0');
   const startDay = String(startDateObj.getDate()).padStart(2, '0');
   startDate.value = `${startYear}${startMonth}${startDay}`;
+  
+  // 格式化结束日期
+  const endYear = endDateObj.getFullYear();
+  const endMonth = String(endDateObj.getMonth() + 1).padStart(2, '0');
+  const endDay = String(endDateObj.getDate()).padStart(2, '0');
+  endDate.value = `${endYear}${endMonth}${endDay}`;
   // 自动调用查询
   await loadData();
 };
