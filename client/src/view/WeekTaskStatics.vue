@@ -317,20 +317,7 @@ const setDateRange = async (rangeType) => {
 };
 
 onMounted(async () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  endDate.value = `${year}${month}${day}`;
-  
-  // 设置startDate为七天前日期
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(today.getDate() - 7);
-  const startYear = sevenDaysAgo.getFullYear();
-  const startMonth = String(sevenDaysAgo.getMonth() + 1).padStart(2, '0');
-  const startDay = String(sevenDaysAgo.getDate()).padStart(2, '0');
-  startDate.value = `${startYear}${startMonth}${startDay}`;
-
+   setDateRange('week')
   await fetchDepartments()
   const cachedId = localStorage.getItem('department_id_cache') || 2
   const dept = departments.value.find(d => d.id == cachedId)
