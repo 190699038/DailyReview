@@ -26,11 +26,11 @@
       </el-select>
 
       <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('week')">本周</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastWeek')">近一周</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastFourWeeks')">近四周</el-button>
+    <el-button type="success" style="margin-left: 8px;" @click="setDateRange('week')">本周</el-button>
+<el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastWeek')">近一周</el-button>
+<el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
+<el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
+<el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastFourWeeks')">近四周</el-button>
     </div>
 
     <!-- 统计数据展示区域 -->

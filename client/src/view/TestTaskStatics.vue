@@ -21,11 +21,11 @@
 
 
     <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('week')">本周</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastWeek')">近一周</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
-    <el-button type="warn" style="margin-left: 8px;" @click="setDateRange('lastFourWeeks')">近四周</el-button>
+    <el-button type="success" style="margin-left: 8px;" @click="setDateRange('week')">本周</el-button>
+            <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastWeek')">近一周</el-button>
+            <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
+            <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
+            <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastFourWeeks')">近四周</el-button>
 
 
     </div>
@@ -423,21 +423,41 @@ const showTaskDetails = (tasks, title) => {
 // 初始化图表
 const initCharts = () => {
   if (pieChartRef.value && !pieChart) {
+    // 如果图表已存在，先销毁
+    if (pieChart) {
+      pieChart.dispose();
+      pieChart = null;
+    }
     pieChart = echarts.init(pieChartRef.value);
     // 添加点击事件
     pieChart.on('click', handlePieChartClick);
   }
   if (lineChartRef.value && !lineChart) {
+    // 如果图表已存在，先销毁
+    if (lineChart) {
+      lineChart.dispose();
+      lineChart = null;
+    }
     lineChart = echarts.init(lineChartRef.value);
     // 添加点击事件
     lineChart.on('click', handleLineChartClick);
   }
   if (personBarChartRef.value && !personBarChart) {
+    // 如果图表已存在，先销毁
+    if (personBarChart) {
+      personBarChart.dispose();
+      personBarChart = null;
+    }
     personBarChart = echarts.init(personBarChartRef.value);
     // 添加点击事件
     personBarChart.on('click', handlePersonBarChartClick);
   }
   if (personPieChartRef.value && !personPieChart) {
+    // 如果图表已存在，先销毁
+    if (personPieChart) {
+      personPieChart.dispose();
+      personPieChart = null;
+    }
     personPieChart = echarts.init(personPieChartRef.value);
     // 添加点击事件
     personPieChart.on('click', handlePersonPieChartClick);
@@ -516,10 +536,11 @@ const handlePersonPieChartClick = (params) => {
 const initSubmitPieChart = ( data ) => {
   if (!submitPieChartRef.value) return;
   
-  submitPieChart = echarts.init(submitPieChartRef.value);
-  
- 
-  if (!submitPieChartRef.value) return;
+  // 如果图表已存在，先销毁
+  if (submitPieChart) {
+    submitPieChart.dispose();
+    submitPieChart = null;
+  }
   
   submitPieChart = echarts.init(submitPieChartRef.value);
   
@@ -1038,10 +1059,27 @@ const getPersonInfo = (personData,type) => {
     }
 }
 
-// 组件挂载时设置默认值
+// 组件卸载时清理所有图表实例
 onBeforeUnmount(() => {
   if (submitPieChart) {
     submitPieChart.dispose();
+    submitPieChart = null;
+  }
+  if (pieChart) {
+    pieChart.dispose();
+    pieChart = null;
+  }
+  if (lineChart) {
+    lineChart.dispose();
+    lineChart = null;
+  }
+  if (personBarChart) {
+    personBarChart.dispose();
+    personBarChart = null;
+  }
+  if (personPieChart) {
+    personPieChart.dispose();
+    personPieChart = null;
   }
 });
 
