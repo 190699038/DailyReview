@@ -90,7 +90,7 @@
         </template>
       </el-table-column> -->
       <!-- <el-table-column prop="department_name" label="部门" width="100" align="center" header-align="center" border/> -->
-      <el-table-column prop="version" label="版本" width="100" align="center" header-align="center" border />
+
       <el-table-column prop="executor" label="负责人" width="150" align="center" header-align="center" border />
       <el-table-column label="优先级" width="80" align="center" header-align="center" border>
         <template #default="{ row }">
@@ -106,7 +106,13 @@
           }}
         </template>
       </el-table-column>
-
+      <el-table-column  label="是否跨周" width="100" align="center" header-align="center" border>
+      <template  #default="{ row }">
+          {{
+            { 0: '当周完成', 1: '跨周完成' }[row.cross_week]
+          }}
+      </template>
+      </el-table-column>
       <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border />
       <el-table-column prop="pre_finish_date" label="预计时间" width="100" align="center" header-align="center" border />
       <el-table-column prop="real_finish_date" label="上线时间" width="100" align="center" header-align="center" border />
@@ -153,15 +159,19 @@
         <el-form-item label="周目标" required>
           <el-input v-model="form.weekly_goal" type="textarea" :rows="3" />
         </el-form-item>
-        <el-form-item label="版本">
-          <el-input v-model="form.version" />
+        <el-form-item label="是否跨周">
+          <el-select v-model="form.cross_week">
+            <el-option label="当周完成" :value="0" />
+            <el-option label="跨周完成" :value="1" />
+          </el-select>
+          <!-- <el-input v-model="form.cross_week" /> -->
         </el-form-item>
-        <el-form-item label="新增需求">
+        <!-- <el-form-item label="新增需求">
           <el-select v-model="form.is_new_goal">
             <el-option label="新增" :value="1" />
             <el-option label="默认" :value="0" />
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="选择周范围" required>
           <el-select v-model="form.mondayDate" placeholder="请选择周范围">
             <el-option v-for="option in mondayOptions" :key="option.value" :label="option.label"
@@ -348,6 +358,8 @@ const setDefaultCountry = (dpid)=>{
     form.value.country = 'XR'
   }else if(dpid == 8){
     form.value.country = 'CW'
+  }else if(dpid == 10){
+    form.value.country = 'US3'
   }
 }
 
@@ -390,6 +402,7 @@ const countryOptions = ref([
   { value: 'OA', label: 'OA系统' },
   { value: 'US1', label: '美国1' },
   { value: 'US2', label: '美国2' },
+  { value: 'US3', label: '美国3' },
   { value: 'BR1', label: '巴西1' },
   { value: 'BR2', label: '巴西2' },
   { value: 'MX', label: '墨西哥' },
@@ -433,6 +446,7 @@ const form = ref({
   pre_finish_date: '',
   real_finish_date: '',
   remark: '',
+  cross_week: 0,
   country: selectedDepartmentId.value === 2 || selectedDepartmentId.value === 5 ? 'US2' : 
     selectedDepartmentId.value === 3 ? 'QSJS' : 
     selectedDepartmentId.value === 15 ? 'QSDY' :
@@ -442,6 +456,7 @@ const form = ref({
     selectedDepartmentId.value === 13 ? 'DF' :
     selectedDepartmentId.value === 7 ? 'YR' :
     selectedDepartmentId.value === 6 ? 'XR' :
+    selectedDepartmentId.value === 10 ? 'US3' :
     selectedDepartmentId.value === 8 ? 'CW' : 'OA',
   version: ''
 })
