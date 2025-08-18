@@ -59,6 +59,9 @@ export default {
 }
 .container {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
 }
 .upload-demo {
   margin-bottom: 20px;

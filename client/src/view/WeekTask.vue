@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container" style="width: 86%;margin-left: 7%;">
+  <div class="page-container" style="width: 100%;">
     <!-- <el-button type="success" @click="handleImport">导入Excel</el-button> -->
 
     <el-select v-model="mondayDate" @change="loadData" placeholder="选择周范围"
@@ -72,7 +72,7 @@
       <el-table-column label="序号" width="90" align="center" header-align="center" border>
         <template #default="{ $index }">{{ $index + 1 }}</template>
       </el-table-column>
-      <el-table-column prop="weekly_goal" label="周目标" header-align="center" border>
+      <el-table-column prop="weekly_goal" label="周目标" header-align="center" width="470" border>
         <template #default="{ row }">
           <div style="white-space: pre-line;"> <!-- 添加换行样式 -->
             【{{
