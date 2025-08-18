@@ -108,9 +108,9 @@
       </el-table-column>
       <el-table-column  label="是否跨周" width="100" align="center" header-align="center" border>
       <template  #default="{ row }">
-          {{
-            { 0: '当周完成', 1: '跨周完成' }[row.cross_week]
-          }}
+          <span :class="getCrossWeekClass(row.cross_week)">
+            {{ { 0: '当周完成', 1: '跨周完成' }[row.cross_week] }}
+          </span>
       </template>
       </el-table-column>
       <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border />
@@ -699,6 +699,14 @@ const createAndUpdate = async(params) =>{
     }
   }
 
+// 获取跨周状态的CSS类名
+const getCrossWeekClass = (crossWeek) => {
+  return {
+    'cross-week-current': parseInt(crossWeek) === 0,
+    'cross-week-span': parseInt(crossWeek) === 1
+  }
+}
+
 // 删除目标
 const deleteGoal = async (row) => {
   try {
@@ -964,5 +972,24 @@ const readExcel = (file) => {
 /* 设置该列的字体大小 */
 .custom-column .cell {
   font-size: 12px;
+}
+
+/* 跨周状态样式 */
+.cross-week-current {
+  background-color: #e8f5e9 !important;
+  color: #2e7d32;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.cross-week-span {
+  background-color: #fff3e0 !important;
+  color: #f57c00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 500;
 }
 </style>
