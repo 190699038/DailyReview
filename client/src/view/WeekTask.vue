@@ -94,16 +94,16 @@
       <el-table-column prop="executor" label="负责人" width="150" align="center" header-align="center" border />
       <el-table-column label="优先级" width="80" align="center" header-align="center" border>
         <template #default="{ row }">
-          {{
-            { 10: 'S', 9: 'A', 8: 'B', 7: 'C' }[row.priority]
-          }}
+          <span :class="getPriorityClass(row.priority)">
+            {{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C' }[row.priority] }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column label="完成进度" width="120" align="center" header-align="center" border>
         <template #default="{ row }">
-          {{
-            { 1: '进行中', 2: '测试中', 3: '已上线', 4: '已暂停', 5: '已完成', 0: '未开始' }[row.status] || '未知状态'
-          }}
+          <span :class="getStatusClass(row.status)">
+            {{ { 1: '进行中', 2: '测试中', 3: '已上线', 4: '已暂停', 5: '已完成', 0: '未开始' }[row.status] || '未知状态' }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column  label="是否跨周" width="100" align="center" header-align="center" border>
@@ -707,6 +707,28 @@ const getCrossWeekClass = (crossWeek) => {
   }
 }
 
+// 获取优先级的CSS类名
+const getPriorityClass = (priority) => {
+  return {
+    'priority-s': parseInt(priority) === 10,
+    'priority-a': parseInt(priority) === 9,
+    'priority-b': parseInt(priority) === 8,
+    'priority-c': parseInt(priority) === 7
+  }
+}
+
+// 获取状态的CSS类名
+const getStatusClass = (status) => {
+  return {
+    'status-not-started': parseInt(status) === 0,
+    'status-in-progress': parseInt(status) === 1,
+    'status-testing': parseInt(status) === 2,
+    'status-online': parseInt(status) === 3,
+    'status-paused': parseInt(status) === 4,
+    'status-completed': parseInt(status) === 5
+  }
+}
+
 // 删除目标
 const deleteGoal = async (row) => {
   try {
@@ -987,6 +1009,51 @@ const readExcel = (file) => {
 .cross-week-span {
   background-color: #fff3e0 !important;
   color: #f57c00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 500;
+}
+
+/* 优先级样式 */
+.priority-s {
+  background-color: #ffebee !important;
+  color: #c62828;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 600;
+}
+
+.priority-a {
+  background-color: #fff3e0 !important;
+  color: #ef6c00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.priority-b {
+  background-color: #e3f2fd !important;
+  color: #1565c0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.priority-c {
+  background-color: #f3e5f5 !important;
+  color: #7b1fa2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 500;
+}
+.status-not-started {
+  background-color: #fafafa !important;
+  color: #616161;
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
