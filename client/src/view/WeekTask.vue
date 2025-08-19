@@ -69,10 +69,10 @@
     </div>
     <el-table :data="filteredGoals" border :row-class-name="rowClassName">
       <!-- <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/> -->
-      <el-table-column label="序号" width="90" align="center" header-align="center" border>
+      <el-table-column label="序号" :width="getWidth(90)" align="center" header-align="center" border>
         <template #default="{ $index }">{{ $index + 1 }}</template>
       </el-table-column>
-      <el-table-column prop="weekly_goal" label="周目标" header-align="center" width="470" border>
+      <el-table-column prop="weekly_goal" label="周目标" header-align="center" :width="getWidth(470)" border>
         <template #default="{ row }">
           <div style="white-space: pre-line;"> <!-- 添加换行样式 -->
             【{{
@@ -91,35 +91,35 @@
       </el-table-column> -->
       <!-- <el-table-column prop="department_name" label="部门" width="100" align="center" header-align="center" border/> -->
 
-      <el-table-column prop="executor" label="负责人" width="150" align="center" header-align="center" border />
-      <el-table-column label="优先级" width="80" align="center" header-align="center" border>
+      <el-table-column prop="executor" label="负责人" :width="getWidth(180)" align="center" header-align="center" border />
+      <el-table-column label="优先级" :width="getWidth(80)" align="center" header-align="center" border>
         <template #default="{ row }">
           <span :class="getPriorityClass(row.priority)">
             {{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C' }[row.priority] }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="完成进度" width="120" align="center" header-align="center" border>
+      <el-table-column label="完成进度" :width="getWidth(120)" align="center" header-align="center" border>
         <template #default="{ row }">
           <span :class="getStatusClass(row.status)">
             {{ { 1: '进行中', 2: '测试中', 3: '已上线', 4: '已暂停', 5: '已完成', 0: '未开始' }[row.status] || '未知状态' }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column  label="是否跨周" width="100" align="center" header-align="center" border>
+      <el-table-column  label="是否跨周" :width="getWidth(100)" align="center" header-align="center" border>
       <template  #default="{ row }">
           <span :class="getCrossWeekClass(row.cross_week)">
             {{ { 0: '当周完成', 1: '跨周完成' }[row.cross_week] }}
           </span>
       </template>
       </el-table-column>
-      <el-table-column prop="createdate" label="创建日期" width="120" align="center" header-align="center" border />
-      <el-table-column prop="pre_finish_date" label="预计时间" width="100" align="center" header-align="center" border />
-      <el-table-column prop="real_finish_date" label="上线时间" width="100" align="center" header-align="center" border />
+      <el-table-column prop="createdate" label="创建日期" :width="getWidth(120)" align="center" header-align="center" border />
+      <el-table-column prop="pre_finish_date" label="预计时间" :width="getWidth(100)" align="center" header-align="center" border />
+      <el-table-column prop="real_finish_date" label="上线时间" :width="getWidth(100)" align="center" header-align="center" border />
 
-      <el-table-column prop="remark" label="备注" width="250" align="center" header-align="center"
+      <el-table-column prop="remark" label="备注" :width="getWidth(250)" align="center" header-align="center"
         class-name="custom-column" border />
-      <el-table-column label="操作" header-align="center" align="center" border width="160">
+      <el-table-column label="操作" :width="getWidth(160)" header-align="center" align="center" border>
         <template #default="{ row }">
           <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
             <div>
@@ -239,7 +239,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted,onUnmounted } from 'vue'
 import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
 import { computed } from 'vue'
@@ -250,6 +250,10 @@ const searchText = ref('')
 const departments = ref([])
 const selectedDepartmentId = ref(null)
 const selectedExecutor = ref('全部')
+
+const getWidth = (w) => {
+  return window.innerWidth * (w/90)*0.05
+}
 
 const fetchDepartments = async () => {
   try {
@@ -329,10 +333,42 @@ onMounted(async () => {
   const dept = departments.value.find(d => d.id == cachedId)
   selectedDepartmentId.value = dept ? dept.id : departments.value[0]?.id || 2
 
-
+  // 添加窗口大小变化监听
+  window.addEventListener('resize', handleResize)
 
   loadData()
 })
+
+// 组件卸载时移除监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  // 清理定时器
+  if (handleResize.timer) {
+    clearTimeout(handleResize.timer)
+  }
+})
+
+// 屏幕尺寸变化监听方法
+const handleResize = () => {
+  // 使用防抖处理，避免频繁触发
+  clearTimeout(handleResize.timer)
+  handleResize.timer = setTimeout(() => {
+    // 打印屏幕变化后的尺寸
+    const screenWidth = window.innerWidth
+    const screenHeight = window.innerHeight
+    const devicePixelRatio = window.devicePixelRatio || 1
+   
+    loadData()
+    
+    console.log('屏幕尺寸变化:', {
+      宽度: screenWidth + 'px',
+      高度: screenHeight + 'px',
+      设备像素比: devicePixelRatio,
+      实际分辨率: `${screenWidth * devicePixelRatio} x ${screenHeight * devicePixelRatio}`,
+      时间戳: new Date().toLocaleString()
+    })
+  }, 100)
+}
 
 const setDefaultCountry = (dpid)=>{
   if(typeof dpid == 'string'){
