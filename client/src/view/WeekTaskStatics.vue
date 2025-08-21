@@ -143,10 +143,13 @@
 
 
 <script setup>
-import { ref, onMounted, onActivated, computed, nextTick } from 'vue'
+import { ref, onMounted, onActivated, onUnmounted, computed, nextTick } from 'vue'
 import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
+
+// 定义emit事件
+const emit = defineEmits(['department-change'])
 
 // 生成三个周一选项
 const mondayOptions = ref([])
@@ -197,6 +200,9 @@ const fetchDepartments = async () => {
 
 const handleDepartmentChange = (val) => {
   localStorage.setItem('department_id_cache', val)
+  
+  // 通知父组件部门变化
+  emit('department-change', val)
 
   if (val == 0) {
     http.get(`UserInfoAPI.php?action=get_all_users`)
@@ -358,8 +364,30 @@ const setDateRange = async (rangeType) => {
   await loadData();
 };
 
+
+
+// 屏幕尺寸变化监听方法
+const handleResize = () => {
+  // 使用防抖处理，避免频繁触发
+  clearTimeout(handleResize.timer)
+  handleResize.timer = setTimeout(() => {
+    resizeCharts()
+  }, 100)
+}
+
+// 组件激活时重新调整图表大小
+onActivated(async () => {
+  await nextTick()
+  resizeCharts()
+  // 如果折线图存在，也需要resize
+  if (lineChart && showLineChart.value) {
+    lineChart.resize()
+  }
+})
+
+// 组件挂载时添加窗口大小变化监听
 onMounted(async () => {
-   setDateRange('week')
+  setDateRange('week')
   await fetchDepartments()
   const cachedId = localStorage.getItem('department_id_cache') || 2
   const dept = departments.value.find(d => d.id == cachedId)
@@ -371,17 +399,31 @@ onMounted(async () => {
   await nextTick()
   initCharts()
   updateCharts()
+  
+  // 添加窗口大小变化监听
+  window.addEventListener('resize', handleResize)
 })
 
-// 组件激活时重新调整图表大小
-onActivated(async () => {
-  await nextTick()
-  resizeCharts()
-  // 如果折线图存在，也需要resize
-  if (lineChart && showLineChart.value) {
-    lineChart.resize()
+// 组件卸载时移除监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  // 清理定时器
+  if (handleResize.timer) {
+    clearTimeout(handleResize.timer)
   }
-
+  // 销毁图表实例
+  if (priorityPieChart) {
+    priorityPieChart.dispose()
+    priorityPieChart = null
+  }
+  if (statusPieChart) {
+    statusPieChart.dispose()
+    statusPieChart = null
+  }
+  if (lineChart) {
+    lineChart.dispose()
+    lineChart = null
+  }
 })
 
 

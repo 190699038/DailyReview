@@ -246,6 +246,9 @@ import { computed } from 'vue'
 import * as XLSX from 'xlsx'
 import { parseExcelFile } from '@/utils/excelParser'
 import { getTodayDate } from '@/utils/dateUtils'
+
+// 定义emit事件
+const emit = defineEmits(['department-change'])
 const searchText = ref('')
 const departments = ref([])
 const selectedDepartmentId = ref(null)
@@ -274,6 +277,10 @@ const fetchDepartments = async () => {
 
 const handleDepartmentChange = (val) => {
   localStorage.setItem('department_id_cache', val)
+  
+  // 通知父组件部门变化
+  emit('department-change', val)
+  
   if (val == 0) {
     http.get(`UserInfoAPI.php?action=get_all_users`)
       .then(res => {
@@ -396,6 +403,8 @@ const setDefaultCountry = (dpid)=>{
     form.value.country = 'CW'
   }else if(dpid == 10){
     form.value.country = 'US3'
+  }else if(dpid == 11){
+    form.value.country = 'YXJS'
   }
 }
 
@@ -451,6 +460,7 @@ const countryOptions = ref([
   { value: 'QSJS', label: '奇胜-技术' },
   { value: 'QSDY', label: '奇胜-调研' },
   { value: 'QSLL', label: '奇胜-流量' },
+  { value: 'YXJS', label: '游戏技术' },
   { value: 'XR', label: '选人' },
   { value: 'YR', label: '用人' },
   { value: 'YW', label: '运维' },
@@ -459,7 +469,6 @@ const countryOptions = ref([
   { value: 'CW', label: '财务' },
   { value: 'TF', label: '投放' },
   { value: 'DF', label: '支付' },
-
   { value: 'QT', label: '其它' },
 
 ])
