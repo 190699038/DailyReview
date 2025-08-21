@@ -11,6 +11,7 @@
     <el-tab-pane  v-if="selectedDepartmentId == 2 || selectedDepartmentId == 3  || selectedDepartmentId == 5 " :label="'导入' + (selectedDepartmentName ? '【' + selectedDepartmentName +'】': '')" name="week-task-import">
       <WeekTaskBatch v-if="selectedDepartmentId == 3"  ref="weekTaskBatchRef"></WeekTaskBatch>
       <WeekTaskBatchGame v-if="selectedDepartmentId == 2"  ref="weekTaskBatchRef"></WeekTaskBatchGame>
+      <WeekTaskBatchProduct v-if="selectedDepartmentId == 5"  ref="weekTaskBatchProduct"></WeekTaskBatchProduct>
     </el-tab-pane>
   </el-tabs> 
 
@@ -27,6 +28,7 @@ import WeekTask from '@/view/WeekTask.vue';
 import WeekTaskStatics from '@/view/WeekTaskStatics.vue';
 import WeekTaskBatch from '@/view/WeekTaskBatch.vue';
 import WeekTaskBatchGame from '@/view/WeekTaskBatchGame.vue';
+import WeekTaskBatchProduct from '../view/WeekTaskBatchProduct.vue';
 
 
 
@@ -39,7 +41,7 @@ const departments = ref([])
 
 export default {
   components: {
-    WeekTask,WeekTaskStatics,WeekTaskBatch,WeekTaskBatchGame
+    WeekTask,WeekTaskStatics,WeekTaskBatch,WeekTaskBatchGame,WeekTaskBatchProduct
   },
   setup() {
     // 处理TAB切换事件
