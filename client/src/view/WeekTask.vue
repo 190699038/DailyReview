@@ -64,6 +64,7 @@
     <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
     <el-button type="primary" style="margin-left: 8px;" @click="copytaskSimple()">简单复制</el-button>
     <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
+    <el-button type="primary" v-if="selectedDepartmentId == 0 " style="margin-left: 8px;" @click="sendTaskToGroup()">发送周任务到群</el-button>
 
 
     </div>
@@ -235,6 +236,26 @@
         <el-table-column prop="executor" label="执行人" width="150" />
       </el-table>
     </el-dialog>
+
+    <!-- 发送周任务到群弹窗 -->
+    <el-dialog v-model="sendTaskDialogVisible" title="发送周任务到群" width="400px">
+      <el-form label-width="120px">
+        <el-form-item label="选择周一日期" required>
+          <el-select v-model="sendTaskMondayDate" placeholder="请选择周一日期" style="width: 100%">
+            <el-option 
+              v-for="option in mondayOptions" 
+              :key="option.value" 
+              :label="option.label" 
+              :value="option.value" 
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="sendTaskDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmSendTaskToGroup">确定发送</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -302,6 +323,39 @@ const handleDepartmentChange = (val) => {
   loadData()
 }
 
+
+// 发送周任务到群相关变量
+const sendTaskDialogVisible = ref(false)
+const sendTaskMondayDate = ref('')
+
+const sendTaskToGroup = async () => {
+  // 显示日期选择弹窗
+  sendTaskMondayDate.value = mondayDate.value // 默认使用当前选择的周一日期
+  sendTaskDialogVisible.value = true
+}
+
+// 确认发送周任务到群
+const confirmSendTaskToGroup = async () => {
+  if (!sendTaskMondayDate.value) {
+    ElMessage.error('请选择周一日期')
+    return
+  }
+  
+  try {
+    // 发送请求到指定API
+    const response = await fetch(`https://daily.gameyzy.com/server/WeekTaskSend.php?mondayDate=${sendTaskMondayDate.value}`)
+    
+    if (response.ok) {
+      ElMessage.success('周任务发送成功')
+      sendTaskDialogVisible.value = false
+    } else {
+      ElMessage.error('发送失败，请重试')
+    }
+  } catch (error) {
+    console.error('发送周任务失败:', error)
+    ElMessage.error('发送失败，请检查网络连接')
+  }
+}
 
 const copytask = async () => {
   try {

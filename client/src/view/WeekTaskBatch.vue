@@ -327,7 +327,7 @@ export default {
             weekly_goal: item.content,
             priority: getPriority(item.priority),
             is_new_goal: 0,
-            mondayDate: mondayDate.value,
+            mondayDate: getCurrentMonday(),
             status: 1,
             country:getCountry(item.project),
             executor_id: getExecutorId(item.developer),

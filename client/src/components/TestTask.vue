@@ -87,7 +87,7 @@ const newTaskForm = reactive({
 const tableHeaders = ref([
   '负责人', '优先级', '产品', '测试内容（需求链接）', 
   '测试状态', '测试进度', '预计提测时间','提测时间', '预计上线时间','困难与障碍', 
-  '实际上线时间', '实际耗时（h）', '用例耗时（h）'
+  '实际上线时间', '预计耗时（用例+测试）','测试实际耗时（h）', '用例耗时（h）'
 ]);
 
 const tableData = ref([]);
@@ -389,7 +389,8 @@ loading.value = ElLoading.service({
         formData.submission_time = item['提测时间']
         formData.planned_online_time = item['预计上线时间']
         formData.actual_online_time = item['实际上线时间']
-        formData.actual_time_spent = item['实际耗时（h）'] == null ? 0:item['实际耗时（h）']
+        formData.planned_time_spent = item['预计耗时（用例+测试）']
+        formData.actual_time_spent = item['测试实际耗时（h）'] == null ? 0:item['测试实际耗时（h）']
         formData.actual_yl_time = item['用例耗时（h）'] == null ? 0:item['用例耗时（h）']
         formData.remarks = item['困难与障碍']
         formData.creation_date = selectedDate.value
