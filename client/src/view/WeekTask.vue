@@ -70,10 +70,10 @@
     </div>
     <el-table :data="filteredGoals" border :row-class-name="rowClassName">
       <!-- <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/> -->
-      <el-table-column label="序号" :width="getWidth(90)" align="center" header-align="center" border>
+      <el-table-column label="序号" :width="getWidth(80)" align="center" header-align="center" border>
         <template #default="{ $index }">{{ $index + 1 }}</template>
       </el-table-column>
-      <el-table-column prop="weekly_goal" label="周目标" header-align="center" :width="getWidth(470)" border>
+      <el-table-column prop="weekly_goal" label="周目标" header-align="center" :width="getWidth(503)" border>
         <template #default="{ row }">
           <div style="white-space: pre-line;"> <!-- 添加换行样式 -->
             【{{
@@ -92,7 +92,7 @@
       </el-table-column> -->
       <!-- <el-table-column prop="department_name" label="部门" width="100" align="center" header-align="center" border/> -->
 
-      <el-table-column prop="executor" label="负责人" :width="getWidth(180)" align="center" header-align="center" border />
+      <el-table-column prop="executor" label="负责人" :width="getWidth(160)" align="center" header-align="center" border />
       <el-table-column label="优先级" :width="getWidth(80)" align="center" header-align="center" border>
         <template #default="{ row }">
           <span :class="getPriorityClass(row.priority)">
@@ -100,27 +100,37 @@
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="完成进度" :width="getWidth(120)" align="center" header-align="center" border>
+      <el-table-column label="完成进度" :width="getWidth(90)" align="center" header-align="center" border>
         <template #default="{ row }">
           <span :class="getStatusClass(row.status)">
             {{ { 1: '进行中', 2: '测试中', 3: '已上线', 4: '已暂停', 5: '已完成', 0: '未开始' }[row.status] || '未知状态' }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column  label="是否跨周" :width="getWidth(100)" align="center" header-align="center" border>
+      <el-table-column  label="是否跨周" :width="getWidth(90)" align="center" header-align="center" border>
       <template  #default="{ row }">
           <span :class="getCrossWeekClass(row.cross_week)">
             {{ { 0: '当周完成', 1: '跨周完成' }[row.cross_week] }}
           </span>
       </template>
       </el-table-column>
-      <el-table-column prop="createdate" label="创建日期" :width="getWidth(120)" align="center" header-align="center" border />
+      <el-table-column label="进度" :width="getWidth(100)" align="center" header-align="center" border>
+        <template #default="{ row }">
+          <el-progress 
+            :percentage="Math.round((row.process || 0) * 100)" 
+            :stroke-width="8"
+            :show-text="true"
+            :format="() => `${Math.round((row.process || 0) * 100)}%`"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column prop="createdate" label="创建日期" :width="getWidth(100)" align="center" header-align="center" border />
       <el-table-column prop="pre_finish_date" label="预计时间" :width="getWidth(100)" align="center" header-align="center" border />
       <el-table-column prop="real_finish_date" label="上线时间" :width="getWidth(100)" align="center" header-align="center" border />
 
-      <el-table-column prop="remark" label="备注" :width="getWidth(250)" align="center" header-align="center"
+      <el-table-column prop="remark" label="备注" :width="getWidth(200)" align="center" header-align="center"
         class-name="custom-column" border />
-      <el-table-column label="操作" :width="getWidth(160)" header-align="center" align="center" border>
+      <el-table-column label="操作" :width="getWidth(150)" header-align="center" align="center" border>
         <template #default="{ row }">
           <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
             <div>
@@ -187,6 +197,27 @@
             <el-option label="已暂停" :value="4" />
             <el-option label="已完成" :value="5" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="进度更新">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <el-slider 
+              v-model="form.process" 
+              :min="0" 
+              :max="1" 
+              :step="0.01" 
+              :show-tooltip="false"
+              style="flex: 1;"
+            />
+            <el-input-number 
+              v-model="form.process" 
+              :min="0" 
+              :max="1" 
+              :step="0.01" 
+              :precision="2"
+              style="width: 120px;"
+            />
+            <span style="color: #909399; font-size: 12px;">{{ Math.round((form.process || 0) * 100) }}%</span>
+          </div>
         </el-form-item>
 
         <el-form-item label="截止日期">
@@ -546,6 +577,7 @@ const form = ref({
   real_finish_date: '',
   remark: '',
   cross_week: 0,
+  process: 0,
   country: selectedDepartmentId.value === 2 || selectedDepartmentId.value === 5 ? 'US2' : 
     selectedDepartmentId.value === 3 ? 'QSJS' : 
     selectedDepartmentId.value === 15 ? 'QSDY' :
@@ -699,7 +731,7 @@ const submitFormSimple = async (row, type) => {
     }
 
     row.real_finish_date = getTodayDate()
-
+    row.process = 1
   } else if (type == 1) {
     row.mondayDate = mondayOptions.value[3].value
     row.status = 1
@@ -739,6 +771,8 @@ const preFinshData = () =>{
     } 
 
     form.value.real_finish_date = getTodayDate()
+
+    form.value.process = 1
 
 }
 
