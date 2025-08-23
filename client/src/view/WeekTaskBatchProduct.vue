@@ -74,7 +74,7 @@
       </el-table-column>
       <el-table-column prop="projectName" label="项目名称" min-width="150" />
       <el-table-column prop="content" label="需求内容" min-width="200" />
-      <el-table-column prop="productManager" label="产品经理" width="120" align="center" />
+      <el-table-column prop="developer" label="产品经理" width="120" align="center" />
       <el-table-column prop="confirmTime" label="需求确认时间" min-width="120" />
       <el-table-column prop="crossWeek" label="跨周状态" width="100" align="center">
         <template #default="{ row }">

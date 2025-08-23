@@ -13,7 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require __DIR__ . '/db_connect.php';
 
 // 钉钉webhook地址
-$webhook = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97';
+$webhook = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97'; //测试钉钉群
+// $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=521d66766b9b7d738f2d67ca01f265fe1b45ad1ae3287858908d04a37a6d6a0e'; //正式钉钉群
 
 // 获取mondayDate参数
 $mondayDate = isset($_REQUEST['mondayDate']) ? $_REQUEST['mondayDate'] : '';
@@ -37,19 +38,34 @@ $departments = [
     '财务组' => '杨秀玲',
 ];
 
-// 部门对应的图标
+// 部门对应的图标（优化版 - 更具代表性和区分度）
 $deptIcons = [
-    '游戏技术组' => '🎮',
-    '奇胜技术组' => '💻',
-    '产品组' => '📱',
-    '奇胜调研' => '🔍',
-    '奇胜流量' => '📈',
-    '投放组' => '🚀',
-    '技术组' => '🔧',
-    '大富组' => '💰',
-    '用人组' => '👥',
-    '选人组' => '🔍',
-    '财务组' => '💹'
+    '游戏技术组' => '🎮',    // 游戏手柄 - 游戏相关
+    '奇胜技术组' => '💻',    // 电脑 - 技术开发
+    '产品组' => '📱',        // 手机 - 产品设计
+    '奇胜调研' => '📊',      // 条形图 - 数据调研
+    '奇胜流量' => '📈',      // 上升趋势 - 流量增长
+    '投放组' => '🚀',        // 火箭 - 快速投放
+    '技术组' => '⚙️',       // 齿轮 - 技术支持
+    '大富组' => '💰',        // 钱袋 - 财富管理
+    '用人组' => '👥',        // 人群 - 人力资源
+    '选人组' => '🎯',        // 靶心 - 精准选择
+    '财务组' => '💹'         // 股票图表 - 财务分析
+];
+
+// 部门对应的颜色（用于区分不同部门）
+$deptColors = [
+    '游戏技术组' => '#1E90FF',  // 道奇蓝
+    '奇胜技术组' => '#32CD32',  // 酸橙绿
+    '产品组' => '#FF6347',      // 番茄红
+    '奇胜调研' => '#9370DB',    // 中紫色
+    '奇胜流量' => '#FF8C00',    // 深橙色
+    '投放组' => '#20B2AA',      // 浅海绿
+    '技术组' => '#4169E1',      // 皇家蓝
+    '大富组' => '#FFD700',      // 金色
+    '用人组' => '#DC143C',      // 深红色
+    '选人组' => '#8A2BE2',      // 蓝紫色
+    '财务组' => '#00CED1'       // 深绿松石色
 ];
 
 // priority映射关系（带颜色标识）
@@ -118,14 +134,20 @@ function queryExecutorData($mondayDate, $executor) {
                 WHERE mondayDate = :mondayDate AND executor LIKE :executor order by priority desc";
         
         $stmt = $conn->prepare($sql);
-        if (!$stmt) {
+        if ($stmt === false) {
             return [];
         }
         
         $executorParam = "%{$executor}%";
-        $stmt->bindParam(':mondayDate', $mondayDate, PDO::PARAM_STR);
-        $stmt->bindParam(':executor', $executorParam, PDO::PARAM_STR);
-        $stmt->execute();
+        if ($stmt->bindParam(':mondayDate', $mondayDate, PDO::PARAM_STR) === false) {
+            return [];
+        }
+        if ($stmt->bindParam(':executor', $executorParam, PDO::PARAM_STR) === false) {
+            return [];
+        }
+        if ($stmt->execute() === false) {
+            return [];
+        }
         
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return is_array($result) ? $result : [];
@@ -139,18 +161,30 @@ function queryDepartmentData($mondayDate, $deptId) {
     global $conn;
     
     try {
-        $sql = "SELECT weekly_goal, executor, priority, pre_finish_date, country 
+        if($deptId == 16){
+            $sql = "SELECT weekly_goal, executor, priority, pre_finish_date, country 
+                FROM weekly_goals 
+                WHERE mondayDate = :mondayDate AND department_id = :deptId  and executor not LIKE '%王旭%' and  country = 'QSLL'   order by priority desc";
+        }else{
+            $sql = "SELECT weekly_goal, executor, priority, pre_finish_date, country 
                 FROM weekly_goals 
                 WHERE mondayDate = :mondayDate AND department_id = :deptId  and executor not LIKE '%王旭%' and  executor not LIKE '%梁超%'   order by priority desc";
+        }
         
         $stmt = $conn->prepare($sql);
-        if (!$stmt) {
+        if ($stmt === false) {
             return [];
         }
         
-        $stmt->bindParam(':mondayDate', $mondayDate, PDO::PARAM_STR);
-        $stmt->bindParam(':deptId', $deptId, PDO::PARAM_INT);
-        $stmt->execute();
+        if ($stmt->bindParam(':mondayDate', $mondayDate, PDO::PARAM_STR) === false) {
+            return [];
+        }
+        if ($stmt->bindParam(':deptId', $deptId, PDO::PARAM_INT) === false) {
+            return [];
+        }
+        if ($stmt->execute() === false) {
+            return [];
+        }
         
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return is_array($result) ? $result : [];
@@ -188,23 +222,23 @@ function transformData($rawData, $priorityMap, $countryMap) {
 // 美化任务内容，处理包含多个子项的任务
 function beautifyTaskContent($content) {
     // 处理以数字+、开头的子项
-    $pattern = '/(\d+)、/';
-    if (preg_match($pattern, $content, $matches)) {
-        // 如果是第一个字符就是数字+、，则拆分处理
-        if (strpos($content, $matches[0]) === 0) {
-            $parts = preg_split($pattern, $content, -1, PREG_SPLIT_DELIM_CAPTURE);
-            $result = [];
-            for ($i = 1; $i < count($parts); $i += 2) {
-                if (!empty($parts[$i+1])) {
-                    $result[] = "  - {$parts[$i]}、{$parts[$i+1]}";
-                }
-            }
-            return "\n\n" . implode("\n\n", $result);
-        }
-    }
+    // $pattern = '/(\d+)、/';
+    // if (preg_match($pattern, $content, $matches)) {
+    //     // 如果是第一个字符就是数字+、，则拆分处理
+    //     if (strpos($content, $matches[0]) === 0) {
+    //         $parts = preg_split($pattern, $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+    //         $result = [];
+    //         for ($i = 1; $i < count($parts); $i += 2) {
+    //             if (!empty($parts[$i+1])) {
+    //                 $result[] = "  - {$parts[$i]}、{$parts[$i+1]}";
+    //             }
+    //         }
+    //         return "\n\n" . implode("\n\n", $result);
+    //     }
+    // }
     
-    // 处理普通换行符，转换为钉钉支持的格式
-    $content = str_replace("\n", "\n\n", $content);
+    // // 处理普通换行符，转换为钉钉支持的格式
+    // $content = str_replace("\n", "\n\n", $content);
     
     return $content;
 }
@@ -242,18 +276,19 @@ function organizeByDeptAndExecutor($allData, $departments) {
 }
 
 // 生成钉钉消息内容（任务描述加粗版）
-function generateDingTalkContent($organizedData, $deptIcons, $mondayDate) {
-    $mdContent = "### 周目标清单（{$mondayDate}）\n\n";
-    $mdContent .= "任务清单查看地址: [周目标系统](https://daily.gameyzy.com/#/week-goal)\n\n";
+function generateDingTalkContent($organizedData, $deptIcons, $deptColors, $mondayDate) {
+    $mdContent = "## 周目标清单\n\n";
+    $mdContent .= "### 任务清单查看地址: [周目标清单](https://daily.gameyzy.com/#/week-goal)\n\n";
     
     foreach ($organizedData as $group) {
         if (empty($group['tasks'])) {
             continue; // 跳过没有任务的组
         }
         
-        // 项目组标题加粗显示
+        // 项目组标题加粗显示，带颜色区分
         $deptIcon = isset($deptIcons[$group['department']]) ? $deptIcons[$group['department']] : '📌';
-        $mdContent .= "#### {$deptIcon}  **{$group['department']}-{$group['executor']}**\n\n";
+        $deptColor = isset($deptColors[$group['department']]) ? $deptColors[$group['department']] : '#333333';
+        $mdContent .= "#### {$deptIcon}  <font color='{$deptColor}'>**{$group['department']}-{$group['executor']}**</font>\n\n";
         
         $taskNum = 1;
         foreach ($group['tasks'] as $task) {
@@ -261,13 +296,38 @@ function generateDingTalkContent($organizedData, $deptIcons, $mondayDate) {
             $priorityLabel = "<font color='{$task['priority_color']}'>【{$task['priority_name']}】</font>";
             $countryLabel = $task['country_name'];
             // 任务描述加粗显示
-            $goal = "**" . beautifyTaskContent($task['weekly_goal']) . "**";
+            // $goal = "**" . beautifyTaskContent($task['weekly_goal']) . "**";
+            
+
+            
+            // 处理换行符，统一为 \n
+            $weeklyGoal = str_replace("\r\n", "\n", $task['weekly_goal']);
+            // 按换行分割成数组
+            $lines = explode("\n", $weeklyGoal);
+            
+            if (count($lines) === 1) {
+                // 单行内容，直接全加粗
+                $goal = "**" . trim($lines[0]) . "**";
+            } else {
+                // 多行内容：第一行加粗，后续行换行并缩进2个空格
+                $goal = "**" . trim($lines[0]) . "**";
+                for ($i = 1; $i < count($lines); $i++) {
+                    $goal .= "\n\n&nbsp;&nbsp;&nbsp;&nbsp;" . trim($lines[$i]);
+                }
+            }
+                        
+            
             $executor = "[{$task['executor']}]";
             
             $deadline = '';
             if (!empty($task['pre_finish_date'])) {
                 // 预计时间加粗显示
-                $deadline = " <font color='#888888'>- 预计上线时间: **{$task['pre_finish_date']}**</font>";
+                if($group['department']=='游戏技术组' || $group['department']=='奇胜技术组'){
+                     $deadline = " <font color='#888888'>- 预计上线时间: **{$task['pre_finish_date']}**</font>";
+                }else{
+                     $deadline = " <font color='#888888'>- 预计完成时间: **{$task['pre_finish_date']}**</font>";
+                }
+               
             }
             
             // 每个任务单独一行输出，增加可读性
@@ -277,6 +337,8 @@ function generateDingTalkContent($organizedData, $deptIcons, $mondayDate) {
         
         // 组之间增加分割线
         $mdContent .= "---\n\n";
+                $mdContent .= "---\n\n";
+
     }
     
     return $mdContent;
@@ -327,7 +389,19 @@ try {
 
     
     // 处理其他部门
-    $otherDepartments = ['游戏技术组', '奇胜技术组', '产品组', '奇胜调研', '投放组', '技术组', '大富组', '用人组', '选人组'];
+    $otherDepartments = [
+        '游戏技术组',
+        '奇胜技术组',
+        '产品组',
+        '奇胜调研',
+        '奇胜流量',
+        '投放组',
+        '技术组' ,
+        '大富组',
+        '用人组' ,
+        '选人组',
+        '财务组'
+    ];
     foreach ($otherDepartments as $dept) {
         $deptId = getDepartmentId($dept);
         if ($deptId > 0) {
@@ -369,12 +443,16 @@ try {
         }
     }    
     
+    
+    // var_dump($allData);
     // 按部门和负责人组织数据
     // $organizedData = organizeByDeptAndExecutor($allData, $departments);
         // echo(json_encode($organizedData));
 
     // 生成钉钉消息内容
-    $dingTalkContent = generateDingTalkContent($organizedData, $deptIcons, $mondayDate);
+    $dingTalkContent = generateDingTalkContent($organizedData, $deptIcons, $deptColors, $mondayDate);
+    
+    // var_dump($dingTalkContent);
     
     //发送到钉钉
     $response = sendToDingTalk($webhook, $dingTalkContent);
