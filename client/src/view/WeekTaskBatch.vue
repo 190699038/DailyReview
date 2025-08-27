@@ -190,7 +190,8 @@ export default {
             currentProject = '投放';
           } else if (projectGroupBM.includes('OA') || projectGroupBM.includes('分包')) {
             currentProject = 'OA系统';
-          } else if (projectGroupBM.includes('奇胜二号') || projectGroupBM.includes('奇胜一号') || projectGroupBM.includes('评论') || projectGroupBM.includes('引流') || projectGroupBM.includes('TG')) {
+          } else if (projectGroupBM.includes('奇胜流量') || projectGroupBM.includes('奇胜二号') || projectGroupBM.includes('奇胜一号') || projectGroupBM.includes('评论') || projectGroupBM.includes('引流') 
+          || projectGroupBM.includes('疯传') || projectGroupBM.includes('TG')) {
             currentProject = '奇胜-流量';
           } else {
             currentProject = '奇胜-技术';
@@ -327,7 +328,7 @@ export default {
             weekly_goal: item.content,
             priority: getPriority(item.priority),
             is_new_goal: 0,
-            mondayDate: getCurrentMonday(),
+            mondayDate: mondayDate.value,
             status: 1,
             country:getCountry(item.project),
             executor_id: getExecutorId(item.developer),
