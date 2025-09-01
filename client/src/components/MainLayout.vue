@@ -6,17 +6,19 @@
       router
       class="nav-menu"
     >
-      <el-menu-item index="/daily-goal">日目标管理</el-menu-item>
+          <el-menu-item index="/daily-goal">日目标管理</el-menu-item>
       <el-menu-item index="/week-goal">周目标管理</el-menu-item>
       <el-menu-item index="/test-task">测试任务</el-menu-item>
-      <!-- <el-menu-item index="/history-daily">历史记录</el-menu-item> -->
       <el-menu-item index="/system-setting">部门设置</el-menu-item>
-      <el-menu-item index="/user-today-plan">其它</el-menu-item>
+
 
     </el-menu>
     <router-view class="content-container" />
   </div>
 </template>
+
+      <!-- <el-menu-item index="/history-daily">历史记录</el-menu-item> -->
+      <!-- <el-menu-item index="/user-today-plan">其它</el-menu-item> -->
 
 <script setup>
 import { useRoute } from 'vue-router'

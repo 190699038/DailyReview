@@ -138,6 +138,7 @@ const handleDepartmentChange = (val) => {
 }
 
 const handleEdit = (row) => {
+  row.is_active = parseInt(row.is_active)
   editForm.value = { ...row }
   editDialogVisible.value = true
 }
