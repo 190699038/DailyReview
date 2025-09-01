@@ -84,6 +84,28 @@
                 <div ref="statusPieChartRef" style="width: 100%; height: 300px;"></div>
               </el-card>
             </el-col>
+            <el-col :span="24" style="margin-top: 5px;">
+              <el-card>
+                <div slot="header">
+                  <h3>执行人任务分布</h3>
+                </div>
+                <el-row :gutter="20">
+                  <el-col :span="20">
+                    <div ref="executorPieChartRef" style="width: 100%; height: 350px;"></div>
+                  </el-col>
+                  <el-col :span="4">
+                    <div class="executor-stats">
+                      <el-descriptions :column="1" border>
+                        <el-descriptions-item v-for="(stat, index) in executorStatsList" :key="index" :label="stat.name">
+                          <span style="color: #409eff; font-weight: bold;">{{ stat.value }}</span>
+                          <span style="color: #606266;"> ({{ stat.percentage }})</span>
+                        </el-descriptions-item>
+                      </el-descriptions>
+                    </div>
+                  </el-col>
+                </el-row>
+              </el-card>
+            </el-col>
           </el-row>
           
           <!-- 折线图区域 -->
@@ -163,9 +185,11 @@ const goals = ref([])
 // 图表相关
 const priorityPieChartRef = ref()
 const statusPieChartRef = ref()
+const executorPieChartRef = ref()
 const lineChartRef = ref()
 let priorityPieChart = null
 let statusPieChart = null
+let executorPieChart = null
 let lineChart = null
 
 // 折线图相关
@@ -194,8 +218,8 @@ const fetchDepartments = async () => {
       departments.value = JSON.parse(cache)
     } else {
       departments.value = [{ id: 2, department_name: '默认部门' }]
-    }
   }
+}
 }
 
 const handleDepartmentChange = (val) => {
@@ -420,6 +444,12 @@ onUnmounted(() => {
     statusPieChart.dispose()
     statusPieChart = null
   }
+  if (executorPieChart) {
+    updateExecutorPieChart()
+    executorPieChart.resize()
+    executorPieChart.dispose()
+    executorPieChart = null
+  }
   if (lineChart) {
     lineChart.dispose()
     lineChart = null
@@ -546,12 +576,26 @@ const initCharts = () => {
       showTaskDialogByStatus(params.name)
     })
   }
+  if (executorPieChartRef.value && !executorPieChart) {
+    const element = executorPieChartRef.value
+    if (element.clientWidth === 0 || element.clientHeight === 0) {
+      setTimeout(() => {
+        initCharts()
+      }, 200)
+      return
+    }
+    executorPieChart = echarts.init(executorPieChartRef.value)
+    executorPieChart.on('click', (params) => {
+      showTaskDialogByExecutor(params.name)
+    })
+  }
 }
 
 // 更新图表
 const updateCharts = () => {
   updatePriorityPieChart()
   updateStatusPieChart()
+  updateExecutorPieChart()
 }
 
 // 重新调整图表大小
@@ -561,6 +605,9 @@ const resizeCharts = () => {
   }
   if (statusPieChart) {
     statusPieChart.resize()
+  }
+  if (executorPieChart) {
+    executorPieChart.resize()
   }
   if (lineChart) {
     lineChart.resize()
@@ -986,6 +1033,74 @@ const updateStatusPieChart = () => {
   statusPieChart.setOption(option)
 }
 
+const executorStatsList = computed(() => {
+  const executorCounts = {};
+  let totalTasks = 0;
+
+  taskStats.value.forEach(task => {
+    if (task.executor && typeof task.executor === 'string') {
+      const executors = task.executor.split('/');
+      executors.forEach(executor => {
+        executor = executor.trim();
+        if (executor) {
+          executorCounts[executor] = (executorCounts[executor] || 0) + 1;
+          totalTasks++;
+        }
+      });
+    }
+  });
+
+  const stats = Object.keys(executorCounts).map(executor => {
+    const count = executorCounts[executor];
+    const percentage = totalTasks > 0 ? ((count / totalTasks) * 100).toFixed(2) + '%' : '0.00%';
+    return {
+      name: executor,
+      value: count,
+      percentage: percentage
+    };
+  });
+
+  return stats.sort((a, b) => b.value - a.value);
+});
+
+const updateExecutorPieChart = () => {
+  if (!executorPieChart) return;
+
+  const data = executorStatsList.value.map(item => ({
+    value: item.value,
+    name: item.name
+  }));
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left',
+      data: data.map(item => item.name)
+    },
+    series: [
+      {
+        name: '执行人任务',
+        type: 'pie',
+        radius: '50%',
+        center: ['50%', '60%'],
+        data: data,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }
+    ]
+  };
+  executorPieChart.setOption(option);
+}
+
 // 显示任务详情弹窗（按优先级和完成状态）
 const showTaskDialog = (priority, type) => {
   const priorityValue = getPriorityValue(priority)
@@ -1023,6 +1138,17 @@ const showTaskDialogByStatus = (statusName) => {
   
   dialogTasks.value = taskStats.value.filter(task => statusValue.includes(parseInt(task.status)))
   dialogTitle.value = `${statusName}任务列表`
+  dialogVisible.value = true
+}
+
+const showTaskDialogByExecutor = (executorName) => {
+  dialogTasks.value = taskStats.value.filter(task => {
+    if (task.executor && typeof task.executor === 'string') {
+      return task.executor.split('/').includes(executorName)
+    }
+    return false
+  })
+  dialogTitle.value = `${executorName}的任务列表`
   dialogVisible.value = true
 }
 
