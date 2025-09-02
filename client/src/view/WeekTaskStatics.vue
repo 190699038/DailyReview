@@ -1085,9 +1085,13 @@ const updateExecutorPieChart = () => {
       {
         name: '执行人任务',
         type: 'pie',
-        radius: '50%',
-        center: ['50%', '60%'],
+        radius: ['40%', '70%'],
+        center: ['50%', '50%'],
         data: data,
+        label: {
+          show: true,
+          formatter: '{b}: {c}\n({d}%)'
+        },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
