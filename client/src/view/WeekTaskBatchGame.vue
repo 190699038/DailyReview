@@ -217,13 +217,13 @@ export default {
         const row = jsonData[i];
         
         // 检查L列备注是否包含"暂停"关键字
-        const remark = row[11]?.toString().trim() || '';
+        const remark = row[10]?.toString().trim() || '';
         if (remark.includes('暂停')) {
           continue;
         }
         
         // 处理C列需求内容的合并单元格
-        const content = row[2]?.toString().trim() || '';
+        const content = row[1]?.toString().trim() || '';
         if (content && content !== currentContent) {
           // 新的需求内容，重置开发人员列表
           currentContent = content;
@@ -233,7 +233,7 @@ export default {
         let country = getCountryName(currentContent)
       
         // 读取D列研发人员
-        const developer = row[3]?.toString().trim() || '';
+        const developer = row[2]?.toString().trim() || '';
         if (developer && !currentDevelopers.includes(developer)) {
           currentDevelopers.push(developer);
         }
@@ -243,7 +243,7 @@ export default {
         let testTime = '';
         let releaseTime = '';
         
-        for (let col = 5; col <= 10; col++) { // F-K列对应索引5-10
+        for (let col = 4; col <= 9; col++) { // F-K列对应索引5-10
           const cellValue = row[col]?.toString().trim() || '';
           if (cellValue.includes('提测')) {
             hasTimeInfo = true;
