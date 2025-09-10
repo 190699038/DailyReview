@@ -96,8 +96,12 @@
                   <el-col :span="4">
                     <div class="executor-stats">
                       <el-descriptions :column="1" border>
-                        <el-descriptions-item v-for="(stat, index) in executorStatsList" :key="index" :label="stat.name">
-                          <span style="color: #409eff; font-weight: bold;">{{ stat.value }}</span>
+                        <el-descriptions-item v-for="(stat, index) in executorStatsList" :key="index">
+                          <template #label>
+                            <span>{{ stat.name }}</span>
+                          </template>
+                          <span style="color: #67C23A; font-weight: bold;">{{ stat.completedValue }}</span>
+                          <span>/{{ stat.value }}</span>
                           <span style="color: #606266;"> ({{ stat.percentage }})</span>
                         </el-descriptions-item>
                       </el-descriptions>
@@ -1035,6 +1039,7 @@ const updateStatusPieChart = () => {
 
 const executorStatsList = computed(() => {
   const executorCounts = {};
+  const executorCompletedCounts = {}; // New: To store completed task counts per executor
   let totalTasks = 0;
 
   taskStats.value.forEach(task => {
@@ -1044,6 +1049,10 @@ const executorStatsList = computed(() => {
         executor = executor.trim();
         if (executor) {
           executorCounts[executor] = (executorCounts[executor] || 0) + 1;
+          // New: Increment completed count if task status is 3 (assuming 3 means completed)
+          if (parseInt(task.status) === 3) {
+            executorCompletedCounts[executor] = (executorCompletedCounts[executor] || 0) + 1;
+          }
           totalTasks++;
         }
       });
@@ -1052,10 +1061,12 @@ const executorStatsList = computed(() => {
 
   const stats = Object.keys(executorCounts).map(executor => {
     const count = executorCounts[executor];
+    const completedCount = executorCompletedCounts[executor] || 0; // New: Get completed count
     const percentage = totalTasks > 0 ? ((count / totalTasks) * 100).toFixed(2) + '%' : '0.00%';
     return {
       name: executor,
       value: count,
+      completedValue: completedCount, // New: Add completedValue
       percentage: percentage
     };
   });
