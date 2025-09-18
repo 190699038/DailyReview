@@ -550,6 +550,7 @@ const countryOptions = ref([
   { value: 'YR', label: '用人' },
   { value: 'YW', label: '运维' },
   { value: 'FK', label: '风控' },
+  { value: 'WH', label: '文化' },
   { value: 'MVP', label: 'MVP' },
   { value: 'CW', label: '财务' },
   { value: 'TF', label: '投放' },
