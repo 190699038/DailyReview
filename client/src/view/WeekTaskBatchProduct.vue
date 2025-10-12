@@ -244,7 +244,7 @@ export default {
         // }
 
                 // 处理项目组合并单元格
-        if (row.length == 1 && row[0] && typeof row[0] === 'string') {
+        if (row.length == 1 && row[0] && typeof row[0] === 'string' || row[0] && typeof row[0] === 'string' && row[1] == null && row[2] == null) {
           const projectName = getCountryName(row[0]);
           console.log('currentProject', projectName)
           if (projectName && projectName !== currentProjectName) {
@@ -355,7 +355,7 @@ export default {
     
 
     const getCountry = (project) => {
-      if(project.includes('美国1')){
+      if(project.includes('美国1') || project.includes('运营活动')){
       return 'US1'
       }else if(project.includes('美国2')){
         return 'US2'
@@ -389,7 +389,7 @@ export default {
 
 
   const getCountryName = (project) => {
-    if(project.includes('美国1')){
+    if(project.includes('美国1') || project.includes('运营活动')){
       return '美国1'
     }else if(project.includes('美国2')){
       return '美国2'

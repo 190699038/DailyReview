@@ -207,7 +207,7 @@ export default {
           const [month, day] = monthDay.split('-');
           const currentYear = new Date().getFullYear();
           const fullDate = `${currentYear}${month}${day}`;
-          columnDateMap.set(5 + i, fullDate); // F列=5, G列=6, ..., K列=10
+          columnDateMap.set(4 + i, fullDate); // F列=5, G列=6, ..., K列=10
         }
         console.log('列索引到日期映射:', Object.fromEntries(columnDateMap));
       }
