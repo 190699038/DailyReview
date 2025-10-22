@@ -551,6 +551,8 @@ const countryOptions = ref([
   { value: 'YW', label: '运维' },
   { value: 'FK', label: '风控' },
   { value: 'WH', label: '文化' },
+  { value: 'PX', label: '培训' },
+  { value: 'AIGLJ', label: 'AI-古兰经' },
   { value: 'MVP', label: 'MVP' },
   { value: 'CW', label: '财务' },
   { value: 'TF', label: '投放' },
