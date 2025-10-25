@@ -177,8 +177,8 @@ export default {
         }
         
         // 处理项目组合并单元格
-        if (row[1] && typeof row[1] === 'string' && row.length == 2) {
-          currentProject = row[1];
+        if (row[2] && typeof row[2] === 'string' && row.length == 3) {
+          currentProject = row[2];
           console.log('currentProject', currentProject)
           //客服OA 投放OA 奇胜流量管理系统  奇胜二号 评论引流  分包系统   Google 上架 - 目标8月份在线6个谷歌包  苹果包的上架推进 奇胜一号 app引流 TG 引流 攻坚
           // 字符串包含投放  --  value: 'TF', label: '投放' 
@@ -191,9 +191,14 @@ export default {
           } else if (projectGroupBM.includes('OA') || projectGroupBM.includes('分包')) {
             currentProject = 'OA系统';
           } else if (projectGroupBM.includes('奇胜流量') || projectGroupBM.includes('奇胜二号') || projectGroupBM.includes('奇胜一号') || projectGroupBM.includes('评论') || projectGroupBM.includes('引流') 
-          || projectGroupBM.includes('疯传') || projectGroupBM.includes('TG')) {
+          || projectGroupBM.includes('疯传') || projectGroupBM.includes('TG') || projectGroupBM.includes('小米') || projectGroupBM.includes('私域')) {
             currentProject = '奇胜-流量';
-          } else {
+          }else if (projectGroupBM.includes('AI 产品')) {
+            currentProject = 'AI-古兰经';
+          }else if (projectGroupBM.includes('其它')) {
+            currentProject = '美国1';
+          } 
+          else {
             currentProject = '奇胜-技术';
           }
           continue;
