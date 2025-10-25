@@ -545,6 +545,7 @@ const countryOptions = ref([
   { value: 'QSJS', label: '奇胜-技术' },
   { value: 'QSDY', label: '奇胜-调研' },
   { value: 'QSLL', label: '奇胜-流量' },
+  { value: 'sy', label: '私域流量' },
   { value: 'YXJS', label: '游戏技术' },
   { value: 'XR', label: '选人' },
   { value: 'YR', label: '用人' },
