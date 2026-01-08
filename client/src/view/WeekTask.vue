@@ -391,7 +391,7 @@ const confirmSendTaskToGroup = async () => {
 const copytask = async () => {
   try {
     const text = filteredGoals.value
-      .map((goal, index) => `${index + 1}、${goal.priority == 10 ? '【S】' : (goal.priority == 9 ? '【A】' : (goal.priority == 8 ? '【B】' : '【C】'))} ${goal.weekly_goal} - ${countryOptions.value.find(opt => opt.value === goal.country)?.label} - ${goal.executor} - ${goal.status == 1 ? '进行中' : (goal.status == 2 ? '测试中' : (goal.status == 3 ? '已上线' : (goal.status == 4 ? '已暂停' : (goal.status == 5 ? '已完成' : '未知状态'))))}`)
+      .map((goal, index) => `${index + 1}、${goal.priority == 10 ? '【S】' : (goal.priority == 9 ? '【A】' : (goal.priority == 8 ? '【B】' : '【C】'))} ${goal.weekly_goal} - ${countryOptions.value.find(opt => opt.value === goal.country)?.label} - ${parseInt(goal.process)*100}% - ${goal.department_name} - ${goal.executor} - ${goal.cross_week == 1 || goal.cross_week == '1' ? '跨周' : '当周完成'}- ${goal.status == 1 ? '进行中' : (goal.status == 2 ? '测试中' : (goal.status == 3 ? '已上线' : (goal.status == 4 ? '已暂停' : (goal.status == 5 ? '已完成' : '未知状态'))))}`)
       .join('\n');
 
     await navigator.clipboard.writeText(text);
@@ -533,6 +533,9 @@ const countryOptions = ref([
   { value: 'US1', label: '美国1' },
   { value: 'US2', label: '美国2' },
   { value: 'US3', label: '美国3' },
+  { value: 'US4', label: '美国4' },
+  { value: 'OZ', label: '欧洲' },
+  { value: 'ZD', label: '中东' },
   { value: 'BR1', label: '巴西1' },
   { value: 'BR2', label: '巴西2' },
   { value: 'MX', label: '墨西哥' },
@@ -546,6 +549,7 @@ const countryOptions = ref([
   { value: 'QSDY', label: '奇胜-调研' },
   { value: 'QSLL', label: '奇胜-流量' },
   { value: 'YXJS', label: '游戏技术' },
+  { value: 'KF', label: '客服' },
   { value: 'XR', label: '选人' },
   { value: 'YR', label: '用人' },
   { value: 'YW', label: '运维' },

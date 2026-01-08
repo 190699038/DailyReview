@@ -23,7 +23,7 @@ export default createRouter({
         { path: 'system-setting', component: SystemSetting },
         { path: 'history-daily', component: DailyHistory },
         { path: 'test-task', component: TestTask },
-        { path: '', redirect: 'daily-goal' }
+        { path: '', redirect: 'week-goal' }
       ]
     }
   ]

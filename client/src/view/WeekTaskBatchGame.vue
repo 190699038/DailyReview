@@ -337,7 +337,15 @@ export default {
       return 'US2'
     }else if(project.includes('美国3')){
       return 'US3'
-    }else if(project.includes('巴西1')){
+    }else if(project.includes('美国4')){
+      return 'US4'
+    }else if(project.includes('欧洲')){
+      return 'OZ'
+    }
+    else if(project.includes('中东')){
+      return 'ZD'
+    }
+    else if(project.includes('巴西1')){
       return 'BR1'
     }else if(project.includes('巴西2')){
       return 'BR2'

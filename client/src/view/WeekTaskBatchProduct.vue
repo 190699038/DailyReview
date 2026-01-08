@@ -361,7 +361,10 @@ export default {
         return 'US2'
       }else if(project.includes('美国3')){
         return 'US3'
-      }else if(project.includes('巴西1')){
+      }else if(project.includes('美国4')){
+        return 'US4'
+      }
+      else if(project.includes('巴西1')){
         return 'BR1'
       }else if(project.includes('巴西2')){
         return 'BR2'
@@ -371,7 +374,20 @@ export default {
         return 'CL'
       }else if(project.includes('加拿大')){
         return 'CA'
-      }else if(project.includes('澳大利亚') || project.includes('澳洲')){
+      }else if(project.includes('欧洲')){
+        return 'OZ'
+      }else if(project.includes('中东')){
+        return 'ZD'
+      }
+      //  { value: 'AIFN', label: 'AI赋能' },
+  // { value: 'AIGLJ', label: 'AI-古兰经' },
+    else if(project.includes('古兰经')){
+        return 'AIGLJ'
+      }
+      else if(project.includes('AI')){
+        return 'AIFN'
+      }
+      else if(project.includes('澳大利亚') || project.includes('澳洲')){
         return 'AU'
       }else if(project.includes('秘鲁')){
         return 'PE'

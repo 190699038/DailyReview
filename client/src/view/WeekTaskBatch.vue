@@ -176,8 +176,10 @@ export default {
           break;
         }
         
+        console.log('row', row)
         // 处理项目组合并单元格
-        if (row[2] && typeof row[2] === 'string' && row.length == 3) {
+        if ((row[2] && typeof row[2] === 'string' && row.length == 3) 
+        || (row.length > 4 && row[2] && typeof row[2] === 'string' && row[3] ==null  &&  row[4] ==null )) {
           currentProject = row[2];
           console.log('currentProject', currentProject)
           //客服OA 投放OA 奇胜流量管理系统  奇胜二号 评论引流  分包系统   Google 上架 - 目标8月份在线6个谷歌包  苹果包的上架推进 奇胜一号 app引流 TG 引流 攻坚
@@ -186,17 +188,44 @@ export default {
           // 字符串包含奇胜二号、奇胜一号、评论、引流、TG  --   value: 'QSLL', label: '奇胜-流量'
           // 其它 -- value: 'QSJS', label: '奇胜-技术'  
           let projectGroupBM = currentProject;
+          console.log('projectGroupBM', projectGroupBM)
           if (projectGroupBM.includes('投放')) {
             currentProject = '投放';
-          } else if (projectGroupBM.includes('OA') || projectGroupBM.includes('分包')) {
-            currentProject = 'OA系统';
-          } else if (projectGroupBM.includes('奇胜流量') || projectGroupBM.includes('奇胜二号') || projectGroupBM.includes('奇胜一号') || projectGroupBM.includes('评论') || projectGroupBM.includes('引流') 
+          }  else if (projectGroupBM.includes('奇胜流量') || projectGroupBM.includes('奇胜二号') || projectGroupBM.includes('奇胜一号') || projectGroupBM.includes('评论') || projectGroupBM.includes('引流') 
           || projectGroupBM.includes('疯传') || projectGroupBM.includes('TG') || projectGroupBM.includes('小米') || projectGroupBM.includes('私域')) {
             currentProject = '奇胜-流量';
-          }else if (projectGroupBM.includes('AI 产品')) {
+          }else if (projectGroupBM.includes('Google') || projectGroupBM.includes('苹果包') || projectGroupBM.includes('上架')) {
+            currentProject = '奇胜-技术';
+          }
+          else if (projectGroupBM.includes('AI 产品')) {
             currentProject = 'AI-古兰经';
-          }else if (projectGroupBM.includes('其它')) {
+          }else if (projectGroupBM.includes('AI')) {
+            currentProject = 'AI赋能';
+          }
+          else if (projectGroupBM.includes('美国1')) {
             currentProject = '美国1';
+          } 
+          else if (projectGroupBM.includes('美国2')) {
+            currentProject = '美国2';
+          } 
+          else if (projectGroupBM.includes('美国3')) {
+            currentProject = '美国3';
+          } 
+          else if (projectGroupBM.includes('美国4')) {
+            currentProject = '美国4';
+          }  else if (projectGroupBM.includes('欧洲')) {
+            currentProject = '欧洲';
+          } else if (projectGroupBM.includes('中东')) {
+            currentProject = '中东';
+          } 
+          else if (projectGroupBM.includes('其它') || projectGroupBM.includes('其他')) {
+            currentProject = '美国1';
+          }
+           else if (projectGroupBM.includes('客服OA') ) {
+            currentProject = '客服';
+          } 
+          else if (projectGroupBM.includes('OA') || projectGroupBM.includes('分包')) {
+            currentProject = 'OA系统';
           } 
           else {
             currentProject = '奇胜-技术';
@@ -210,7 +239,9 @@ export default {
 
           const content = row[2]?.toString().trim() || '';
           const priority = normalizePriority(row[1]);
-          const name = row[12]?.toString().trim() || '';
+          const name2 = row[12]?.toString().trim() || '';
+          //name中删除@字符串
+          const name = name2.replace('@', '');
           const target = row[10]?.toString().trim() || '';
           
           // 如果需求内容为空，则跳过此行
@@ -222,8 +253,10 @@ export default {
           const contentKey = `${projectGroup}-${content}-${name}`;
           
           // 处理多研发人员情况
-          const developers = row[3]?.toString().split(/[,\/、]+/).map(d => d.trim()).filter(d => d) || [];
-          
+          const dev = formatTags(row[3]);
+
+          const developers = dev?.toString().split(/[,\/、]+/).map(d => d.trim()).filter(d => d) || [];
+      
           if (projectContentMap.has(contentKey)) {
             // 如果已存在相同项目内容，合并研发人员
             const existingItem = projectContentMap.get(contentKey);
@@ -258,6 +291,26 @@ export default {
       }
     };
 
+const formatTags = (text) => {
+  if (!text) return "";
+
+  // 1. 使用正则匹配所有符合 @xxx 格式的片段
+  // 正则解释：/@([^\s@]+)/g
+  // @       : 匹配 @ 符号
+  // ([^\s@]+): 捕获组，匹配 @ 之后直到遇到 "空白字符" 或 "下一个 @" 之前的所有字符
+  const matches = text.match(/@([^\s@]+)/g);
+
+  if (!matches) {
+    return text; // 如果没有匹配到 @，返回原文本
+  }
+
+  // 2. 去掉 @ 符号并用 / 连接
+  return matches
+    .map(tag => tag.replace('@', '').trim()) // 移除 @ 并去除可能的前后空格
+    .join('/'); // 用 / 连接
+  }
+
+
 // 获取当前周一日期
   const getCurrentMonday = () => {
     const date = new Date();
@@ -290,7 +343,44 @@ export default {
       return 'OA';
     } else if (name.includes('奇胜-流量')) {
       return 'QSLL';
-    }  else {
+    }
+    else if (name.includes('AI-古兰经')) {
+      return 'AIGLJ';
+    }
+    else if (name.includes('AI赋能')) {
+      return 'AIFN';
+    }
+    else if (name.includes('美国1')) {
+      return 'US1';
+    }
+    else if (name.includes('美国2')) {
+      return 'US2';
+    }
+    else if (name.includes('美国3')) {
+      return 'US3';
+    }
+    else if (name.includes('美国4')) {
+      return 'US4';
+    }
+    else if (name.includes('客服')) {
+      return 'KF';
+    }
+    else if (name.includes('巴西1')) {
+      return 'BR1';
+    }
+    else if (name.includes('巴西2')) {
+      return 'BR2';
+    }
+    else if (name.includes('墨西哥')) {
+      return 'MX';
+    }
+    else if (name.includes('欧洲')) {
+      return 'OZ';
+    }else if (name.includes('中东')) {
+      return 'ZD';
+    }
+
+    else {
       return 'QSJS';
     }
   }
