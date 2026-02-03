@@ -1,9 +1,11 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" :style="{ width: isMobile ? '90%' : 'auto' }">
     <h2>部门设置</h2>
-    <el-form :model="form" label-width="120px" class="center-form">
-      <el-form-item label="部门选择" class="form-item-left">
-        <el-select v-model="selectedDepartmentId" :placeholder="selectedDepartmentName" @change="handleDepartmentChange" style="max-width: 100px">
+    
+    <!-- Mobile Toolbar -->
+    <div v-if="isMobile" class="mobile-toolbar">
+      <div class="toolbar-row">
+        <el-select v-model="selectedDepartmentId" :placeholder="selectedDepartmentName" @change="handleDepartmentChange" style="width: 100%">
           <el-option
             v-for="dept in departments"
             :key="dept.id"
@@ -11,14 +13,34 @@
             :value="dept.id"
           />
         </el-select>
-      </el-form-item>
-    </el-form>
-
-    <div class="button-wrapper" style="margin-bottom: 10px">
-      <el-button type="primary" @click="showAddDialog" class="add-button">新增用户</el-button>
+      </div>
+      <div class="toolbar-row">
+        <el-button type="primary" @click="showAddDialog" style="width: 100%">新增用户</el-button>
+      </div>
     </div>
+
+    <!-- Desktop Toolbar -->
+    <template v-else>
+      <el-form :model="form" label-width="80px" class="center-form">
+        <el-form-item label="部门选择" class="form-item-left">
+          <el-select v-model="selectedDepartmentId" :placeholder="selectedDepartmentName" @change="handleDepartmentChange" style="max-width: 100px">
+            <el-option
+              v-for="dept in departments"
+              :key="dept.id"
+              :label="dept.department_name"
+              :value="dept.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <div class="button-wrapper" style="margin-bottom: 10px">
+        <el-button type="primary" @click="showAddDialog" class="add-button">新增用户</el-button>
+      </div>
+    </template>
     
-    <el-table :data="users" border class="custom-table" stripe>
+    <!-- Desktop Table -->
+    <el-table v-if="!isMobile" :data="users" border class="custom-table" stripe>
       <el-table-column prop="partner_name" label="姓名" width="180" align="center" header-align="center"/>
       <el-table-column prop="mode" label="模式" width="180" align="center" header-align="center"/>
 
@@ -27,25 +49,51 @@
       <el-table-column label="操作" width="180" height="55"  align="center" header-align="center">
         <template #default="{ row }">
           <div style="display: flex; justify-content: center; align-items: center; gap: 8px; height: 100%">
-  <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-</div>
+            <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="editDialogVisible" title="用户信息" class="dialog-center">
-      <el-form :model="editForm" label-width="80px" class="dialog-form">
-        <el-form-item label="姓名" label-width="80px">
+    <!-- Mobile User List -->
+    <div v-else class="mobile-user-list" >
+      <el-card v-for="user in users" :key="user.id" class="mobile-user-card" shadow="never" >
+        <div class="user-card-header">
+          <span class="user-name">{{ user.partner_name }}</span>
+          <el-button size="small" type="primary" plain @click="handleEdit(user)">编辑</el-button>
+        </div>
+        <div class="user-card-content">
+          <div class="info-row">
+            <span class="label">部门:</span>
+            <span class="value">{{ user.department_name }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">职位:</span>
+            <span class="value">{{ user.position || '-' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">模式:</span>
+            <span class="value">
+              <el-tag size="small" :type="user.mode === '拼搏模式' ? 'danger' : 'success'">{{ user.mode }}</el-tag>
+            </span>
+          </div>
+        </div>
+      </el-card>
+    </div>
+
+    <el-dialog v-model="editDialogVisible" title="用户信息" :width="isMobile ? '90%' : '50%'" class="dialog-center">
+      <el-form :model="editForm" :label-width="isMobile ? '60px' : '80px'" class="dialog-form">
+        <el-form-item label="姓名">
           <el-input v-model="editForm.partner_name" />
         </el-form-item>
-        <el-form-item label="模式" label-width="80px">
+        <el-form-item label="模式">
           <el-radio-group v-model="editForm.mode">
             <el-radio value="拼搏模式">拼搏模式</el-radio>
             <el-radio value="正常模式">正常模式</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="部门" label-width="80px">
-          <el-select v-model="editForm.department_id" placeholder="请选择部门">
+        <el-form-item label="部门">
+          <el-select v-model="editForm.department_id" placeholder="请选择部门" style="width: 100%">
           <el-option
             v-for="dept in departments"
             :key="dept.id"
@@ -54,10 +102,10 @@
           />
         </el-select>
         </el-form-item>
-        <el-form-item label="职位" label-width="80px">
+        <el-form-item label="职位">
           <el-input v-model="editForm.position" />
         </el-form-item>
-        <el-form-item label="状态" label-width="80px">
+        <el-form-item label="状态">
           <el-switch v-model="editForm.is_active" :active-value="1" :inactive-value="0" />
         </el-form-item>
       </el-form>
@@ -74,6 +122,9 @@ import { ref } from 'vue'
 import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
 import {megerOAUserIDS} from '@/utils/dailyPlanAsync'
+import { useResponsive } from '@/composables/useResponsive'
+
+const { isMobile } = useResponsive()
 
 const form = ref({
   apiDomain: '',
@@ -198,10 +249,70 @@ loadSettings()
 </script>
 
 <style scoped>
+.mobile-toolbar {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toolbar-row {
+  width: 100%;
+}
+
+.mobile-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.mobile-user-card {
+  border-radius: 8px;
+}
+
+.user-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ebeef5;
+  padding-bottom: 8px;
+}
+
+.user-name {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.user-card-content {
+  margin-bottom: 15px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.info-row .label {
+  color: #909399;
+}
+
+.info-row .value {
+  color: #303133;
+}
+
 .page-container {
-  max-width: 1200px;
+  width: auto;
   margin: 0 auto;
   padding: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  .page-container {
+    padding: 10px;
+  }
 }
 
 .custom-table {
@@ -214,7 +325,6 @@ loadSettings()
 
 :deep(.el-form-item__label) {
   display:flex;
-  width: 70px !important;
 }
 
 :deep(.el-table th) {

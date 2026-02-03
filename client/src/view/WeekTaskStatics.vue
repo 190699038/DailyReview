@@ -1,14 +1,14 @@
 <template>
   <div class="page-container">
     <!-- 查询条件区域 -->
-    <div class="query-section">
+    <div class="query-section" :class="{ 'mobile-query-section': isMobile }">
       <el-date-picker
         v-model="startDate"
         type="date"
         placeholder="开始日期"
         format="YYYYMMDD"
         value-format="YYYYMMDD"
-        style="margin-left: 8px; max-width: 200px;"
+        :style="isMobile ? 'width: 100%; margin-bottom: 10px;' : 'margin-left: 8px; max-width: 200px;'"
       />
 
       <el-date-picker
@@ -17,20 +17,24 @@
         placeholder="结束日期"
         format="YYYYMMDD"
         value-format="YYYYMMDD"
-        style="margin-left: 8px; max-width: 200px;"
+        :style="isMobile ? 'width: 100%; margin-bottom: 10px;' : 'margin-left: 8px; max-width: 200px;'"
       />
 
       <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange"
-        style="max-width: 120px;margin-left:8px">
+        :style="isMobile ? 'width: 100%; margin-bottom: 10px;' : 'max-width: 120px;margin-left:8px'">
         <el-option v-for="dept in departments" :key="dept.id" :label="dept.department_name" :value="dept.id" />
       </el-select>
 
-      <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
-    <el-button type="success" style="margin-left: 8px;" @click="setDateRange('week')">本周</el-button>
-<el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastWeek')">近一周</el-button>
-<el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
-<el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
-<el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastFourWeeks')">近四周</el-button>
+      <div :class="{ 'mobile-buttons': isMobile }">
+        <el-button type="primary" :style="isMobile ? 'width: 100%; margin-bottom: 5px;' : 'margin-left: 8px;'" @click="loadData()">查询</el-button>
+        <div class="quick-dates" :class="{ 'mobile-quick-dates': isMobile }">
+          <el-button type="success" :size="isMobile ? 'small' : 'default'" :style="isMobile ? '' : 'margin-left: 8px;'" @click="setDateRange('week')">本周</el-button>
+          <el-button type="success" :size="isMobile ? 'small' : 'default'" :style="isMobile ? '' : 'margin-left: 8px;'" @click="setDateRange('lastWeek')">近一周</el-button>
+          <el-button type="success" :size="isMobile ? 'small' : 'default'" :style="isMobile ? '' : 'margin-left: 8px;'" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
+          <el-button type="success" :size="isMobile ? 'small' : 'default'" :style="isMobile ? '' : 'margin-left: 8px;'" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
+          <el-button type="success" :size="isMobile ? 'small' : 'default'" :style="isMobile ? '' : 'margin-left: 8px;'" @click="setDateRange('lastFourWeeks')">近四周</el-button>
+        </div>
+      </div>
     </div>
 
     <!-- 统计数据展示区域 -->
@@ -40,7 +44,7 @@
           <h2>周目标任务统计</h2>
           <!-- S、A、B、C类未完成数量统计 -->
           <div class="priority-stats">
-            <el-descriptions :column="4" border>
+            <el-descriptions :column="isMobile ? 2 : 4" border>
               <el-descriptions-item label="S类">
                 <span class="clickable-number" @click="showTaskDialog('S', 'incomplete')" style="color: #f56c6c; cursor: pointer; font-weight: bold;">
                   {{ priorityStats.S.complete }} / {{ priorityStats.S.total }}
@@ -68,7 +72,7 @@
         <!-- 图表展示区域 -->
         <div class="charts-container" style="margin: 20px 0;">
           <el-row :gutter="20">
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12" :span="12">
               <el-card>
                 <div slot="header">
                   <h3>优先级任务状态分布</h3>
@@ -76,7 +80,7 @@
                 <div ref="priorityPieChartRef" style="width: 100%; height: 300px;"></div>
               </el-card>
             </el-col>
-            <el-col :span="12">
+            <el-col :xs="24" :sm="12" :span="12">
               <el-card>
                 <div slot="header">
                   <h3>任务状态分布</h3>
@@ -90,10 +94,10 @@
                   <h3>执行人任务分布</h3>
                 </div>
                 <el-row :gutter="20">
-                  <el-col :span="20">
+                  <el-col :xs="24" :sm="20" :span="20">
                     <div ref="executorPieChartRef" style="width: 100%; height: 350px;"></div>
                   </el-col>
-                  <el-col :span="4">
+                  <el-col :xs="24" :sm="4" :span="4">
                     <div class="executor-stats">
                       <el-descriptions :column="1" border>
                         <el-descriptions-item v-for="(stat, index) in executorStatsList" :key="index">
@@ -134,7 +138,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="80%"
+      :width="isMobile ? '95%' : '80%'"
       max-height="70vh"
     >
       <el-table
@@ -173,6 +177,9 @@ import { ref, onMounted, onActivated, onUnmounted, computed, nextTick } from 'vu
 import http from '@/utils/http'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
+import { useResponsive } from '@/composables/useResponsive'
+
+const { isMobile } = useResponsive()
 
 // 定义emit事件
 const emit = defineEmits(['department-change'])
@@ -657,12 +664,13 @@ const updateLineChart = () => {
     },
     legend: {
       data: ['已完成', '未完成'],
-      bottom: '5%'
+      bottom: isMobile.value ? '0%' : '5%',
+      textStyle: isMobile.value ? { fontSize: 10 } : {}
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
+      bottom: isMobile.value ? '15%' : '15%',
       containLabel: true
     },
     xAxis: {
@@ -959,7 +967,14 @@ const updatePriorityPieChart = () => {
       trigger: 'item',
       formatter: '{b}: {c} ({d}%)'
     },
-    legend: {
+    legend: isMobile.value ? {
+      orient: 'horizontal',
+      bottom: '0',
+      left: 'center',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { fontSize: 11 }
+    } : {
       orient: 'vertical',
       left: 'left'
     },
@@ -967,12 +982,13 @@ const updatePriorityPieChart = () => {
       {
         name: '优先级分布',
         type: 'pie',
-        radius: ['40%', '70%'],
+        radius: isMobile.value ? ['35%', '55%'] : ['40%', '70%'],
         center: ['50%', '50%'],
         data: data,
         label: {
           show: true,
-          formatter: '{b}: {c}\n({d}%)'
+          formatter: isMobile.value ? '{b}: {d}%' : '{b}: {c}\n({d}%)',
+          fontSize: isMobile.value ? 11 : 12
         },
         emphasis: {
           itemStyle: {
@@ -1008,7 +1024,14 @@ const updateStatusPieChart = () => {
       trigger: 'item',
       formatter: '{b}: {c} ({d}%)'
     },
-    legend: {
+    legend: isMobile.value ? {
+      orient: 'horizontal',
+      bottom: '0',
+      left: 'center',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { fontSize: 11 }
+    } : {
       orient: 'vertical',
       left: 'left'
     },
@@ -1016,12 +1039,13 @@ const updateStatusPieChart = () => {
       {
         name: '状态分布',
         type: 'pie',
-        radius: ['40%', '70%'],
+        radius: isMobile.value ? ['35%', '55%'] : ['40%', '70%'],
         center: ['50%', '50%'],
         data: data,
         label: {
           show: true,
-          formatter: '{b}: {c}\n({d}%)'
+          formatter: isMobile.value ? '{b}: {d}%' : '{b}: {c}\n({d}%)',
+          fontSize: isMobile.value ? 11 : 12
         },
         emphasis: {
           itemStyle: {
@@ -1087,7 +1111,15 @@ const updateExecutorPieChart = () => {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c} ({d}%)'
     },
-    legend: {
+    legend: isMobile.value ? {
+      orient: 'horizontal',
+      bottom: '0',
+      left: 'center',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { fontSize: 11 },
+      data: data.map(item => item.name)
+    } : {
       orient: 'vertical',
       left: 'left',
       data: data.map(item => item.name)
@@ -1096,12 +1128,13 @@ const updateExecutorPieChart = () => {
       {
         name: '执行人任务',
         type: 'pie',
-        radius: ['40%', '70%'],
+        radius: isMobile.value ? ['35%', '55%'] : ['40%', '70%'],
         center: ['50%', '50%'],
         data: data,
         label: {
           show: true,
-          formatter: '{b}: {c}\n({d}%)'
+          formatter: isMobile.value ? '{b}: {d}%' : '{b}: {c}\n({d}%)',
+          fontSize: isMobile.value ? 11 : 12
         },
         emphasis: {
           itemStyle: {
@@ -1227,9 +1260,16 @@ defineExpose({
   margin: 0 auto;
 }
 
+@media screen and (max-width: 768px) {
+  .page-container {
+    padding: 10px;
+  }
+}
+
 .query-section {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   margin-bottom: 20px;
 }
@@ -1283,5 +1323,69 @@ defineExpose({
 
 :deep(.el-tag) {
   font-weight: bold;
+}
+.mobile-dialog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.mobile-dialog-card {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+}
+
+.dialog-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.task-id {
+  color: #909399;
+  font-size: 12px;
+}
+
+.mr-1 {
+  margin-right: 4px;
+}
+
+.task-text {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  color: #303133;
+}
+
+.task-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #606266;
+}
+
+.mobile-query-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-buttons {
+  width: 100%;
+}
+
+.mobile-quick-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-start;
+}
+
+.mobile-quick-dates .el-button {
+  margin-left: 0 !important;
+  margin-right: 5px;
+  margin-bottom: 5px;
 }
 </style>

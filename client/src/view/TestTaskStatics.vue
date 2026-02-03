@@ -1,13 +1,13 @@
 <template>
  <div class="container">
-    <div class="test-task-statics-base">
+    <div class="test-task-statics-base" :class="{ 'mobile-filters': isMobile }">
     <el-date-picker
         v-model="startDate"
         type="date"
         placeholder="开始日期"
         format="YYYYMMDD"
         value-format="YYYYMMDD"
-        style="margin-left: 8px; max-width: 200px;"
+        :style="isMobile ? 'width: 100%; margin: 0 0 8px 0;' : 'margin-left: 8px; max-width: 200px;'"
       />
 
     <el-date-picker
@@ -16,16 +16,25 @@
         placeholder="结束日期"
         format="YYYYMMDD"
         value-format="YYYYMMDD"
-        style="margin-left: 8px; max-width: 200px;"
+        :style="isMobile ? 'width: 100%; margin: 0 0 8px 0;' : 'margin-left: 8px; max-width: 200px;'"
       />
 
 
-    <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
-    <el-button type="success" style="margin-left: 8px;" @click="setDateRange('week')">本周</el-button>
-            <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastWeek')">近一周</el-button>
-            <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
-            <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
-            <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastFourWeeks')">近四周</el-button>
+    <el-button type="primary" :style="isMobile ? 'width: 100%; margin: 0 0 8px 0;' : 'margin-left: 8px;'" @click="loadData()">查询</el-button>
+    <div v-if="isMobile" class="quick-dates-mobile">
+        <el-button size="small" type="success" @click="setDateRange('week')">本周</el-button>
+        <el-button size="small" type="success" @click="setDateRange('lastWeek')">近一周</el-button>
+        <el-button size="small" type="success" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
+        <el-button size="small" type="success" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
+        <el-button size="small" type="success" @click="setDateRange('lastFourWeeks')">近四周</el-button>
+    </div>
+    <template v-else>
+        <el-button type="success" style="margin-left: 8px;" @click="setDateRange('week')">本周</el-button>
+        <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastWeek')">近一周</el-button>
+        <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastTwoWeeks')">近两周</el-button>
+        <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastThreeWeeks')">近三周</el-button>
+        <el-button type="success" style="margin-left: 8px;" @click="setDateRange('lastFourWeeks')">近四周</el-button>
+    </template>
 
 
     </div>
@@ -34,7 +43,7 @@
       <div slot="header" class="card-header">
         <h2>测试任务信息统计</h2>
         <div class="total-stats">
-          <el-descriptions :column="4" border>
+          <el-descriptions :column="isMobile ? 1 : 4" border>
             <el-descriptions-item label="总任务数">{{ totalTasks }}</el-descriptions-item>
             <el-descriptions-item label="总耗时(小时)">{{ totalTimeSpent.toFixed(2) }}</el-descriptions-item>
             <el-descriptions-item label="已完成任务">{{ totalCompletedTasks }}</el-descriptions-item>
@@ -46,16 +55,16 @@
       <!-- 图表展示区域 -->
       <div class="charts-container" style="margin: 20px 0;">
         <el-row :gutter="20">
-          <el-col :span="12">
-            <el-card>
+          <el-col :span="isMobile ? 24 : 12">
+            <el-card class="chart-card">
               <div slot="header">
                 <!-- <h3>总体任务分布饼图</h3> -->
               </div>
               <div ref="pieChartRef" style="width: 100%; height: 300px;"></div>
             </el-card>
           </el-col>
-          <el-col :span="12">
-            <el-card>
+          <el-col :span="isMobile ? 24 : 12">
+            <el-card class="chart-card">
               <div slot="header">
                 <!-- <h3>提测时间统计</h3> -->
                 <div ref="submitPieChartRef" style="width: 100%; height:300px;"></div>
@@ -67,16 +76,16 @@
         
         <!-- 按个人分析的图表 -->
         <el-row :gutter="20" style="margin-top: 20px;">
-          <el-col :span="12">
-            <el-card>
+          <el-col :span="isMobile ? 24 : 12">
+            <el-card class="chart-card">
               <div slot="header">
                 <h3>个人任务分布对比</h3>
               </div>
               <div ref="personBarChartRef" style="width: 100%; height: 250px;"></div>
             </el-card>
           </el-col>
-          <el-col :span="12">
-            <el-card>
+          <el-col :span="isMobile ? 24 : 12">
+            <el-card class="chart-card">
               <div slot="header">
                 <h3>个人工作量分布</h3>
               </div>
@@ -110,7 +119,7 @@
           :name="personName"
         >
         <div class="person-stats">
-          <el-descriptions :column="4" border>
+          <el-descriptions :column="isMobile ? 1 : 4" border>
             <el-descriptions-item label="总耗时(小时)">{{ getPersonInfo(personData,1) }}</el-descriptions-item>
             <el-descriptions-item label="已完成任务">{{ getPersonInfo(personData,2) }}</el-descriptions-item>
             <el-descriptions-item label="测试中任务">{{ getPersonInfo(personData,3) }}</el-descriptions-item>
@@ -119,6 +128,7 @@
         </div>  
           <!-- 任务详情表格 -->
           <el-table 
+            v-if="!isMobile"
             :data="personData.tasks" 
             border 
             style="width: 100%;"
@@ -164,6 +174,46 @@
           <el-table-column prop="creation_date" label="创建日期" width="100" header-align="center" align="center"></el-table-column>
 
           </el-table>
+
+          <!-- 移动端卡片视图 -->
+          <div v-else class="mobile-task-list">
+            <div v-for="task in personData.tasks" :key="task.task_id" class="mobile-task-card">
+              <div class="task-header">
+                <span class="task-id">#{{ task.task_id }}</span>
+                <el-tag :type="priorityTypeMap[task.priority]" size="small">{{ task.priority }}</el-tag>
+                <el-tag :type="statusTypeMap[task.test_status]" size="small" class="status-tag">{{ task.test_status }}</el-tag>
+              </div>
+              <div class="task-content">
+                <div class="task-row">
+                  <span class="label">产品:</span>
+                  <span class="value">{{ task.product }}</span>
+                </div>
+                <div class="task-row">
+                  <span class="label">内容:</span>
+                  <span class="value">{{ task.test_content }}</span>
+                </div>
+                <div class="task-row">
+                  <span class="label">进度:</span>
+                  <div class="value progress-wrapper">
+                    <el-progress 
+                      :percentage="getProgressPercentage(task.test_progress)" 
+                      :stroke-width="6"
+                      :status="getProgressStatus(task.test_progress)"
+                    ></el-progress>
+                  </div>
+                </div>
+                <div class="task-row">
+                  <span class="label">耗时:</span>
+                  <span class="value">{{ task.totalTime }}小时</span>
+                </div>
+                <div class="task-dates">
+                   <div class="date-item">提测: {{ task.submission_time }}</div>
+                   <div class="date-item">上线: {{ task.actual_online_time }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </el-collapse-item>
       </el-collapse>
     </el-card>
@@ -173,10 +223,11 @@
   <el-dialog
     v-model="dialogVisible"
     title="任务详情"
-    width="80%"
+    :width="isMobile ? '95%' : '80%'"
     :before-close="handleClose"
   >
     <el-table
+      v-if="!isMobile"
       :data="dialogTaskData"
       border
       style="width: 100%;"
@@ -204,6 +255,42 @@
       <el-table-column prop="creation_date" label="创建日期" header-align="center" align="center" width="100"></el-table-column>
 
     </el-table>
+
+    <div v-else class="mobile-dialog-list">
+      <el-card v-for="task in dialogTaskData" :key="task.task_id" class="mobile-dialog-card" shadow="never">
+        <div class="dialog-card-header">
+          <span class="task-id">#{{ task.task_id }}</span>
+          <el-tag :type="statusTypeMap[task.test_status]" size="small">{{ task.test_status }}</el-tag>
+        </div>
+        <div class="dialog-card-content">
+          <div class="info-row">
+            <span class="label">产品:</span>
+            <span class="value">{{ task.product }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">内容:</span>
+            <span class="value">{{ task.test_content }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">耗时:</span>
+            <span class="value">{{ task.totalTime }}小时</span>
+          </div>
+          <div v-if="showSubTime" class="info-row">
+            <span class="label">预计提测:</span>
+            <span class="value">{{ task.pre_submission_time }}</span>
+          </div>
+          <div v-if="showSubTime" class="info-row">
+            <span class="label">实际提测:</span>
+            <span class="value">{{ task.submission_time }}</span>
+          </div>
+          <div class="info-row">
+             <span class="label">创建日期:</span>
+             <span class="value">{{ task.creation_date }}</span>
+          </div>
+        </div>
+      </el-card>
+    </div>
+
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="dialogVisible = false">关闭</el-button>
@@ -220,7 +307,9 @@ import { ElMessage,ElCard, ElDescriptions, ElDescriptionsItem, ElCollapse, ElCol
 import * as XLSX from 'xlsx';
 import * as echarts from 'echarts';
 import http from '@/utils/http'
+import { useResponsive } from '@/composables/useResponsive'
 
+const { isMobile } = useResponsive()
 const containerRef = ref();
 const loading = ref(null);
 const startDate = ref('');
@@ -611,14 +700,27 @@ const initSubmitPieChart = ( data ) => {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c} ({d}%)'
     },
-    legend: {
+    legend: isMobile.value ? {
+      orient: 'horizontal',
+      bottom: '0',
+      left: 'center',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { fontSize: 10 }
+    } : {
       orient: 'vertical',
       left: 'right'
     },
     series: [{
       name: '提测状态',
       type: 'pie',
-      radius: '50%',
+      radius: isMobile.value ? '40%' : '50%',
+      center: ['50%', '50%'],
+      label: {
+        show: true,
+        formatter: isMobile.value ? '{b}\n{d}%' : '{b}: {c} ({d}%)',
+        fontSize: isMobile.value ? 10 : 12
+      },
       data: [
         { value: statusCount.normal, name: `正常提测 ${statusCount.normal}次 (${((statusCount.normal/(statusCount.normal+statusCount.delay+statusCount.advance+statusCount.unknown))*100).toFixed(1)}%)`,tip:`正常提测` },
         { value: statusCount.delay, name: `延迟提测 ${statusCount.delay}次 (${((statusCount.delay/(statusCount.normal+statusCount.delay+statusCount.advance+statusCount.unknown))*100).toFixed(1)}%)`,tip:`延迟提测` },
@@ -679,7 +781,14 @@ const updatePieChart = () => {
     tooltip: {
       trigger: 'item'
     },
-    legend: {
+    legend: isMobile.value ? {
+      orient: 'horizontal',
+      bottom: '0',
+      left: 'center',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { fontSize: 10 }
+    } : {
       orient: 'vertical',
       left: 'right'
     },
@@ -687,11 +796,13 @@ const updatePieChart = () => {
       {
         name: '任务状态',
         type: 'pie',
-        radius: '50%',
+        radius: isMobile.value ? '40%' : '50%',
+        center: ['50%', '50%'],
         data: data,
         label: {
           show: true,
-          formatter: '{b}: {c}\n({d}%)'
+          formatter: isMobile.value ? '{b}: {d}%' : '{b}: {c}\n({d}%)',
+          fontSize: isMobile.value ? 10 : 12
         },
         emphasis: {
           itemStyle: {
@@ -805,12 +916,14 @@ const updateLineChart = () => {
       trigger: 'axis'
     },
     legend: {
-      data: ['已完成', '进行中', '未提测', '暂停']
+      data: ['已完成', '进行中', '未提测', '暂停'],
+      bottom: isMobile.value ? '0%' : 'auto',
+      textStyle: isMobile.value ? { fontSize: 10 } : {}
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '3%',
+      bottom: isMobile.value ? '15%' : '3%',
       containLabel: true
     },
     xAxis: {
@@ -901,12 +1014,14 @@ const updatePersonBarChart = () => {
       }
     },
     legend: {
-      data: ['已完成', '进行中', '未提测', '暂停']
+      data: ['已完成', '进行中', '未提测', '暂停'],
+      bottom: isMobile.value ? '0%' : 'auto',
+      textStyle: isMobile.value ? { fontSize: 10 } : {}
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '3%',
+      bottom: isMobile.value ? '15%' : '3%',
       containLabel: true
     },
     xAxis: {
@@ -1005,7 +1120,14 @@ const updatePersonPieChart = () => {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c}小时 ({d}%)'
     },
-    legend: {
+    legend: isMobile.value ? {
+      orient: 'horizontal',
+      bottom: '0',
+      left: 'center',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { fontSize: 10 }
+    } : {
       orient: 'vertical',
       left: 'left'
     },
@@ -1013,11 +1135,13 @@ const updatePersonPieChart = () => {
       {
         name: '工作量',
         type: 'pie',
-        radius: ['40%', '70%'],
+        radius: isMobile.value ? ['35%', '55%'] : ['40%', '70%'],
+        center: ['50%', '50%'],
         avoidLabelOverlap: false,
         label: {
           show: true,
-          formatter: '{b}\n{c}h\n({d}%)'
+          formatter: isMobile.value ? '{b}\n{d}%' : '{b}\n{c}h\n({d}%)',
+          fontSize: isMobile.value ? 10 : 12
         },
         emphasis: {
           label: {
@@ -1384,6 +1508,12 @@ onMounted(async () => {
 .container {
   padding: 20px;
 }
+
+@media screen and (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+}
 .upload-demo {
   margin-bottom: 20px;
 }
@@ -1417,5 +1547,119 @@ onMounted(async () => {
 
 ::v-deep .el-progress {
   margin-top: 8px;
+}
+.mobile-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mobile-task-card {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fff;
+}
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+.task-id {
+  font-weight: bold;
+  color: #909399;
+}
+.status-tag {
+  margin-left: auto;
+}
+.task-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.task-row {
+  display: flex;
+  align-items: flex-start;
+  font-size: 14px;
+}
+.label {
+  color: #909399;
+  width: 50px;
+  flex-shrink: 0;
+}
+.value {
+  color: #303133;
+  flex: 1;
+}
+.progress-wrapper {
+  padding-top: 4px;
+}
+.task-dates {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #f0f0f0;
+  font-size: 12px;
+  color: #909399;
+  display: flex;
+  justify-content: space-between;
+}
+
+.mobile-dialog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.mobile-dialog-card {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fff;
+}
+
+.dialog-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dialog-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  font-size: 14px;
+}
+
+.info-row .label {
+  width: 70px;
+}
+
+.mobile-filters {
+  flex-direction: column !important;
+}
+
+.quick-dates-mobile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.quick-dates-mobile .el-button {
+  margin-left: 0 !important;
+  margin-right: 5px;
+  margin-bottom: 5px;
 }
 </style>

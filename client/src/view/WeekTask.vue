@@ -2,73 +2,135 @@
   <div class="page-container" style="width: 100%;">
     <!-- <el-button type="success" @click="handleImport">导入Excel</el-button> -->
 
-    <el-select v-model="mondayDate" @change="loadData" placeholder="选择周范围"
-      style="max-width: 200px;margin-right: 10px;">
-      <el-option width="200" v-for="option in mondayOptions" :key="option.value" :label="option.label"
-        :value="option.value" />
-    </el-select>
-
-    <el-input v-model="searchText" placeholder="搜索目标或执行人" clearable style="max-width: 300px" />
-    <!-- 新增负责人下拉框 -->
- 
-    <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange"
-      style="max-width: 120px;margin-left:8px">
-      <el-option v-for="dept in departments" :key="dept.id" :label="dept.department_name" :value="dept.id" />
-    </el-select>
-
-    <el-select v-model="selectedExecutor" placeholder="请选择负责人" 
-      style="max-width: 150px;margin-left:8px">
-      <el-option label="全部" value="全部" />
-      <el-option v-for="dept in users" :key="dept.partner_name" :label="dept.partner_name" :value="dept.partner_name" />
-    </el-select>
-
-    <el-select v-model="selectedStatus" placeholder="状态" style="max-width: 100px;margin-left:8px">
-      <el-option label="全部状态" :value="0" />
-      <el-option label="进行中" :value="1" />
-      <el-option label="测试中" :value="2" />
-      <el-option label="已上线" :value="3" />
-      <el-option label="已暂停" :value="4" />
-    </el-select>
-
-    <el-select v-model="selectedPriority" placeholder="优先级" style="max-width: 125px;margin-left:8px">
-      <el-option label="优先级-ALL" value="ALL" />
-      <el-option v-for="option in statusPriorityOptions" :key="option.value" :label="option.label"
-        :value="option.value" />
-    </el-select>
-
-
-    <!-- 新增地区选择器 -->
-    <el-select v-model="selectedCountry" placeholder="地区" style="max-width: 100px;margin-left:8px">
-      <el-option v-for="option in countryOptions" :key="option.value" :label="option.label"
-        :value="option.value" />
-    </el-select>
-
-
-    <!-- 新增截止日期选择器 -->
-       <el-date-picker v-model="selectedCreateDate" type="date" placeholder="选择创建日期" format="YYYYMMDD"
-      value-format="YYYYMMDD" style="margin-left: 8px; max-width: 200px;" />
-
-    <el-date-picker
-        v-model="selectedDate"
-        type="date"
-        placeholder="选择截止日期"
-        format="YYYYMMDD"
-        value-format="YYYYMMDD"
-        style="margin-left: 8px; max-width: 200px;"
-      />
-    <el-date-picker v-model="selectedFinishDate" type="date" placeholder="选择完成日期" format="YYYYMMDD"
-      value-format="YYYYMMDD" style="margin-left: 8px; max-width: 200px;" />
-
-    <div style="margin-top: 15px;">
-      <el-button type="primary" @click="showDialog('add')">新增周目标</el-button>
-    <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
-    <el-button type="primary" style="margin-left: 8px;" @click="copytaskSimple()">简单复制</el-button>
-    <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
-    <el-button type="primary" v-if="selectedDepartmentId == 0 " style="margin-left: 8px;" @click="sendTaskToGroup()">发送周任务到群</el-button>
-
-
+    <!-- PC端筛选和操作栏 -->
+    <div v-if="!isMobile">
+      <el-select v-model="mondayDate" @change="loadData" placeholder="选择周范围"
+        style="max-width: 200px;margin-right: 10px;">
+        <el-option width="200" v-for="option in mondayOptions" :key="option.value" :label="option.label"
+          :value="option.value" />
+      </el-select>
+  
+      <el-input v-model="searchText" placeholder="搜索目标或执行人" clearable style="max-width: 300px" />
+      <!-- 新增负责人下拉框 -->
+   
+      <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange"
+        style="max-width: 120px;margin-left:8px">
+        <el-option v-for="dept in departments" :key="dept.id" :label="dept.department_name" :value="dept.id" />
+      </el-select>
+  
+      <el-select v-model="selectedExecutor" placeholder="请选择负责人" 
+        style="max-width: 150px;margin-left:8px">
+        <el-option label="全部" value="全部" />
+        <el-option v-for="dept in users" :key="dept.partner_name" :label="dept.partner_name" :value="dept.partner_name" />
+      </el-select>
+  
+      <el-select v-model="selectedStatus" placeholder="状态" style="max-width: 100px;margin-left:8px">
+        <el-option label="全部状态" :value="0" />
+        <el-option label="进行中" :value="1" />
+        <el-option label="测试中" :value="2" />
+        <el-option label="已上线" :value="3" />
+        <el-option label="已暂停" :value="4" />
+      </el-select>
+  
+      <el-select v-model="selectedPriority" placeholder="优先级" style="max-width: 125px;margin-left:8px">
+        <el-option label="优先级-ALL" value="ALL" />
+        <el-option v-for="option in statusPriorityOptions" :key="option.value" :label="option.label"
+          :value="option.value" />
+      </el-select>
+  
+  
+      <!-- 新增地区选择器 -->
+      <el-select v-model="selectedCountry" placeholder="地区" style="max-width: 100px;margin-left:8px">
+        <el-option v-for="option in countryOptions" :key="option.value" :label="option.label"
+          :value="option.value" />
+      </el-select>
+  
+  
+      <!-- 新增截止日期选择器 -->
+         <el-date-picker v-model="selectedCreateDate" type="date" placeholder="选择创建日期" format="YYYYMMDD"
+        value-format="YYYYMMDD" style="margin-left: 8px; max-width: 200px;" />
+  
+      <el-date-picker
+          v-model="selectedDate"
+          type="date"
+          placeholder="选择截止日期"
+          format="YYYYMMDD"
+          value-format="YYYYMMDD"
+          style="margin-left: 8px; max-width: 200px;"
+        />
+      <el-date-picker v-model="selectedFinishDate" type="date" placeholder="选择完成日期" format="YYYYMMDD"
+        value-format="YYYYMMDD" style="margin-left: 8px; max-width: 200px;" />
+  
+      <div style="margin-top: 15px;">
+        <el-button type="primary" @click="showDialog('add')">新增周目标</el-button>
+        <el-button type="primary" style="margin-left: 8px;" @click="loadData()">查询</el-button>
+        <el-button type="primary" style="margin-left: 8px;" @click="copytaskSimple()">简单复制</el-button>
+        <el-button type="primary" style="margin-left: 8px;" @click="copytask()">复制全部</el-button>
+        <el-button type="primary" v-if="selectedDepartmentId == 0 " style="margin-left: 8px;" @click="sendTaskToGroup()">发送周任务到群</el-button>
+      </div>
     </div>
-    <el-table :data="filteredGoals" border :row-class-name="rowClassName">
+
+    <!-- 移动端顶部工具栏 -->
+    <div v-else class="mobile-toolbar">
+      <el-select v-model="mondayDate" @change="loadData" placeholder="选择周范围" style="width: 160px;">
+        <el-option v-for="option in mondayOptions" :key="option.value" :label="option.label" :value="option.value" />
+      </el-select>
+      <div class="mobile-actions">
+        <el-button :icon="Filter" circle @click="filterDrawerVisible = true" />
+        <el-button type="primary" :icon="Plus" circle @click="showDialog('add')" />
+      </div>
+    </div>
+
+    <!-- 移动端筛选抽屉 -->
+    <el-drawer v-model="filterDrawerVisible" title="筛选任务" direction="rtl" size="85%">
+      <div class="mobile-filters">
+        <div class="filter-item">
+          <div class="label">搜索</div>
+          <el-input v-model="searchText" placeholder="搜索目标或执行人" clearable />
+        </div>
+        <div class="filter-item">
+          <div class="label">部门</div>
+          <el-select v-model="selectedDepartmentId" placeholder="请选择部门" @change="handleDepartmentChange" style="width: 100%">
+            <el-option v-for="dept in departments" :key="dept.id" :label="dept.department_name" :value="dept.id" />
+          </el-select>
+        </div>
+        <div class="filter-item">
+          <div class="label">负责人</div>
+          <el-select v-model="selectedExecutor" placeholder="请选择负责人" style="width: 100%">
+            <el-option label="全部" value="全部" />
+            <el-option v-for="dept in users" :key="dept.partner_name" :label="dept.partner_name" :value="dept.partner_name" />
+          </el-select>
+        </div>
+        <div class="filter-item">
+          <div class="label">状态</div>
+          <el-select v-model="selectedStatus" placeholder="状态" style="width: 100%">
+            <el-option label="全部状态" :value="0" />
+            <el-option label="进行中" :value="1" />
+            <el-option label="测试中" :value="2" />
+            <el-option label="已上线" :value="3" />
+            <el-option label="已暂停" :value="4" />
+          </el-select>
+        </div>
+        <div class="filter-item">
+          <div class="label">优先级</div>
+          <el-select v-model="selectedPriority" placeholder="优先级" style="width: 100%">
+            <el-option label="优先级-ALL" value="ALL" />
+            <el-option v-for="option in statusPriorityOptions" :key="option.value" :label="option.label" :value="option.value" />
+          </el-select>
+        </div>
+        <div class="filter-item">
+          <div class="label">地区</div>
+          <el-select v-model="selectedCountry" placeholder="地区" style="width: 100%">
+            <el-option v-for="option in countryOptions" :key="option.value" :label="option.label" :value="option.value" />
+          </el-select>
+        </div>
+        <div class="filter-item">
+            <el-button type="primary" block @click="loadData(); filterDrawerVisible = false">应用筛选</el-button>
+        </div>
+      </div>
+    </el-drawer>
+
+    <el-table v-if="!isMobile" :data="filteredGoals" border :row-class-name="rowClassName">
       <!-- <el-table-column prop="id" label="序号" width="100"  header-align="center" align="center" border/> -->
       <el-table-column label="序号" :width="getWidth(80)" align="center" header-align="center" border>
         <template #default="{ $index }">{{ $index + 1 }}</template>
@@ -147,7 +209,51 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="40%">
+    <!-- 移动端卡片列表 -->
+    <div v-else class="mobile-card-list">
+      <div v-for="row in filteredGoals" :key="row.id" class="mobile-card">
+        <div class="card-header">
+          <div class="priority-tag">
+            <span :class="getPriorityClass(row.priority)">
+              {{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C' }[row.priority] }}
+            </span>
+          </div>
+          <div class="status-tag">
+            <span :class="getStatusClass(row.status)">
+              {{ { 1: '进行中', 2: '测试中', 3: '已上线', 4: '已暂停', 5: '已完成', 0: '未开始' }[row.status] }}
+            </span>
+          </div>
+          <div class="date-info">{{ row.createdate }}</div>
+        </div>
+        
+        <div class="card-content">
+          <div class="goal-text">
+             【{{ countryOptions.find(opt => opt.value === row.country)?.label || row.country }}】
+             {{ row.weekly_goal }}
+          </div>
+          <div class="executor-info">负责人: {{ row.executor }}</div>
+        </div>
+
+        <div class="card-progress">
+          <el-progress 
+            :percentage="Math.round((row.process || 0) * 100)" 
+            :stroke-width="8"
+          />
+        </div>
+
+        <div class="card-actions">
+           <el-button size="small" type="warning" @click="showDialog('edit', row)">修改</el-button>
+           <el-button size="small" type="danger" @click="deleteGoal(row)">删除</el-button>
+           <template v-if="row.status != 3 && row.status != 5">
+              <el-button size="small" type="primary" @click="submitFormSimple(row, 1)">移动</el-button>
+              <el-button size="small" type="success" @click="submitFormSimple(row, 0)">完成</el-button>
+           </template>
+        </div>
+      </div>
+    </div>
+
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" :width="isMobile ? '90%' : '40%'">
+
       <el-form :model="form" label-width="100px">
         <el-form-item label="执行人" required>
           <el-select v-model="form.executor_id" multiple placeholder="请选择执行人" filterable>
@@ -240,14 +346,14 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="importDialogVisible" title="Excel导入" width="70%">
+    <el-dialog v-model="importDialogVisible" title="Excel导入" :width="isMobile ? '95%' : '70%'">
       <div class="dialog-toolbar">
         <input type="file" ref="fileInput" @change="selectFile" accept=".xlsx" hidden width="100">
         <el-button @click="$refs.fileInput.click()">选择文件</el-button>
-        <el-select v-model="importForm.selectedWeek" placeholder="选择周范围">
+        <el-select v-model="importForm.selectedWeek" placeholder="选择周范围" style="width: 150px">
           <el-option v-for="option in mondayOptions" :key="option.value" :label="option.label" :value="option.value" />
         </el-select>
-        <el-select v-model="importForm.status" placeholder="完成进度">
+        <el-select v-model="importForm.status" placeholder="完成进度" style="width: 120px">
           <el-option label="进行中" :value="1" />
           <el-option label="测试中" :value="2" />
           <el-option label="已上线" :value="3" />
@@ -257,19 +363,19 @@
         <el-button type="primary" @click="uploadAll">全部上传</el-button>
       </div>
 
-      <el-table :data="importData" height="400">
-        <el-table-column prop="id" label="序号" width="100px" />
-        <el-table-column prop="priority" label="优先级" width="100px">
+      <el-table :data="importData" height="400" style="margin-top: 10px;">
+        <el-table-column prop="id" label="序号" width="60" />
+        <el-table-column prop="priority" label="优先级" width="80">
           <template #default="{ row }">{{ { 10: 'S', 9: 'A', 8: 'B', 7: 'C' }[row.priority]
             }}</template>
         </el-table-column>
-        <el-table-column prop="weekly_goal" label="任务内容" />
-        <el-table-column prop="executor" label="执行人" width="150" />
+        <el-table-column prop="weekly_goal" label="任务内容" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="executor" label="执行人" width="100" />
       </el-table>
     </el-dialog>
 
     <!-- 发送周任务到群弹窗 -->
-    <el-dialog v-model="sendTaskDialogVisible" title="发送周任务到群" width="400px">
+    <el-dialog v-model="sendTaskDialogVisible" title="发送周任务到群" :width="isMobile ? '90%' : '400px'">
       <el-form label-width="120px">
         <el-form-item label="选择周一日期" required>
           <el-select v-model="sendTaskMondayDate" placeholder="请选择周一日期" style="width: 100%">
@@ -298,6 +404,11 @@ import { computed } from 'vue'
 import * as XLSX from 'xlsx'
 import { parseExcelFile } from '@/utils/excelParser'
 import { getTodayDate } from '@/utils/dateUtils'
+import { useResponsive } from '@/composables/useResponsive'
+import { Filter, Plus } from '@element-plus/icons-vue'
+
+const { isMobile } = useResponsive()
+const filterDrawerVisible = ref(false)
 
 // 定义emit事件
 const emit = defineEmits(['department-change'])
@@ -1192,6 +1303,80 @@ const readExcel = (file) => {
   display: inline-block;
   font-weight: 500;
 }
+
+/* 移动端样式 */
+.mobile-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 10px;
+}
+.mobile-actions {
+  display: flex;
+  gap: 10px;
+}
+.mobile-filters {
+  padding: 20px;
+}
+.filter-item {
+  margin-bottom: 20px;
+}
+.filter-item .label {
+  font-size: 14px;
+  color: #606266;
+  margin-bottom: 8px;
+}
+.mobile-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.mobile-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+  border-left: 4px solid #409eff;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.priority-tag, .status-tag {
+  font-size: 12px;
+}
+.date-info {
+  margin-left: auto;
+  font-size: 12px;
+  color: #909399;
+}
+.card-content {
+  margin-bottom: 12px;
+}
+.goal-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #303133;
+  margin-bottom: 8px;
+  white-space: pre-line;
+}
+.executor-info {
+  font-size: 13px;
+  color: #606266;
+}
+.card-progress {
+  margin-bottom: 15px;
+}
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .status-not-started {
   background-color: #fafafa !important;
   color: #616161;
@@ -1199,5 +1384,11 @@ const readExcel = (file) => {
   border-radius: 4px;
   display: inline-block;
   font-weight: 500;
+}
+.dialog-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 </style>

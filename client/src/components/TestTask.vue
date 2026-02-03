@@ -441,4 +441,70 @@ onMounted(() => {
 .upload-demo {
   margin-bottom: 20px;
 }
+
+.mobile-controls-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.control-row {
+  width: 100%;
+}
+
+.mobile-list-view {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.mobile-card {
+  border-radius: 8px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-name {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 14px;
+}
+
+.info-row .label {
+  color: #666;
+  min-width: 70px;
+}
+
+.info-row .value {
+  text-align: right;
+  flex: 1;
+}
+
+.content-text {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.progress-wrapper {
+  width: 100%;
+  max-width: 150px;
+}
 </style>

@@ -1,6 +1,8 @@
 <template>
   <div class="main-layout">
+    <!-- PC端导航 -->
     <el-menu
+      v-if="!isMobile"
       :default-active="activeIndex"
       mode="horizontal"
       router
@@ -10,21 +12,47 @@
       <el-menu-item index="/week-goal">周目标管理</el-menu-item>
       <el-menu-item index="/test-task">测试任务</el-menu-item>
       <el-menu-item index="/system-setting">部门设置</el-menu-item>
-
-
     </el-menu>
+
+    <!-- 移动端Header -->
+    <div v-else class="mobile-header">
+      <div class="logo">周目标管理</div>
+      <el-icon class="menu-icon" @click="drawerVisible = true"><Menu /></el-icon>
+    </div>
+
+    <!-- 移动端抽屉菜单 -->
+    <el-drawer
+      v-model="drawerVisible"
+      title="菜单"
+      direction="rtl"
+      size="60%"
+    >
+      <el-menu
+        :default-active="activeIndex"
+        mode="vertical"
+        router
+        @select="drawerVisible = false"
+      >
+        <el-menu-item index="/week-goal">周目标管理</el-menu-item>
+        <el-menu-item index="/test-task">测试任务</el-menu-item>
+        <el-menu-item index="/system-setting">部门设置</el-menu-item>
+      </el-menu>
+    </el-drawer>
+
     <router-view class="content-container" />
   </div>
 </template>
 
-      <!-- <el-menu-item index="/history-daily">历史记录</el-menu-item> -->
-      <!-- <el-menu-item index="/user-today-plan">其它</el-menu-item> -->
-
 <script setup>
 import { useRoute } from 'vue-router'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import http from '@/utils/http'
 import {megerOAUserIDS} from '@/utils/dailyPlanAsync'
+import { useResponsive } from '@/composables/useResponsive'
+import { Menu } from '@element-plus/icons-vue'
+
+const { isMobile } = useResponsive()
+const drawerVisible = ref(false)
 
 const route = useRoute()
 const activeIndex = route.path
@@ -56,9 +84,31 @@ onMounted(async () => {
 .nav-menu {
   flex-shrink: 0;
 }
+.mobile-header {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background-color: #fff;
+  border-bottom: 1px solid #dcdfe6;
+}
+.logo {
+  font-weight: bold;
+  font-size: 18px;
+}
+.menu-icon {
+  font-size: 24px;
+  cursor: pointer;
+}
 .content-container {
   flex: 1;
   padding: 20px;
-  overflow:visible;
+  overflow: auto;
+}
+@media screen and (max-width: 768px) {
+  .content-container {
+    padding: 0;
+  }
 }
 </style>
