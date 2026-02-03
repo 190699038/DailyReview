@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory,createWebHashHistory  } from 'vue-router'
 import MainLayout from '@/components/MainLayout.vue'
-import UserTodayPlan from '@/components/UserTodayPlan.vue'
 import WeekGoal from '@/components/WeekGoal.vue'
 import DailyGoal from '@/components/DailyGoal.vue'
 import SystemSetting from '@/components/SystemSetting.vue'
