@@ -1554,22 +1554,22 @@ onMounted(async () => {
   gap: 10px;
 }
 .mobile-task-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
   padding: 10px;
-  background-color: #fff;
+  background-color: var(--el-bg-color-overlay);
 }
 .task-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
   padding-bottom: 8px;
 }
 .task-id {
   font-weight: bold;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 .status-tag {
   margin-left: auto;
@@ -1585,12 +1585,12 @@ onMounted(async () => {
   font-size: 14px;
 }
 .label {
-  color: #909399;
+  color: var(--el-text-color-secondary);
   width: 50px;
   flex-shrink: 0;
 }
 .value {
-  color: #303133;
+  color: var(--el-text-color-primary);
   flex: 1;
 }
 .progress-wrapper {

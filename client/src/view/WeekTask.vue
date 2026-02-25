@@ -192,18 +192,13 @@
 
       <el-table-column prop="remark" label="备注" :width="getWidth(200)" align="center" header-align="center"
         class-name="custom-column" border />
-      <el-table-column label="操作" :width="getWidth(150)" header-align="center" align="center" border>
+      <el-table-column label="操作" :width="getWidth(120)" header-align="center" align="center" fixed="right" border>
         <template #default="{ row }">
-          <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
-            <div>
-              <el-button size="small" type="warning" @click="showDialog('edit', row)">修改</el-button>
-              <el-button size="small" type="danger" @click="deleteGoal(row)">删除</el-button>
-            </div>
-            <div v-if="row.status != 3 && row.status != 5" style="margin-top: 5px;">
-              <el-button size="small" type="primary" @click="submitFormSimple(row, 1)">移动</el-button>
-              <el-button size="small" type="success" @click="submitFormSimple(row, 0)">完成</el-button>
-            </div>
-
+          <div class="action-buttons">
+            <el-button size="small" type="warning" @click="showDialog('edit', row)">修改</el-button>
+            <el-button size="small" type="danger" @click="deleteGoal(row)">删除</el-button>
+            <el-button v-if="row.status != 3 && row.status != 5" size="small" type="primary" @click="submitFormSimple(row, 1)">移动</el-button>
+            <el-button v-if="row.status != 3 && row.status != 5" size="small" type="success" @click="submitFormSimple(row, 0)">完成</el-button>
           </div>
         </template>
       </el-table-column>
@@ -1196,51 +1191,51 @@ const readExcel = (file) => {
 }
 
 :deep(.el-table) {
-  border: 1px solid #d0d7e5;
+  border: 1px solid var(--el-border-color);
   font-family: '微软雅黑';
 }
 
 :deep(.el-table th) {
-  background: #004bff;
-  /* color: white; */
+  background: var(--el-color-primary-light-9);
+  color: var(--el-text-color-primary);
   font-weight: bold;
 }
 
 :deep(.el-table__row--striped) {
-  background: #f8f9fa;
+  background: var(--el-fill-color-lighter);
 }
 
 :deep(.el-table__cell) {
-  border-right: 1px solid #d0d7e5 !important;
-  border-bottom: 1px solid #d0d7e5 !important;
+  border-right: 1px solid var(--el-border-color) !important;
+  border-bottom: 1px solid var(--el-border-color) !important;
 }
 
 .status-in-progress {
-  background-color: #fff !important;
+  background-color: var(--el-fill-color-blank) !important;
 }
 
 .status-testing {
-  background-color: #e8f5e9 !important;
+  background-color: var(--el-color-primary-light-9) !important;
 }
 
 .status-online {
-  background-color: #A9D08D !important;
+  background-color: var(--el-color-success-light-9) !important;
 }
 
 .status-paused {
-  background-color: #b0abab !important;
+  background-color: var(--el-color-info-light-9) !important;
 }
 
 .status-not-started {
-  background-color: #f3e5f5 !important;
+  background-color: var(--el-fill-color-lighter) !important;
 }
 
 .pre-finish-today {
-  background-color: #fff3ce !important;
+  background-color: var(--el-color-warning-light-9) !important;
 }
 
 .pre-finish-overdue {
-  background-color: #e2adad !important;
+  background-color: var(--el-color-danger-light-9) !important;
 }
 
 /* 设置该列的字体大小 */
@@ -1250,8 +1245,8 @@ const readExcel = (file) => {
 
 /* 跨周状态样式 */
 .cross-week-current {
-  background-color: #e8f5e9 !important;
-  color: #2e7d32;
+  background-color: var(--el-color-success-light-9) !important;
+  color: var(--el-color-success);
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
@@ -1259,8 +1254,8 @@ const readExcel = (file) => {
 }
 
 .cross-week-span {
-  background-color: #fff3e0 !important;
-  color: #f57c00;
+  background-color: var(--el-color-warning-light-9) !important;
+  color: var(--el-color-warning);
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
@@ -1269,8 +1264,8 @@ const readExcel = (file) => {
 
 /* 优先级样式 */
 .priority-s {
-  background-color: #ffebee !important;
-  color: #c62828;
+  background-color: var(--el-color-danger-light-9) !important;
+  color: var(--el-color-danger);
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
@@ -1278,8 +1273,8 @@ const readExcel = (file) => {
 }
 
 .priority-a {
-  background-color: #fff3e0 !important;
-  color: #ef6c00;
+  background-color: var(--el-color-warning-light-9) !important;
+  color: var(--el-color-warning);
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
@@ -1287,8 +1282,8 @@ const readExcel = (file) => {
 }
 
 .priority-b {
-  background-color: #e3f2fd !important;
-  color: #1565c0;
+  background-color: var(--el-color-primary-light-9) !important;
+  color: var(--el-color-primary);
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
@@ -1296,12 +1291,26 @@ const readExcel = (file) => {
 }
 
 .priority-c {
-  background-color: #f3e5f5 !important;
-  color: #7b1fa2;
+  background-color: var(--el-color-info-light-9) !important;
+  color: var(--el-color-info);
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
   font-weight: 500;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+
+.action-buttons .el-button {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: calc(50% - 2px);
+  padding: 8px 0;
 }
 
 /* 移动端样式 */

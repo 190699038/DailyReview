@@ -275,13 +275,14 @@ loadSettings()
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-lighter);
   padding-bottom: 8px;
 }
 
 .user-name {
   font-weight: bold;
   font-size: 16px;
+  color: var(--el-text-color-primary);
 }
 
 .user-card-content {
@@ -296,11 +297,11 @@ loadSettings()
 }
 
 .info-row .label {
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .info-row .value {
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .page-container {
@@ -328,13 +329,13 @@ loadSettings()
 }
 
 :deep(.el-table th) {
-  background-color: #f5f7fa;
-  color: #606266;
+  background-color: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
   font-weight: 600;
 }
 
 :deep(.el-table__row--striped) {
-  background-color: #fafafa;
+  background-color: var(--el-fill-color-lighter);
 }
 
 :deep(.el-table__row) {

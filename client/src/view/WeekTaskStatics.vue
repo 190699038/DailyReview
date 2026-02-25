@@ -1310,7 +1310,7 @@ defineExpose({
 
 :deep(.el-card__header) {
   padding: 18px 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 :deep(.el-dialog__body) {
@@ -1333,7 +1333,7 @@ defineExpose({
 }
 
 .mobile-dialog-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
 }
 

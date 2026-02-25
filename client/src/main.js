@@ -3,6 +3,8 @@ import App from './App.vue'
 import router from './router'
 import installElementPlus from './plugins/element'
 import ElementPlus from 'element-plus';
+import 'element-plus/theme-chalk/dark/css-vars.css'
+import './style.css' // Global styles
 
 // 配置被动事件监听器以提高性能
 if (typeof window !== 'undefined') {
