@@ -526,6 +526,7 @@ const copytaskSimple = async () => {
 onMounted(async () => {
   initUsers()
   generateMondayOptions()
+  await fetchProjectGroups()
   await fetchDepartments()
   const cachedId = localStorage.getItem('department_id_cache') || 2
   const dept = departments.value.find(d => d.id == cachedId)
@@ -627,43 +628,17 @@ const importData = ref([]);
 const selectedWeek = ref('');
 const executorList = ref([]);
 
-const countryOptions = ref([
-  { value: 'OA', label: 'OA系统' },
-  { value: 'US1', label: '美国1' },
-  { value: 'US2', label: '美国2' },
-  { value: 'US3', label: '美国3' },
-  { value: 'US4', label: '美国4' },
-  { value: 'OZ', label: '欧洲' },
-  { value: 'ZD', label: '中东' },
-  { value: 'BR1', label: '巴西1' },
-  { value: 'BR2', label: '巴西2' },
-  { value: 'MX', label: '墨西哥' },
-  { value: 'PE', label: '秘鲁' },
-  { value: 'CL', label: '智利' },
-  { value: 'AU', label: '澳大利亚' },
-  { value: 'CA', label: '加拿大' },
-  { value: 'PH', label: '菲律宾' },
-  { value: 'ALL', label: '所有地区' },
-  { value: 'QSJS', label: '奇胜-技术' },
-  { value: 'QSDY', label: '奇胜-调研' },
-  { value: 'QSLL', label: '奇胜-流量' },
-  { value: 'YXJS', label: '游戏技术' },
-  { value: 'KF', label: '客服' },
-  { value: 'XR', label: '选人' },
-  { value: 'YR', label: '用人' },
-  { value: 'YW', label: '运维' },
-  { value: 'FK', label: '风控' },
-  { value: 'WH', label: '文化' },
-  { value: 'PX', label: '培训' },
-  { value: 'AIFN', label: 'AI赋能' },
-  { value: 'AIGLJ', label: 'AI-古兰经' },
-  { value: 'MVP', label: 'MVP' },
-  { value: 'CW', label: '财务' },
-  { value: 'TF', label: '投放' },
-  { value: 'DF', label: '支付' },
-  { value: 'QT', label: '其它' },
+const countryOptions = ref([])
 
-])
+const fetchProjectGroups = async () => {
+  try {
+    const res = await http.get('UserInfoAPI.php?action=get_project_groups')
+    const groups = res.data || []
+    countryOptions.value = groups.map(g => ({ value: g.group_code, label: g.group_name }))
+  } catch (e) {
+    console.error('获取项目组配置失败:', e)
+  }
+}
 //{ 10: 'S', 9: 'A', 8: 'B', 7: 'C'}
 const statusPriorityOptions = ref([
   { label: '优先级【S】', value: '10' },

@@ -80,6 +80,13 @@ try {
             echo json_encode(['data' => $departments]);
             break;
 
+        case 'get_project_groups':
+            // 查询项目组/业务线配置（启用状态，按sort_order降序）
+            $stmt = $conn->query("SELECT group_code, group_name, category FROM project_groups WHERE status = 1 ORDER BY sort_order DESC");
+            $groups = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['data' => $groups]);
+            break;
+
         default:
             http_response_code(400);
             echo json_encode(['error' => '无效的操作类型']);

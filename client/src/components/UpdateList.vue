@@ -206,29 +206,17 @@ import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 // ========== 常量 ==========
-const countryOptions = [
-  { label: '巴西', value: 'brazil' },
-  { label: '墨西哥', value: 'mexico' },
-  { label: '哥伦比亚', value: 'colombia' },
-  { label: '秘鲁', value: 'peru' },
-  { label: '智利', value: 'chile' },
-  { label: '阿根廷', value: 'argentina' },
-  { label: '厄瓜多尔', value: 'ecuador' },
-  { label: '玻利维亚', value: 'bolivia' },
-  { label: '巴拉圭', value: 'paraguay' },
-  { label: '乌拉圭', value: 'uruguay' },
-  { label: '委内瑞拉', value: 'venezuela' },
-  { label: '危地马拉', value: 'guatemala' },
-  { label: '洪都拉斯', value: 'honduras' },
-  { label: '萨尔瓦多', value: 'el_salvador' },
-  { label: '尼加拉瓜', value: 'nicaragua' },
-  { label: '哥斯达黎加', value: 'costa_rica' },
-  { label: '巴拿马', value: 'panama' },
-  { label: '多米尼加', value: 'dominican' },
-  { label: '菲律宾', value: 'philippines' },
-  { label: '拉美全部', value: 'latin_all' },
-  { label: '全球', value: 'global' },
-]
+const countryOptions = ref([])
+
+async function fetchProjectGroups() {
+  try {
+    const res = await http.get('UserInfoAPI.php?action=get_project_groups')
+    const groups = res.data || []
+    countryOptions.value = groups.map(g => ({ value: g.group_code, label: g.group_name }))
+  } catch (e) {
+    console.error('获取项目组配置失败:', e)
+  }
+}
 
 const typeOptions = ['新功能', '新游戏', 'bug修复', '功能优化']
 const platformOptions = ['Android', 'IOS', '前端', '后端', '前后端', '数据库']
@@ -465,7 +453,7 @@ function parseContent(text) {
   const countryMatch = text.match(/【地区】(.+?)(?:\n|$)/)
   if (countryMatch) {
     const countryText = countryMatch[1].trim()
-    const matched = countryOptions.filter(opt =>
+    const matched = countryOptions.value.filter(opt =>
       countryText.includes(opt.label) || countryText.includes(opt.value)
     )
     if (matched.length > 0) {
@@ -653,7 +641,7 @@ function formatCountry(row) {
 
 function formatCountryLabel(value) {
   if (!value) return ''
-  const opt = countryOptions.find(o => o.value === value)
+  const opt = countryOptions.value.find(o => o.value === value)
   return opt ? opt.label : value
 }
 
@@ -669,7 +657,7 @@ function handleCountryChange(selected) {
     formData.value.impact = '全球'
   } else {
     const labels = selected.map(v => {
-      const opt = countryOptions.find(o => o.value === v)
+      const opt = countryOptions.value.find(o => o.value === v)
       return opt ? opt.label : v
     })
     formData.value.impact = labels.join('、')
@@ -731,6 +719,7 @@ onMounted(() => {
   searchParams.value.end_time = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} 23:59:59`
   searchParams.value.country = 'ALL'
 
+  fetchProjectGroups()
   fetchUserList()
   fetchRecords()
 
