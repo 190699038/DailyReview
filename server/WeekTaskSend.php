@@ -36,6 +36,9 @@ $departments = [
     '用人组' => '章志雄',
     '选人组' => '孙晓远',
     '财务组' => '杨秀玲',
+    '总办组' => '张锴楠',
+    '客服组' => '赵洋',
+
 ];
 
 // 部门对应的图标（优化版 - 更具代表性和区分度）
@@ -50,7 +53,10 @@ $deptIcons = [
     '大富组' => '💰',        // 钱袋 - 财富管理
     '用人组' => '👥',        // 人群 - 人力资源
     '选人组' => '🎯',        // 靶心 - 精准选择
-    '财务组' => '💹'         // 股票图表 - 财务分析
+    '财务组' => '💹',         // 股票图表 - 财务分析
+    '总办组' => '🤖',        // 机器人脸 - 人工智能的直接象征
+    '客服组' => '🎧',
+
 ];
 
 // 部门对应的颜色（用于区分不同部门）
@@ -65,7 +71,10 @@ $deptColors = [
     '大富组' => '#FFD700',      // 金色
     '用人组' => '#DC143C',      // 深红色
     '选人组' => '#8A2BE2',      // 蓝紫色
-    '财务组' => '#00CED1'       // 深绿松石色
+    '财务组' => '#00CED1',        // 深绿松石色
+    '总办组' => '#9F00FF',        // 电紫色 - 代表AI的前沿科技与总办的决策权威
+    '客服组' =>'#1EBDEF',
+
 ];
 
 // priority映射关系（带颜色标识）
@@ -82,9 +91,12 @@ $countryMap = [
     "US1" => "美国1",
     "US2" => "美国2",
     "US3" => "美国3",
+    "US4" => "美国4",
     "BR1" => "巴西1",
     "BR2" => "巴西2",
     "MX" => "墨西哥",
+    "OZ" => "欧洲",
+    "ZD" => "中东",
     "PE" => "秘鲁",
     "CL" => "智利",
     "AU" => "澳大利亚",
@@ -95,14 +107,20 @@ $countryMap = [
     "QSDY" => "奇胜-调研",
     "QSLL" => "奇胜-流量",
     "YXJS" => "游戏技术",
+    "KF" => "客服",
     "XR" => "选人",
     "YR" => "用人",
     "YW" => "运维",
     "FK" => "风控",
+    "WH" => "文化",
+    "PX" => "培训",
+    "AIFN" => "AI赋能",
+    "AIGLJ" => "AI-古兰经",
     "MVP" => "MVP",
     "CW" => "财务",
     "TF" => "投放",
     "DF" => "支付",
+    "AIGLJ" => "总办组",    
     "QT" => "其它"
 ];
 
@@ -119,7 +137,10 @@ function getDepartmentId($deptName) {
         '大富组' => 13,
         '用人组' => 7,
         '选人组' => 6,
-        '财务组' => 8
+        '财务组' => 8,
+        '总办组' => 9,
+        '客服组' => 17,
+
     ];
     return isset($deptIdMap[$deptName]) ? $deptIdMap[$deptName] : 0;
 }
@@ -161,14 +182,22 @@ function queryDepartmentData($mondayDate, $deptId) {
     global $conn;
     
     try {
-        if($deptId == 16){
+        //if($deptId == 16 || $deptId == 13){
+        if($deptId == 16 ){
+            // $sql = "SELECT weekly_goal, executor, priority, pre_finish_date, country 
+            //     FROM weekly_goals 
+            //     WHERE mondayDate = :mondayDate AND department_id = :deptId  and executor not LIKE '%梁超%' and executor not LIKE '%赵洋%'   order by priority desc";
             $sql = "SELECT weekly_goal, executor, priority, pre_finish_date, country 
                 FROM weekly_goals 
-                WHERE mondayDate = :mondayDate AND department_id = :deptId  and executor not LIKE '%王旭%' and  country = 'QSLL'   order by priority desc";
-        }else{
-            $sql = "SELECT weekly_goal, executor, priority, pre_finish_date, country 
+                WHERE mondayDate = :mondayDate AND department_id = :deptId  and executor not LIKE '%梁超%'  order by priority desc";
+        }
+        else{
+            // $sql = "SELECT weekly_goal, executor, priority, pre_finish_date, country 
+            //     FROM weekly_goals 
+            //     WHERE mondayDate = :mondayDate AND department_id = :deptId  and executor not LIKE '%王旭%' and  executor not LIKE '%梁超%' and  executor not LIKE '%赵洋%'   order by priority desc";
+             $sql = "SELECT weekly_goal, executor, priority, pre_finish_date, country 
                 FROM weekly_goals 
-                WHERE mondayDate = :mondayDate AND department_id = :deptId  and executor not LIKE '%王旭%' and  executor not LIKE '%梁超%'   order by priority desc";
+                WHERE mondayDate = :mondayDate AND department_id = :deptId  and executor not LIKE '%王旭%' and  executor not LIKE '%梁超%' order by priority desc";    
         }
         
         $stmt = $conn->prepare($sql);
@@ -353,7 +382,9 @@ function sendToDingTalk($webhook, $content) {
             'text' => $content
         ],
         'at' => [
-            'isAtAll' => false
+            'isAtAll' => true,
+            'userIds'=> ["0705512521647713"], // 替换为实际userID
+
         ]
     ];
     
@@ -400,7 +431,7 @@ try {
         '大富组',
         '用人组' ,
         '选人组',
-        '财务组'
+        '财务组','总办组','客服组'
     ];
     foreach ($otherDepartments as $dept) {
         $deptId = getDepartmentId($dept);
@@ -418,8 +449,10 @@ try {
         }
     }
     
-    
+
     $specialExecutors = ['梁超', '王旭'];
+    
+    // $specialExecutors = ['梁超', '王旭', '赵洋'];
     foreach ($specialExecutors as $executor) {
         $rawData = queryExecutorData($mondayDate, $executor);
         $transformed = transformData($rawData, $priorityMap, $countryMap);
@@ -441,6 +474,14 @@ try {
             $data['tasks'] = $transformed;
             $organizedData[$key] = $data;
         }
+        // if($executor == '赵洋'){
+        //     $key = '大富组-赵洋';
+        //     $data = [];
+        //     $data['department'] = '大富组';
+        //     $data['executor'] = '赵洋';
+        //     $data['tasks'] = $transformed;
+        //     $organizedData[$key] = $data;
+        // }
     }    
     
     

@@ -17,7 +17,7 @@ $action = $_REQUEST['action'] ?? '';
 
 try {
     switch ($action) {
-        case 'list':
+         case 'list':
             // 参数白名单和验证
             $allowedParams = ['department_id', 'startDate', 'endDate','country','mondayDates'];
             
@@ -54,6 +54,7 @@ try {
                    INNER JOIN departments d ON wg.department_id = d.id 
                    WHERE wg.mondayDate IN ($placeholders)";
             
+            // echo($sql);
             // 添加mondayDates参数
             $queryParams = [];
             
@@ -63,7 +64,7 @@ try {
                 $queryParams = array_merge($queryParams, $params);
             }
             
-            $sql .= ' ORDER BY wg.mondayDate DESC';
+            $sql .= ' ORDER BY wg.mondayDate ASC';
             
             $stmt = $conn->prepare($sql);
             $stmt->execute($queryParams);
@@ -130,7 +131,12 @@ try {
                 $sql .= ' AND ' . implode(' AND ', $conditions);
             }
             
-            $sql .= ' ORDER BY priority DESC, version DESC';
+             if ($departmentId != 0) {
+                $sql .= ' ORDER BY priority DESC, version DESC ';
+            }else{
+                $sql .= ' ORDER BY department_id DESC, executor DESC ';
+
+            }
 
 
             // echo($sql);
@@ -231,7 +237,7 @@ try {
 
         case 'create':
             // 允许创建的字段白名单
-            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal', 'mondayDate','priority','status','remark','pre_finish_date','real_finish_date','country','version'];
+            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal', 'mondayDate','priority','status','remark','pre_finish_date','real_finish_date','country','version','cross_week','process'];
             
             // 动态收集参数并验证必填字段
             $fields = [];
@@ -316,7 +322,7 @@ try {
             $id = $_REQUEST['id'];
             
             // 允许更新的字段列表
-            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal','mondayDate','priority','status','remark','pre_finish_date','real_finish_date','country','version'];
+            $allowedFields = ['department_id', 'executor', 'executor_id', 'weekly_goal', 'is_new_goal','mondayDate','priority','status','remark','pre_finish_date','real_finish_date','country','version','cross_week','process'];
             $updates = [];
             $params = [];
             $executor = "";
@@ -401,6 +407,8 @@ try {
                                 'real_finish_date',
                                 'country',
                                 'version',
+                                'cross_week',
+                                'process',
                                 'createdate'
                             ];
                             $insertValues = [
@@ -417,6 +425,8 @@ try {
                                 $weeklyGoal['real_finish_date'],
                                 $weeklyGoal['country'],
                                 $weeklyGoal['version'],
+                                $weeklyGoal['cross_week'],
+                                $weeklyGoal['process'],
                                 date('Ymd')
                             ];
                             $placeholders = implode(', ', array_fill(0, count($insertValues), '?'));
@@ -430,7 +440,7 @@ try {
                             'priority',
                             'mondayDate',
                             'status','pre_finish_date','real_finish_date',
-                                'country','version'];
+                                'country','version','cross_week','process'];
                             $updateValues = [
                                 $weeklyGoal['weekly_goal'],
                                 $weeklyGoal['is_new_goal'],
@@ -439,7 +449,7 @@ try {
                                 $weeklyGoal['status'],
                                 $weeklyGoal['pre_finish_date'],
                                 $weeklyGoal['real_finish_date'],
-                                $weeklyGoal['country'],$weeklyGoal['version']
+                                $weeklyGoal['country'],$weeklyGoal['version'],$weeklyGoal['cross_week'],$weeklyGoal['process']
                             ];
                             $updateStmt = $conn->prepare("UPDATE daily_goals SET ". implode(' =?, ', $updateFields). " =? WHERE weekly_goals_id =? AND executor_id =?");
                             $updateStmt->execute(array_merge($updateValues, [$id, $eid]));

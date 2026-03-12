@@ -22,6 +22,8 @@ try {
                 break;
             }
             
+            // var_dump($_POST);
+            
             // 获取前端传递的参数
             $responsible_person = $_POST['responsible_person'] ?? '';
             $priority = $_POST['priority'] ?? '';
@@ -29,10 +31,13 @@ try {
             $test_content = $_POST['test_content'] ?? '';
             $test_status = $_POST['test_status'] ?? '';
             $test_progress = $_POST['test_progress'] ?? '';
+            $pre_submission_time = $_POST['pre_submission_time'] ?? null;
             $submission_time = $_POST['submission_time'] ?? null;
             $planned_online_time = $_POST['planned_online_time'] ?? '';
             $actual_online_time = $_POST['actual_online_time'] ?? '';
-            $actual_time_spent = $_POST['actual_time_spent'] ?? null;
+            $planned_time_spent= $_POST['planned_time_spent'] ?? 0;
+            $actual_time_spent = $_POST['actual_time_spent'] ?? 0;
+            $actual_yl_time = $_POST['actual_yl_time'] ?? 0;
             $creation_date = $_POST['creation_date'] ?? '';
             $remarks = $_POST['remarks'] ?? '';
             
@@ -56,8 +61,8 @@ try {
                 $task_id = $task_record['id'];
             } else {
                 // 如果不存在，插入新记录
-                $stmt = $conn->prepare("INSERT INTO test_tasks (md5key) VALUES (?)");
-                $stmt->execute([$md5key]);
+                $stmt = $conn->prepare("INSERT INTO test_tasks (md5key,creation_date) VALUES (?,?)");
+                $stmt->execute([$md5key,$creation_date]);
                 $task_id = $conn->lastInsertId();
             }
             
@@ -86,20 +91,19 @@ try {
                 echo json_encode(['error' => $creation_date.' 当前日期的测试任务已经存在了，不要重复创建']);
                 break;
 
-
             } else {
                 // 如果不存在，插入新记录
                 $stmt = $conn->prepare("
                     INSERT INTO test_tasks_info 
                     (task_id, responsible_person, priority, product, test_content, 
-                     test_status, test_progress, submission_time, planned_online_time, 
-                     actual_online_time, actual_time_spent, creation_date, remarks) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     test_status, test_progress, pre_submission_time,submission_time, planned_online_time, 
+                     actual_online_time,planned_time_spent, actual_time_spent, actual_yl_time,creation_date, remarks) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
                 ");
                 $stmt->execute([
                     $task_id, $responsible_person, $priority, $product, $test_content,
-                    $test_status, $test_progress, $submission_time, $planned_online_time,
-                    $actual_online_time, $actual_time_spent, $creation_date, $remarks
+                    $test_status, $test_progress,$pre_submission_time, $submission_time, $planned_online_time,
+                    $actual_online_time,$planned_time_spent, $actual_time_spent, $actual_yl_time,$creation_date, $remarks
                 ]);
                 echo json_encode(['success' => true, 'task_id' => $task_id, 'action' => 'created', 'id' => $conn->lastInsertId()]);
             }
@@ -114,7 +118,9 @@ try {
             
             // 获取查询参数
             $responsible_person = $_GET['responsible_person'] ?? '';
-            $creation_date = $_GET['creation_date'] ?? '';
+            $startDate = $_GET['startDate'] ?? '';
+            $endDate = $_GET['endDate'] ?? '';
+
             $actual_online_time = $_GET['actual_online_time'] ?? '';
             $submission_time = $_GET['submission_time'] ?? '';
             
@@ -127,9 +133,11 @@ try {
                 $params[] = $responsible_person;
             }
             
-            if (!empty($creation_date)) {
-                $where_conditions[] = "creation_date = ?";
-                $params[] = $creation_date;
+            if (!empty($endDate) && !empty($startDate)) {
+                $where_conditions[] = "creation_date >= ? and creation_date <= ?";
+                $params[] = $startDate;
+                $params[] = $endDate;
+
             }
             
             if (!empty($actual_online_time)) {
@@ -143,11 +151,13 @@ try {
             }
             
             // 构建SQL查询
-            $sql = "SELECT * FROM test_tasks_info";
+            $sql = "select *,(actual_time_spent+actual_yl_time) as totalTime FROM test_tasks_info";
             if (!empty($where_conditions)) {
                 $sql .= " WHERE " . implode(" AND ", $where_conditions);
             }
-            $sql .= " ORDER BY id DESC";
+            $sql .= " ORDER BY creation_date DESC";
+            
+            // echo($sql);
             
             $stmt = $conn->prepare($sql);
             $stmt->execute($params);
