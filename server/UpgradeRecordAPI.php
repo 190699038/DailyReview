@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/DingTalkNotifier.php';
 
 $action = $_REQUEST['action'] ?? '';
 
@@ -166,47 +167,38 @@ try {
         case 'send_dingding':
             $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
-            $content = $input['content'] ?? '';
-            $country = $input['country'] ?? '';
-            $updater = $input['updater'] ?? '';
-            $updateTime = $input['update_time'] ?? '';
-            $impact = $input['impact'] ?? '';
-
-            $markdownText = "### 📦 升级记录通知 \n\n";
-            $markdownText .= "- 🌎 国家：**{$country}**\n";
-            $markdownText .= "- 📝 升级内容：{$content}\n";
-            $markdownText .= "- 📍 影响范围：{$impact}\n";
-            $markdownText .= "- 👨‍💻 研发：{$updater}\n";
-            $markdownText .= "- ⏰ 更新时间：{$updateTime}\n";
-
-            $data = [
-                'msgtype' => 'markdown',
-                'markdown' => [
-                    'title' => "升级记录 - {$country}",
-                    'text' => $markdownText
-                ],
-                'at' => ['isAtAll' => false]
-            ];
-
-            $webhookUrl = $_ENV['DINGTALK_WEBHOOK_TEST'] ?? '';
-            if (empty($webhookUrl)) {
-                throw new Exception('钉钉Webhook未配置');
+            if (empty($input['id'])) {
+                throw new Exception('缺少必要参数：id');
             }
 
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $webhookUrl);
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            $response = curl_exec($ch);
-            curl_close($ch);
+            // 从数据库获取记录
+            $stmt = $conn->prepare("SELECT * FROM upgrade_record WHERE id = ?");
+            $stmt->execute([intval($input['id'])]);
+            $productInfo = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $result = json_decode($response, true);
+            if (empty($productInfo)) {
+                throw new Exception('未找到ID为' . $input['id'] . '的记录');
+            }
+
+            $notifier = new DingTalkNotifier();
+            $result = $notifier->sendDingTalkText($productInfo);
+
+            if (isset($result['error'])) {
+                throw new Exception($result['error']);
+            }
+
+            $allSuccess = true;
+            foreach ($result as $item) {
+                if (!$item['success']) {
+                    $allSuccess = false;
+                    break;
+                }
+            }
+
             echo json_encode([
-                'success' => (isset($result['errcode']) && $result['errcode'] === 0),
-                'message' => (isset($result['errcode']) && $result['errcode'] === 0) ? '发送成功' : '发送失败'
+                'success' => $allSuccess,
+                'message' => $allSuccess ? '发送成功' : '部分发送失败',
+                'details' => $result
             ]);
             break;
 

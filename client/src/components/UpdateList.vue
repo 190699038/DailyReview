@@ -533,11 +533,7 @@ async function sendMessageToGroup(row) {
   try {
     await ElMessageBox.confirm('确认将此记录发送到钉钉群？', '提示')
     await http.post('UpgradeRecordAPI.php?action=send_dingding', {
-      content: row.content,
-      country: formatCountryLabel(row.country),
-      updater: row.updater,
-      update_time: row.update_time,
-      impact: row.impact,
+      id: row.id,
     })
     ElMessage.success('发送成功')
   } catch (e) {
