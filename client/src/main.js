@@ -35,7 +35,6 @@ const app = createApp(App)
 // installElementPlus(app)
 app.use(router)
 app.mount('#app')
-console.log('Environment:', import.meta.env.MODE);
 
 app.use(ElementPlus, { 
   loading: { 

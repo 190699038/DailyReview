@@ -213,7 +213,7 @@ const formatDate = (dateStr) => {
 const dataAnlysis = (data,startDate) => {
   // 获取当前部门用户映射表
   const usercache = localStorage.getItem('departments_user_cache') ;
-  const userList = JSON.parse(usercache) ||[];
+  const userList = usercache ? JSON.parse(usercache) : [];
 
   const result = [];
 
@@ -273,7 +273,6 @@ rowinfo.dailyTasks = Object.keys(groups)
   }
 
   tableData.value = result;
-  console.log((result))
 
 }
 

@@ -558,13 +558,6 @@ const handleResize = () => {
    
     loadData()
     
-    console.log('屏幕尺寸变化:', {
-      宽度: screenWidth + 'px',
-      高度: screenHeight + 'px',
-      设备像素比: devicePixelRatio,
-      实际分辨率: `${screenWidth * devicePixelRatio} x ${screenHeight * devicePixelRatio}`,
-      时间戳: new Date().toLocaleString()
-    })
   }, 100)
 }
 
@@ -790,7 +783,6 @@ const loadData = async () => {
     })
     goals.value = res
     // filteredGoals.value = filterData()
-    console.log(filteredGoals.value)
   } catch (error) {
     console.error('获取数据失败:', error)
   }
@@ -1122,7 +1114,6 @@ const selectFile = async (e) => {
       weekly_goal: item.content,  // 映射content字段
       executor: item.executor
     }));
-    console.log(importData.value);
   } catch (error) {
     ElMessage.error({
       message: `文件解析失败: ${error.message}`,

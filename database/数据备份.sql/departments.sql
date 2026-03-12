@@ -1,0 +1,17 @@
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (1, 10, '技术组', 70);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (2, 24, '游戏技术组', 10);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (3, 36, '奇胜技术组', 30);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (4, 25, '投放组', 60);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (5, 34, '产品组', 50);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (6, 7, '选人组', 100);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (7, 8, '用人组', 90);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (8, 12, '财务组', 110);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (9, 9, '总办组', 130);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (10, 39, '系统组', 140);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (11, 0, '政委组', 150);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (12, 0, '行政组', 160);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (13, 17, '大富组', 80);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (14, 41, '观星组', 120);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (15, 26, '奇胜研究组', 30);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (16, 37, '奇胜流量组', 40);
+INSERT INTO dailyreview.departments (id, group_id, department_name, sort) VALUES (17, 18, '客服组', 85);

@@ -65,7 +65,7 @@ export default {
 
     const parseDeparment = (departmentId) => {
         let departments_cache = localStorage.getItem('departments_cache')
-        departments.value = JSON.parse(departments_cache)
+        departments.value = departments_cache ? JSON.parse(departments_cache) : []
         const cachedDept = departments.value.find(d => d.id == departmentId)
         if (cachedDept) {
           selectedDepartmentId.value = departmentId

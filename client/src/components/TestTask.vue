@@ -164,8 +164,6 @@ const handleFileChange = async (file) => {
         return item;
       });
 
-      console.log(tableData.value)
-
     } catch (error) {
       ElMessage.error(`解析失败: ${error.message}`);
     }
@@ -190,7 +188,6 @@ const getTimezoneOffsetMS = (dateStr) => {
 };
 
 const unifiedDateParser = (dateStr) => {
-  console.log(dateStr)
     // 按分隔符拆分字符串（支持 / 和空格）
     const parts = dateStr.split(/[/ ]/);
     let year, month, day, hours = 0, minutes = 0, seconds = 0;

@@ -299,7 +299,6 @@ const loadData = async () => {
   try {
     // 开始日期 startDate、结束日期 endDate  计算这个日期区间的周一日期
     const mondayDates = getMondaysInRange(startDate.value, endDate.value)
-    console.log('日期区间内的周一日期:', mondayDates)
     
     // 始终显示折线图
     showLineChart.value = true
@@ -505,7 +504,6 @@ const priorityStats = computed(() => {
       }
     }
   })
-  console.log(stats)
   return stats
 })
 
@@ -539,9 +537,7 @@ const statusStats = computed(() => {
         break
     }
   })
-  //                console.log('id = '+task.id+'  status = '+task.status+'  priority = '+priority)
 
-  console.log(stats)
   return stats
 })
 
@@ -646,7 +642,6 @@ const updateLineChart = () => {
   if (!lineChart || !taskStats.value.length) return
   
   const lineData = processLineChartData()
-  console.log(lineData)
   const option = {
     title: {
       text: chartType.value === 'day' ? '日任务完成趋势' : chartType.value === 'week' ? '周任务完成趋势' : '月任务完成趋势',
@@ -734,7 +729,6 @@ const processLineChartData = () => {
       // 完成任务的标准：状态等于5或3，并且完成日期（real_finish_date）是当天
       const status = parseInt(task.status)
       const isCompleted = (status === 5 || status === 3) && task.real_finish_date === dayKey
-      console.log('任务状态:', status, '完成日期:', task.real_finish_date, '当天日期:', dayKey, '是否完成:', isCompleted)
       if (isCompleted) {
         dayData[dayKey].completed++
       } 

@@ -176,19 +176,16 @@ export default {
           break;
         }
         
-        console.log('row', row)
         // 处理项目组合并单元格
         if ((row[2] && typeof row[2] === 'string' && row.length == 3) 
         || (row.length > 4 && row[2] && typeof row[2] === 'string' && row[3] ==null  &&  row[4] ==null )) {
           currentProject = row[2];
-          console.log('currentProject', currentProject)
           //客服OA 投放OA 奇胜流量管理系统  奇胜二号 评论引流  分包系统   Google 上架 - 目标8月份在线6个谷歌包  苹果包的上架推进 奇胜一号 app引流 TG 引流 攻坚
           // 字符串包含投放  --  value: 'TF', label: '投放' 
           // 字符串包含OA或是分包  --  value: 'OA', label: 'OA系统' 
           // 字符串包含奇胜二号、奇胜一号、评论、引流、TG  --   value: 'QSLL', label: '奇胜-流量'
           // 其它 -- value: 'QSJS', label: '奇胜-技术'  
           let projectGroupBM = currentProject;
-          console.log('projectGroupBM', projectGroupBM)
           if (projectGroupBM.includes('投放')) {
             currentProject = '投放';
           }  else if (projectGroupBM.includes('奇胜流量') || projectGroupBM.includes('奇胜二号') || projectGroupBM.includes('奇胜一号') || projectGroupBM.includes('评论') || projectGroupBM.includes('引流') 

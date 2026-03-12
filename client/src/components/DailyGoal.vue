@@ -288,9 +288,6 @@ const showDialog = (type, row) => {
 
 // 加载任务数据
 const loadTaskData = async (executor_id, monday_date, bFirst) => {
-  console.log("loadTaskData called with executor_id:", executor_id);
-  console.log(mondayDate.value)
-
   if (executor_id == null || monday_date == null) {
     return
   }
@@ -317,10 +314,7 @@ const loadTaskData = async (executor_id, monday_date, bFirst) => {
       }
     });
 
-    console.log(tempTask);
-    
     tasks.value = tempTask;
-    console.log(tempTask)
     drawTable()
     // ElMessage.success('获取任务成功');
   } catch (error) {
@@ -356,8 +350,6 @@ const drawTable = () => {
     constTotalTimeReal.value += time > 0? time : 0;
   }
   tableKey.value += 1;
-  console.log(dailyGoal)
-  console.log(dailyTask)
 }
 const getWeekDates = () => {
   const today = new Date(); // 当前日期（2025-03-20）
@@ -388,7 +380,6 @@ const getDateByWeekday = (weekday) => {
 
 // 处理标签切换
 const handleTabChange = (tabName) => {
-  console.log(tabName)
   let week = parseInt(tabName)
   index.value = week - 1;
   obj.tabIndex = index.value;
@@ -461,7 +452,6 @@ const getDailyGoal = async () => {
     })
 
     let data = res?.content || ''
-    console.log(data)
 
     goalContent.value = data
     // fenxTodayTarget()

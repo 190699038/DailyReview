@@ -14,7 +14,7 @@ export default createRouter({
       component: MainLayout,
       children: [
     {
-      path: '/user-today-plan',
+      path: 'user-today-plan',
       component: () => import('@/components/UserTodayPlan.vue')
     },
         { path: 'daily-goal', component: DailyGoal },

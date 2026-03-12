@@ -147,7 +147,6 @@ function handleSync($isToday) {
             if($isToday){
                  $checkStmtToday = $conn->prepare("SELECT id FROM daily_tasks_today WHERE oa_taskid = ? ");
                 foreach ($oa_dailytask as $item) {
-                    echo('oa_task_id = '.$item['oa_task_id']).'|';
                     $checkStmtToday->execute([$item['oa_task_id']]);
                     if ($checkStmtToday->fetch()) {
                         continue;
@@ -176,7 +175,6 @@ function handleSync($isToday) {
             }else{
                 $checkStmt = $conn->prepare("SELECT id FROM daily_tasks WHERE oa_taskid = ?");
                 foreach ($oa_dailytask as $item) {
-                    echo('oa_task_id = '.$item['oa_task_id'].' executor_id = '.$item['executor_id']).'|';
 
                     $checkStmt->execute([$item['oa_task_id']]);
                     if ($checkStmt->fetch()) {

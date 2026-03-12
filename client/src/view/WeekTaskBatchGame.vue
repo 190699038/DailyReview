@@ -198,7 +198,6 @@ export default {
       if (jsonData.length > 0 && jsonData[0].length > 0) {
         const firstRowText = jsonData[0].join(' ');
         dateMap = extractDateRange(firstRowText);
-        console.log('日期星期对应关系:', Object.fromEntries(dateMap));
         
         // 创建列索引到日期的映射 (F-K列对应索引5-10)
         const dateEntries = Array.from(dateMap.entries());
@@ -209,7 +208,6 @@ export default {
           const fullDate = `${currentYear}${month}${day}`;
           columnDateMap.set(4 + i, fullDate); // F列=5, G列=6, ..., K列=10
         }
-        console.log('列索引到日期映射:', Object.fromEntries(columnDateMap));
       }
       
       // 从第2行开始解析数据
@@ -323,8 +321,6 @@ export default {
         }
       }
 
-      console.log('解析后的任务列表:', taskList.value);
-      
       if (taskList.value.length === 0) {
         noDataText.value = '未解析到有效数据';
       }
@@ -476,7 +472,6 @@ const getDeveloper = (developers) => {
           }
 
 
-          console.log(params)
           try {
               await http.get('WeekGoalAPI.php', {
                 params: {

@@ -16,9 +16,12 @@ try {
             
             $mondayDates = $_REQUEST['mondayDates'];
             
-            
-            // 构建IN查询的占位符
-            $placeholders = $mondayDates;
+            // 安全处理：将逗号分隔的日期转为整数数组，防止SQL注入
+            $dateArray = array_filter(array_map('intval', explode(',', $mondayDates)));
+            if (empty($dateArray)) {
+                throw new Exception('mondayDates参数格式无效');
+            }
+            $placeholders = implode(',', array_fill(0, count($dateArray), '?'));
             
             // 构建查询条件
             $conditions = [];
@@ -27,7 +30,7 @@ try {
             // department_id 如果为0则不参与查询
             if (isset($_REQUEST['department_id']) && $_REQUEST['department_id'] != 0) {
                 $conditions[] = 'wg.department_id = ?';
-                $params[] = $_REQUEST['department_id'];
+                $params[] = intval($_REQUEST['department_id']);
             }
             
             // country 如果为空则不参与查询
@@ -42,9 +45,8 @@ try {
                    INNER JOIN departments d ON wg.department_id = d.id 
                    WHERE wg.mondayDate IN ($placeholders)";
             
-            // echo($sql);
             // 添加mondayDates参数
-            $queryParams = [];
+            $queryParams = $dateArray;
             
             // 添加其他动态条件
             if (!empty($conditions)) {

@@ -23,8 +23,8 @@ const dailyData = {
 }
 
 const loginData = {
-    'username': 'yejijian',
-    "password": "qyy369852"
+    'username': '',
+    "password": ""
 }
 
 
@@ -53,7 +53,6 @@ export const  loginOA = async () => {
       if (!response.ok) throw new Error('登录失败');
       
       const data = await response.json();
-      console.log(data);
       if (data.code !== 200) throw new Error('登录失败');
       token = data.data.token;
       localStorage.setItem('token', token);

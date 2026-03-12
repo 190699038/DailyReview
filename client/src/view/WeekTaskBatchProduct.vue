@@ -208,7 +208,6 @@ export default {
       let dateMap = new Map();
       let columnDateMap = new Map(); // 列索引到日期的映射
         dateMap = extractDateRange();
-        console.log('日期星期对应关系:', Object.fromEntries(dateMap));
         
         // 创建列索引到日期的映射 (I-N列对应索引8-13，周一到周六)
         const dateEntries = Array.from(dateMap.entries());
@@ -224,8 +223,6 @@ export default {
             mondayDate.value = fullDate;
           }
         }
-        console.log('列索引到日期映射:', Object.fromEntries(columnDateMap));
-        console.log('周一日期:', mondayDate.value);
       
       // 从第2行开始解析数据
       for (let i = 2; i < jsonData.length; i++) {
@@ -246,7 +243,6 @@ export default {
                 // 处理项目组合并单元格
         if (row.length == 1 && row[0] && typeof row[0] === 'string' || row[0] && typeof row[0] === 'string' && row[1] == null && row[2] == null) {
           const projectName = getCountryName(row[0]);
-          console.log('currentProject', projectName)
           if (projectName && projectName !== currentProjectName) {
             currentProjectName = projectName;
           }
@@ -344,8 +340,6 @@ export default {
         }
       }
 
-      console.log('解析后的任务列表:', taskList.value);
-      
       if (taskList.value.length === 0) {
         noDataText.value = '未解析到有效数据';
       }
@@ -523,7 +517,6 @@ const getDeveloper = (developers) => {
           }
 
 
-          console.log(params)
           try {
               await http.get('WeekGoalAPI.php', {
                 params: {

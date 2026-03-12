@@ -1,4 +1,3 @@
-import { id } from 'element-plus/es/locales.mjs';
 import { read, utils } from 'xlsx';
 
 export const parseExcelFile = (file,type) => {
@@ -10,8 +9,6 @@ export const parseExcelFile = (file,type) => {
       const workbook = read(data, { type: 'array' });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
-
-    //   console.log(jsonData);
       // 跳过标题行和第二行
       const isDaily = type === 'daily';
       

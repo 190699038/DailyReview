@@ -320,12 +320,16 @@ const submitList = ref([]);
 const groupedData = ref({});
 
 // 窗口resize监听
-window.addEventListener('resize', () => {
+const handleChartResize = () => {
   pieChart?.resize();
   lineChart?.resize();
   personBarChart?.resize();
   personPieChart?.resize();
   submitPieChart?.resize();
+};
+window.addEventListener('resize', handleChartResize);
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleChartResize);
 });
 
 // 弹窗相关
@@ -1165,7 +1169,6 @@ const getProgressPercentage = (test_progress) => {
   if(test_progress == null){
     return 0
   }
-//   console.log(typeof(test_progress)+'  process = '+test_progress)
   return test_progress 
 }
 
