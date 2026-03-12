@@ -3,7 +3,7 @@
 require __DIR__ . '/db_connect.php';
 
 // 钉钉webhook地址（从环境变量读取）
-$webhook = getenv('DINGTALK_WEBHOOK_TEST') ?: '';
+$webhook = $_ENV['DINGTALK_WEBHOOK_TEST'] ?? '';
 
 // 获取mondayDate参数
 $mondayDate = isset($_REQUEST['mondayDate']) ? $_REQUEST['mondayDate'] : '';

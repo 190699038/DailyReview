@@ -345,7 +345,7 @@ function parseProduct() {
     }
 }
 function sendDingTalkMarkdown($data) {
-    $webhook = getenv('DINGTALK_WEBHOOK_PRODUCT') ?: '';
+    $webhook = $_ENV['DINGTALK_WEBHOOK_PRODUCT'] ?? '';
     // 增强版换行处理（合并连续换行+统一缩进）
     // 增强版换行处理
     $processContent = function($items) {

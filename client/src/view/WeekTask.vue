@@ -1035,7 +1035,8 @@ const initUsers = () => {
       // setTimeout(() => location.reload(), 2000) // 2秒后自动刷新
     }
 
-    allUser.value = JSON.parse(localStorage.getItem('all_users'))
+    const allUsersCache = localStorage.getItem('all_users')
+    allUser.value = allUsersCache ? JSON.parse(allUsersCache) : []
 
   } catch (e) {
     console.error('用户数据解析失败:', e)

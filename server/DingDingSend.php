@@ -70,7 +70,7 @@ $data = [
 ];
 
 // 发送到钉钉机器人
-$webhookUrl = getenv('DINGTALK_WEBHOOK_TEST') ?: '';
+$webhookUrl = $_ENV['DINGTALK_WEBHOOK_TEST'] ?? '';
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $webhookUrl);
 curl_setopt($ch, CURLOPT_POST, 1);

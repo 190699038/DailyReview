@@ -11,9 +11,9 @@ $department_ids = [
 
 session_start();
 
-define('LOGIN_URL', getenv('OA_LOGIN_URL') ?: 'https://oa.aizyun.com/admin/login');
-define('DAILY_URL', getenv('OA_DAILY_URL') ?: 'https://oa.aizyun.com/admin/dailyplan/list');
-define('GROUP_URL', getenv('OA_GROUP_URL') ?: 'https://oa.aizyun.com/admin/sys/user/deptlist/');
+define('LOGIN_URL', $_ENV['OA_LOGIN_URL'] ?? 'https://oa.aizyun.com/admin/login');
+define('DAILY_URL', $_ENV['OA_DAILY_URL'] ?? 'https://oa.aizyun.com/admin/dailyplan/list');
+define('GROUP_URL', $_ENV['OA_GROUP_URL'] ?? 'https://oa.aizyun.com/admin/sys/user/deptlist/');
 
 $headers = [
     'Content-Type: application/json;charset=UTF-8',
@@ -28,8 +28,8 @@ function loginOA() {
     if ( 1 == 1) {
 
         $loginData = json_encode([
-            'username' => getenv('OA_USERNAME') ?: '',
-            'password' => getenv('OA_PASSWORD') ?: ''
+            'username' => $_ENV['OA_USERNAME'] ?? '',
+            'password' => $_ENV['OA_PASSWORD'] ?? ''
         ]);
 
         $ch = curl_init(LOGIN_URL);

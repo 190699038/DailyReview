@@ -19,7 +19,6 @@ function loadEnv($path) {
         $key = trim(substr($line, 0, $pos));
         $value = trim(substr($line, $pos + 1));
         if (!isset($_ENV[$key])) {
-            putenv("{$key}={$value}");
             $_ENV[$key] = $value;
         }
     }
