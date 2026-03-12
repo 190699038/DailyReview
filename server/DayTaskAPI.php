@@ -1,14 +1,6 @@
 <?php
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json');
 require __DIR__ . '/db_connect.php';
-// 处理预检请求（OPTIONS 方法）
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    header("HTTP/1.1 200 OK");
-    exit();
-}
+
 $action = $_REQUEST['action'] ?? '';
 
 try {
@@ -55,19 +47,17 @@ try {
             break;
 
         case 'delete':
-            $id = $_POST['id'];
-            $stmt = $conn->prepare("DELETE FROM daily_tasks WHERE id = ?");
-            $stmt->execute([$id]);
-            echo json_encode(['deleted' => $stmt->rowCount()]);
-            break;
-
-        case 'delete':
             if($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 http_response_code(405);
                 echo json_encode(['error' => '仅支持POST方法']);
                 break;
             }
-            $id = $_REQUEST['id'];
+            $id = $_POST['id'] ?? '';
+            if (empty($id)) {
+                http_response_code(400);
+                echo json_encode(['error' => '缺少id参数']);
+                break;
+            }
             $stmt = $conn->prepare("DELETE FROM daily_tasks WHERE id = ?");
             $stmt->execute([$id]);
             echo json_encode(['deleted' => $stmt->rowCount()]);
@@ -77,11 +67,17 @@ try {
                 $start_date = $_POST['start_date'] ?? '';
                 $end_date = $_POST['end_date'] ?? '';
                 
-                $sql = 'SELECT t.*, w.department_name,w.executor_name FROM daily_tasks_today t left join watch_user w on  w.executor_id = t.executor_id where  t.createdate >=' .$start_date.' and t.createdate <= '.$end_date.' and t.executor_id in ('.$uids.') order by  t.createdate desc , t.executor_id desc';
-                // echo($sql);
+                // 参数化查询防止SQL注入
+                $uidArray = array_filter(array_map('intval', explode(',', $uids)));
+                if (empty($uidArray) || empty($start_date) || empty($end_date)) {
+                    echo json_encode([]);
+                    break;
+                }
+                $placeholders = implode(',', array_fill(0, count($uidArray), '?'));
+                $sql = "SELECT t.*, w.department_name, w.executor_name FROM daily_tasks_today t LEFT JOIN watch_user w ON w.executor_id = t.executor_id WHERE t.createdate >= ? AND t.createdate <= ? AND t.executor_id IN ({$placeholders}) ORDER BY t.createdate DESC, t.executor_id DESC";
                 $stmt = $conn->prepare($sql);
-
-                $stmt->execute([]);
+                $params = array_merge([intval($start_date), intval($end_date)], $uidArray);
+                $stmt->execute($params);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                 break;
         case 'getUserGoalAndTasks':
@@ -95,32 +91,46 @@ try {
                     break;
                 }
 
-                $date_array = explode(',', $date_str);
+                $date_array = array_filter(explode(',', $date_str));
+                if (empty($date_array)) {
+                    echo json_encode(['data' => []]);
+                    break;
+                }
+
+                // 批量查询替代循环查询
+                $datePlaceholders = implode(',', array_fill(0, count($date_array), '?'));
+                
+                $task_stmt = $conn->prepare("SELECT * FROM daily_tasks WHERE date IN ({$datePlaceholders}) AND executor_id = ?");
+                $task_stmt->execute(array_merge($date_array, [$executor_id]));
+                $allTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                $task_stmt_today = $conn->prepare("SELECT * FROM daily_tasks_today WHERE date IN ({$datePlaceholders}) AND executor_id = ?");
+                $task_stmt_today->execute(array_merge($date_array, [$executor_id]));
+                $allTasksToday = $task_stmt_today->fetchAll(PDO::FETCH_ASSOC);
+
+                $maxDate = max($date_array);
+                $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ? AND createdate <= ?");
+                $goal_stmt->execute([$monday_date, $executor_id, $maxDate]);
+                $allGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // 按日期分组
+                $tasksByDate = [];
+                $todayByDate = [];
+                foreach ($allTasks as $task) { $tasksByDate[$task['date']][] = $task; }
+                foreach ($allTasksToday as $task) { $todayByDate[$task['date']][] = $task; }
+
                 $result = [];
                 foreach($date_array as $date) {
-                    if( !empty($date)){
-                        // 查询每日任务
-                        $task_stmt = $conn->prepare("SELECT * FROM daily_tasks WHERE date = ? AND executor_id = ?");
-                        $task_stmt->execute([$date, $executor_id]);
-                        $dailyTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                       // 查询每日任务
-                        $task_stmt_today = $conn->prepare("SELECT * FROM daily_tasks_today WHERE date = ? AND executor_id = ?");
-                        $task_stmt_today->execute([$date, $executor_id]);
-                        $dailyTasks_today = $task_stmt_today->fetchAll(PDO::FETCH_ASSOC);
-                        // 查询周目标
-                        $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ? AND createdate <= ?");
-                        $goal_stmt->execute([$monday_date, $executor_id,$date]);
-                        $dailyGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                        $result[] = [
-                            'date' => $date,
-                            'dailyTasks' => $dailyTasks,
-                            'dailyGoals' => $dailyGoals,
-                            'dailyTasks_today' => $dailyTasks_today
-                        ];
-                    }
-                   
+                    // 按日期过滤目标（createdate <= 当前日期）
+                    $goalsForDate = array_values(array_filter($allGoals, function($g) use ($date) {
+                        return $g['createdate'] <= $date;
+                    }));
+                    $result[] = [
+                        'date' => $date,
+                        'dailyTasks' => $tasksByDate[$date] ?? [],
+                        'dailyGoals' => $goalsForDate,
+                        'dailyTasks_today' => $todayByDate[$date] ?? []
+                    ];
                 }
     
                 echo json_encode(['data' => $result]);
@@ -136,22 +146,30 @@ try {
                 break;
             }
 
+            $idArray = array_filter(array_map('intval', explode(',', $executor_ids)));
+            if (empty($idArray)) {
+                echo json_encode(['data' => []]);
+                break;
+            }
+
+            // 批量查询替代循环
+            $placeholders = implode(',', array_fill(0, count($idArray), '?'));
+
+            $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id IN ({$placeholders})");
+            $goal_stmt->execute(array_merge([$week_period], $idArray));
+            $allGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $task_stmt = $conn->prepare("SELECT * FROM daily_tasks WHERE date >= ? AND date < ? AND executor_id IN ({$placeholders})");
+            $task_stmt->execute(array_merge([$week_period, $end_date], $idArray));
+            $allTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // 按 executor_id 分组
             $result = [];
-            foreach(explode(',', $executor_ids) as $executor_id) {
-                // 查询周目标
-                $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ?");
-                $goal_stmt->execute([$week_period, $executor_id]);
-                $dailyGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                // 查询周任务
-                $task_stmt = $conn->prepare("SELECT * FROM daily_tasks 
-                                            WHERE date >= ? AND date < ? AND executor_id = ?");
-                $task_stmt->execute([$week_period, $end_date, $executor_id]);
-                $dailyTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                $result[$executor_id] = [
-                    'dailyGoal' => $dailyGoals,
-                    'dailyTasks' => $dailyTasks
+            foreach ($idArray as $eid) {
+                $eidStr = (string)$eid;
+                $result[$eidStr] = [
+                    'dailyGoal' => array_values(array_filter($allGoals, fn($g) => (string)$g['executor_id'] === $eidStr)),
+                    'dailyTasks' => array_values(array_filter($allTasks, fn($t) => (string)$t['executor_id'] === $eidStr))
                 ];
             }
     

@@ -2,17 +2,7 @@
 
 use function PHPSTORM_META\type;
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json');
-
-require_once 'db_connect.php';
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+require_once __DIR__ . '/db_connect.php';
 
 $department_ids = [
     1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
@@ -21,9 +11,9 @@ $department_ids = [
 
 session_start();
 
-const LOGIN_URL = 'https://oa.aizyun.com/admin/login';
-const DAILY_URL = 'https://oa.aizyun.com/admin/dailyplan/list';
-const GROUP_URL = 'https://oa.aizyun.com/admin/sys/user/deptlist/';
+define('LOGIN_URL', getenv('OA_LOGIN_URL') ?: 'https://oa.aizyun.com/admin/login');
+define('DAILY_URL', getenv('OA_DAILY_URL') ?: 'https://oa.aizyun.com/admin/dailyplan/list');
+define('GROUP_URL', getenv('OA_GROUP_URL') ?: 'https://oa.aizyun.com/admin/sys/user/deptlist/');
 
 $headers = [
     'Content-Type: application/json;charset=UTF-8',
@@ -38,8 +28,8 @@ function loginOA() {
     if ( 1 == 1) {
 
         $loginData = json_encode([
-            'username' => 'xuexizhanshi',
-            'password' => '123456'
+            'username' => getenv('OA_USERNAME') ?: '',
+            'password' => getenv('OA_PASSWORD') ?: ''
         ]);
 
         $ch = curl_init(LOGIN_URL);
@@ -49,7 +39,7 @@ function loginOA() {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FAILONERROR, true);
         curl_setopt($ch, CURLOPT_VERBOSE, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 测试环境跳过SSL验证
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);

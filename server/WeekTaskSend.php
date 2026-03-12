@@ -1,20 +1,9 @@
 <?php
-// 支持跨域
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
-// 处理OPTIONS请求
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit();
-}
-
 // 导入数据库连接文件
 require __DIR__ . '/db_connect.php';
 
-// 钉钉webhook地址
-$webhook = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97'; //测试钉钉群
-// $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=521d66766b9b7d738f2d67ca01f265fe1b45ad1ae3287858908d04a37a6d6a0e'; //正式钉钉群
+// 钉钉webhook地址（从环境变量读取）
+$webhook = getenv('DINGTALK_WEBHOOK_TEST') ?: '';
 
 // 获取mondayDate参数
 $mondayDate = isset($_REQUEST['mondayDate']) ? $_REQUEST['mondayDate'] : '';

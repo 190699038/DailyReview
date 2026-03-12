@@ -24,12 +24,10 @@ export default defineConfig({
     host: '0.0.0.0',
 
     proxy: {
-      '/DailyReview/server': {
-        // target: 'http://127.0.0.1/DailyReview/server',
-        target: 'http://10.10.10.95/DailyReview/server',
-
+      '/server': {
+        target: 'https://daily.gameyzy.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/server/, '')
+        secure: true
       }
     }
   }

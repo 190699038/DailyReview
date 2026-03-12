@@ -1,14 +1,5 @@
 <?php
-// 解决跨域问题（允许所有域名访问，实际部署可改为指定域名）
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, X-Requested-With");
-header("Content-Type: application/json; charset=utf-8");
-
-// 处理预检请求（OPTIONS）
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit;
-}
+require_once __DIR__ . '/db_connect.php';
 
 $filename = "20250813.txt";
 // 记录初始状态（可选）
@@ -79,7 +70,7 @@ $data = [
 ];
 
 // 发送到钉钉机器人
-$webhookUrl = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97';
+$webhookUrl = getenv('DINGTALK_WEBHOOK_TEST') ?: '';
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $webhookUrl);
 curl_setopt($ch, CURLOPT_POST, 1);

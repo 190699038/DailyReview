@@ -1,15 +1,5 @@
 <?php
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json');
 require __DIR__ . '/db_connect.php';
-
-// 处理预检请求（OPTIONS 方法）
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    header("HTTP/1.1 200 OK");
-    exit();
-}
 
 $action = $_REQUEST['action'] ?? '';
 
@@ -355,8 +345,7 @@ function parseProduct() {
     }
 }
 function sendDingTalkMarkdown($data) {
-    // $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=0593d0dcf7172f6d6239c5c21ebc3cd6ea6bd80083ba162afeebb15960a20a97'; //钉钉测试群
-    $webhook = 'https://oapi.dingtalk.com/robot/send?access_token=5d88fd617ede030a0d55e705d522a6b2242c07cdf16bd634e188f3db7a01cf29';
+    $webhook = getenv('DINGTALK_WEBHOOK_PRODUCT') ?: '';
     // 增强版换行处理（合并连续换行+统一缩进）
     // 增强版换行处理
     $processContent = function($items) {
