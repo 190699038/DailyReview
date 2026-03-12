@@ -109,16 +109,7 @@
 
 ## 5. API 接口
 
-所有请求通过 `api.js` 发出，baseURL 为 `https://record.gameyzy.com/server/`。
-
-| 操作 | HTTP 方法 | 端点 | 请求参数 |
-|------|-----------|------|----------|
-| 查询列表 | POST | `/api.php?table=chen_yaopu_review&action=list` | `{ start_date, end_date }` |
-| 新增记录 | POST | `/api.php?table=chen_yaopu_review&action=create` | 表单全字段 |
-| 编辑记录 | PUT | `/api.php?table=chen_yaopu_review&action=update&id=` | 表单全字段 |
-| 删除记录 | DELETE | `/api.php?table=chen_yaopu_review&action=delete&id=` | — |
-| 获取用户 | POST | `/api.php?table=user&action=list` | — |
-| 图片上传 | POST | `/UploadImage.php` | `{ image(base64), type: 'review', record_id }` |
+待实现
 
 ---
 
