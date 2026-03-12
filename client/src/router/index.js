@@ -22,6 +22,7 @@ export default createRouter({
         { path: 'system-setting', component: SystemSetting },
         { path: 'history-daily', component: DailyHistory },
         { path: 'test-task', component: TestTask },
+        { path: 'upgrade-record', component: () => import('@/view/UpgradeRecord.vue') },
         { path: '', redirect: 'week-goal' }
       ]
     }
