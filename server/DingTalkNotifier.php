@@ -147,17 +147,26 @@ class DingTalkNotifier {
     }
 
     private function getTokens($country) {
-        // US1 映射到 US
-        if ($country === 'US1') {
-            $country = 'US';
-        }
-        // BR1 映射到 BR
-        if ($country === 'BR1') {
-            $country = 'BR';
+        // 支持逗号分隔的多国家
+        $countries = array_map('trim', explode(',', $country));
+        $allTokens = [];
+
+        foreach ($countries as $c) {
+            // US1 映射到 US
+            if ($c === 'US1') $c = 'US';
+            // BR1 映射到 BR
+            if ($c === 'BR1') $c = 'BR';
+
+            if (isset($this->countryTokens[$c])) {
+                $allTokens = array_merge($allTokens, $this->countryTokens[$c]);
+            }
         }
 
-        if (isset($this->countryTokens[$country])) {
-            return $this->countryTokens[$country];
+        // 去重
+        $allTokens = array_unique($allTokens);
+
+        if (!empty($allTokens)) {
+            return array_values($allTokens);
         }
 
         // 未配置的国家使用默认tokens
@@ -217,39 +226,46 @@ class DingTalkNotifier {
                 continue;
             }
 
-            $url = '';
-            $title = '';
+            // 替换 URL|文案| 格式
+            $trimmedLine = preg_replace_callback(
+                '/(https?:\/\/[^\s|]+)\|([^|]+)\|/',
+                function ($m) {
+                    $url = str_replace('&amp;', '&', $m[1]);
+                    return '[' . trim($m[2]) . '](' . $url . ')';
+                },
+                $trimmedLine
+            );
 
-            $httpPos = strpos($trimmedLine, 'http');
-            if ($httpPos !== false) {
-                $urlEndPos = strpos($trimmedLine, ' ', $httpPos);
-                if ($urlEndPos === false) {
-                    $urlEndPos = strlen($trimmedLine);
-                }
-                $url = substr($trimmedLine, $httpPos, $urlEndPos - $httpPos);
-                $url = str_replace('&amp;', '&', $url);
+            // 替换 URL（文案） 格式
+            $trimmedLine = preg_replace_callback(
+                '/(https?:\/\/[^\s（）]+)（([^）]+)）/',
+                function ($m) {
+                    $url = str_replace('&amp;', '&', $m[1]);
+                    return '[' . trim($m[2]) . '](' . $url . ')';
+                },
+                $trimmedLine
+            );
 
-                $titleStart = strpos($trimmedLine, '（', $urlEndPos);
-                if ($titleStart === false) {
-                    $titleStart = strpos($trimmedLine, '(', $urlEndPos);
-                }
-                if ($titleStart !== false) {
-                    $titleEnd = strpos($trimmedLine, '）', $titleStart);
-                    if ($titleEnd === false) {
-                        $titleEnd = strpos($trimmedLine, ')', $titleStart);
-                    }
-                    if ($titleEnd !== false) {
-                        $title = substr($trimmedLine, $titleStart + 3, $titleEnd - $titleStart - 3);
-                        $title = trim($title);
-                    }
-                }
-            }
+            // 替换 URL(文案) 格式（不匹配已转换的markdown链接）
+            $trimmedLine = preg_replace_callback(
+                '/(?<!\])(https?:\/\/[^\s()]+)\(([^)]+)\)/',
+                function ($m) {
+                    $url = str_replace('&amp;', '&', $m[1]);
+                    return '[' . trim($m[2]) . '](' . $url . ')';
+                },
+                $trimmedLine
+            );
 
-            if (!empty($url) && !empty($title)) {
-                $formattedLines[] = "> [{$title}]({$url})\n";
-            } else {
-                $formattedLines[] = "> " . $trimmedLine . "\n";
-            }
+            // 替换剩余的纯URL（未被转为markdown链接的）
+            $trimmedLine = preg_replace_callback(
+                '/(?<!\()(https?:\/\/[^\s\)<>]+)(?!\))/',
+                function ($m) {
+                    return '[链接](' . str_replace('&amp;', '&', $m[1]) . ')';
+                },
+                $trimmedLine
+            );
+
+            $formattedLines[] = "> " . $trimmedLine . "\n";
         }
         return $formattedLines;
     }
@@ -262,7 +278,16 @@ class DingTalkNotifier {
 
     private function sendToDingTalk(string $token, array $message) {
         $url = $this->dingtalkApiUrl . $token;
-        $jsonMessage = json_encode($message, JSON_UNESCAPED_UNICODE);
+        $jsonMessage = json_encode($message, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        if ($jsonMessage === false) {
+            return [
+                'token' => $token,
+                'success' => false,
+                'errcode' => -1,
+                'errmsg' => 'JSON编码失败: ' . json_last_error_msg()
+            ];
+        }
 
         try {
             $ch = curl_init();
@@ -274,7 +299,7 @@ class DingTalkNotifier {
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($ch, CURLOPT_TIMEOUT, 10);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json',
+                'Content-Type: application/json; charset=utf-8',
                 'Content-Length: ' . strlen($jsonMessage)
             ]);
 
