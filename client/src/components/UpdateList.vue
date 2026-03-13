@@ -219,7 +219,7 @@ async function fetchProjectGroups() {
 }
 
 const typeOptions = ['新功能', '新游戏', 'bug修复', '功能优化']
-const platformOptions = ['Android', 'IOS', '前端', '后端', '前后端', '数据库']
+const platformOptions = ['Android', 'IOS', 'H5', '前端', '后端', '前后端', '数据库']
 
 const quillToolbar = [
   ['bold', 'italic', 'underline'],
@@ -449,52 +449,52 @@ function openTextParser() {
 }
 
 function parseContent(text) {
-  // 解析地区
-  const countryMatch = text.match(/【地区】(.+?)(?:\n|$)/)
+  // 解析地区（匹配不到默认巴西1）
+  const countryMatch = text.match(/【地区】[：:\s]*(.+?)(?:\n|$)/)
   if (countryMatch) {
     const countryText = countryMatch[1].trim()
     const matched = countryOptions.value.filter(opt =>
       countryText.includes(opt.label) || countryText.includes(opt.value)
     )
-    if (matched.length > 0) {
-      formData.value.country = matched.map(m => m.value)
-    }
+    formData.value.country = matched.length > 0 ? matched.map(m => m.value) : ['BR1']
+  } else {
+    formData.value.country = ['BR1']
   }
 
   // 解析更新内容
-  const contentMatch = text.match(/【更新内容】(.+?)(?=【|$)/s)
+  const contentMatch = text.match(/【更新内容】[：:\s]*(.+?)(?=ꔷ\s*【|$)/s)
   if (contentMatch) {
     formData.value.content = contentMatch[1].trim()
   }
 
-  // 解析上线时间
+  // 解析上线时间（北京/国内）
   const timeStr = getConvertUpdateTime(text)
   if (timeStr) {
     formData.value.update_time = timeStr
   }
 
   // 解析当地时间
-  const localTimeMatch = text.match(/【当地时间】(.+?)(?:\n|$)/)
-  if (localTimeMatch) {
-    formData.value.update_time_out = localTimeMatch[1].trim()
+  const localTimeStr = getConvertLocalTime(text)
+  if (localTimeStr) {
+    formData.value.update_time_out = localTimeStr
   }
 
   // 解析影响范围
-  const impactMatch = text.match(/【影响范围】(.+?)(?:\n|$)/)
+  const impactMatch = text.match(/【影响范围】[：:\s]*(.+?)(?:\n|$)/)
   if (impactMatch) {
     formData.value.impact = impactMatch[1].trim()
   }
 
-  // 解析平台
-  const platformMatch = text.match(/【平台】(.+?)(?:\n|$)/)
+  // 解析平台（兼容【产品】）
+  const platformMatch = text.match(/【(?:平台|产品)】[：:\s]*(.+?)(?:\n|$)/)
   if (platformMatch) {
     formData.value.platform = platformMatch[1].trim()
   }
 
   // 解析开发人员（模糊匹配）
-  const devMatch = text.match(/【开发(?:人员)?】(.+?)(?:\n|$)/) || text.match(/【研发(?:人员)?】(.+?)(?:\n|$)/)
+  const devMatch = text.match(/【(?:开发|研发)(?:人员)?】[：:\s]*(.+?)(?:\n|$)/)
   if (devMatch) {
-    const names = devMatch[1].trim().split(/[,，、\s]+/)
+    const names = devMatch[1].trim().split(/[,，、\s]+/).filter(n => n)
     const matched = develops.value.filter(d => names.some(n => d.partner_name.includes(n) || n.includes(d.partner_name)))
     if (matched.length > 0) {
       formData.value.updater = matched.map(m => m.partner_name)
@@ -502,9 +502,9 @@ function parseContent(text) {
   }
 
   // 解析测试人员（模糊匹配）
-  const testerMatch = text.match(/【测试(?:人员)?】(.+?)(?:\n|$)/)
+  const testerMatch = text.match(/【测试(?:人员)?】[：:\s]*(.+?)(?:\n|$)/)
   if (testerMatch) {
-    const names = testerMatch[1].trim().split(/[,，、\s]+/)
+    const names = testerMatch[1].trim().split(/[,，、\s]+/).filter(n => n)
     const matched = testers.value.filter(t => names.some(n => t.partner_name.includes(n) || n.includes(t.partner_name)))
     if (matched.length > 0) {
       formData.value.tester = matched.map(m => m.partner_name)
@@ -515,14 +515,29 @@ function parseContent(text) {
 }
 
 function getConvertUpdateTime(text) {
-  // 兼容多种时间格式
+  const timeRegex = /(\d{4}[-/]\d{1,2}[-/]\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)/
   const patterns = [
-    /【上线时间】\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)/,
-    /【更新时间】\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)/,
-    /【时间】\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)/,
+    /【上线时间[（(](?:国内|北京)[)）]】[：:\s]*/,
+    /【(?:上线|更新)时间】[：:\s]*/,
+    /【时间[（(](?:国内|北京)[)）]】[：:\s]*/,
+    /【时间】[：:\s]*/,
   ]
   for (const pattern of patterns) {
-    const match = text.match(pattern)
+    const match = text.match(new RegExp(pattern.source + timeRegex.source))
+    if (match) return match[1].trim()
+  }
+  return null
+}
+
+function getConvertLocalTime(text) {
+  const timeRegex = /(\d{4}[-/]\d{1,2}[-/]\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)/
+  const patterns = [
+    /【上线时间[（(]当地[)）]】[：:\s]*/,
+    /【当地时间】[：:\s]*/,
+    /【时间[（(]当地[)）]】[：:\s]*/,
+  ]
+  for (const pattern of patterns) {
+    const match = text.match(new RegExp(pattern.source + timeRegex.source))
     if (match) return match[1].trim()
   }
   return null
@@ -622,8 +637,11 @@ function formatContentWithLinks(content) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-  // 先匹配 URL（描述文字）模式，替换为带描述的链接
-  let result = escaped.replace(/(https?:\/\/[^\s）)]+)（([^）]+)）/g,
+  // 先匹配 URL|描述文字| 模式（竖线分隔）
+  let result = escaped.replace(/(https?:\/\/[^\s|]+)\|([^|]+)\|/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>')
+  // 匹配 URL（描述文字）模式（中文括号分隔）
+  result = result.replace(/(https?:\/\/[^\s）)]+)（([^）]+)）/g,
     '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>')
   // 再匹配剩余的纯 URL（不在 a 标签内的）
   result = result.replace(/(?<!href="|">)(https?:\/\/[^\s<]+)/g,

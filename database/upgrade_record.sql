@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `upgrade_record` (
   `updater` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '研发人员',
   `tester` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '测试人员',
   `type` VARCHAR(50) NOT NULL DEFAULT '' COMMENT '类型：新功能/新游戏/bug修复/功能优化',
-  `platform` VARCHAR(50) NOT NULL DEFAULT '' COMMENT '平台：Android/IOS/前端/后端/前后端/数据库',
+  `platform` ENUM('Android','IOS','H5','前端','后端','前后端','数据库','') NOT NULL DEFAULT '' COMMENT '平台',
   `impact` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '影响范围',
   `is_review` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已复盘 0-否 1-是',
   `review_conclusion` TEXT COMMENT '复盘结论(HTML)',
