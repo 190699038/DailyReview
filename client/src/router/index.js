@@ -23,6 +23,7 @@ export default createRouter({
         { path: 'history-daily', component: DailyHistory },
         { path: 'test-task', component: TestTask },
         { path: 'upgrade-record', component: () => import('@/view/UpgradeRecord.vue') },
+        { path: 'review-record', component: () => import('@/view/ReviewRecord.vue') },
         { path: '', redirect: 'week-goal' }
       ]
     }
