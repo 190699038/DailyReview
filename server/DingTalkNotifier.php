@@ -217,7 +217,7 @@ class DingTalkNotifier {
         return $this->countryMap[$countryCode] ?? $countryCode;
     }
 
-    private function formatContentLink($lines) {
+     private function formatContentLink($lines) {
         $formattedLines = [];
         foreach ($lines as $line) {
             $trimmedLine = trim($line);
@@ -278,7 +278,9 @@ class DingTalkNotifier {
 
     private function sendToDingTalk(string $token, array $message) {
         $url = $this->dingtalkApiUrl . $token;
-        $jsonMessage = json_encode($message, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        // $jsonMessage = json_encode($message, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $jsonMessage = json_encode($message, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+
 
         if ($jsonMessage === false) {
             return [
