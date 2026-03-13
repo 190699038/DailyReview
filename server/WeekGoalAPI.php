@@ -196,25 +196,6 @@ try {
                     $stmt->execute($values);
                     $weeklyGoalId = $conn->lastInsertId();
 
-                    if ($executor != '' && $executorId != '') {
-                        $executorIds = explode('/', $executorId);
-                        $executors = explode('/', $executor);
-
-                        if (count($executorIds) !== count($executors)) {
-                            throw new Exception('executor_id和executor参数长度不一致');
-                        }
-
-                        $dailyStmt = $conn->prepare("INSERT INTO daily_goals (" . implode(', ', array_merge($fields, ['weekly_goals_id'])) . ") VALUES (" . implode(', ', array_merge($placeholders, ['?'])) . ");");
-
-                        foreach ($executorIds as $index => $executorId) {
-                            $dailyValues = array_merge($values, [$weeklyGoalId]);
-                            $dailyValues[array_search('executor_id', $fields)] = $executorId;
-                            $dailyValues[array_search('executor', $fields)] = $executors[$index];
-                            
-                            $dailyStmt->execute($dailyValues);
-                        }
-                    }
-
                     $results[] = $weeklyGoalId;
                 }
                 $conn->commit();
@@ -274,37 +255,9 @@ try {
             $stmt = $conn->prepare("INSERT INTO weekly_goals (" 
                 . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ");");
             
-            $conn->beginTransaction();
             $stmt->execute($values);
             $weeklyGoalId = $conn->lastInsertId();
-            // 拆分执行人信息
-            if ( $executor != '' && $executorId != '' ) {
-            
-                $executorIds = explode('/',$executorId);
-                $executors = explode('/', $executor);
-                
-                if (count($executorIds) !== count($executors)) {
-                    throw new Exception('executor_id和executor参数长度不一致');
-                }
 
-                // 准备daily_goals插入
-                $dailyFields = array_merge($fields, ['weekly_goals_id']);
-                $dailyPlaceholders = array_merge($placeholders, ['?']);
-                $dailyValues = array_merge($values, ['']);
-
-                $dailyStmt = $conn->prepare("INSERT INTO daily_goals (" 
-                    . implode(', ', $dailyFields) . ") VALUES (" . implode(', ', $dailyPlaceholders) . ");");
-
-                foreach ($executorIds as $index => $executorId) {
-                    $dailyValues[array_search('executor_id', $dailyFields)] = $executorId;
-                    $dailyValues[array_search('executor', $dailyFields)] = $executors[$index];
-                    $dailyValues[array_search('weekly_goals_id', $dailyFields)] = $weeklyGoalId;
-                    
-                    $dailyStmt->execute($dailyValues);
-                }
-            }
-
-            $conn->commit();
             echo json_encode(['id' => $weeklyGoalId]);
             break;
 
@@ -350,103 +303,6 @@ try {
                     throw new Exception('周目标不存在');
                 }
                 
-                // 处理执行人信息
-                if ($executor !== '' && $executorId !== '') {
-                    $executorIds = explode('/', $executorId);
-                    $executors = explode('/', $executor);
-
-                    // 获取当前已关联的执行人ID
-                    $checkStmt = $conn->prepare("SELECT executor_id FROM daily_goals WHERE weekly_goals_id = ?");
-                    $checkStmt->execute([$id]);
-                    $existingIds = $checkStmt->fetchAll(PDO::FETCH_COLUMN);
-
-                    // 删除不存在于新列表的旧执行人
-                    $idsToDelete = array_diff($existingIds, $executorIds);
-                    if (!empty($idsToDelete)) {
-                        $placeholders = rtrim(str_repeat('?,', count($idsToDelete)), ',');
-                        $deleteStmt = $conn->prepare("DELETE FROM daily_goals 
-                            WHERE weekly_goals_id = ? 
-                            AND executor_id IN ($placeholders)");
-                        $deleteParams = array_merge([$id], $idsToDelete);
-                        $deleteStmt->execute($deleteParams);
-                    }
-                    
-                    if (count($executorIds) !== count($executors)) {
-                        throw new Exception('executor_id和executor参数长度不一致');
-                    }
-                    
-                    // 插入daily_goals记录
-                    foreach ($executorIds as $index => $eid) {
-                        // 检查是否已存在
-                        $checkStmt = $conn->prepare("SELECT id FROM daily_goals WHERE weekly_goals_id = ? AND executor_id = ?");
-                        $checkStmt->execute([$id, $eid]);
-                        if (!$checkStmt->fetch()) {
-                            // 构建插入字段和值
-                            // var_dump($weeklyGoal);
-                            $insertFields = [
-                                'department_id',
-                                'executor',
-                                'executor_id',
-                                'weekly_goal',
-                                'is_new_goal',
-                                'mondayDate',
-                                'priority',
-                                'status',
-                                'weekly_goals_id',
-                                'pre_finish_date',
-                                'real_finish_date',
-                                'country',
-                                'version',
-                                'cross_week',
-                                'process',
-                                'createdate'
-                            ];
-                            $insertValues = [
-                                $weeklyGoal['department_id'],
-                                $executors[$index],
-                                $eid,
-                                $weeklyGoal['weekly_goal'],
-                                $weeklyGoal['is_new_goal'],
-                                $weeklyGoal['mondayDate'],
-                                $weeklyGoal['priority'],
-                                $weeklyGoal['status'],
-                                $id,
-                                $weeklyGoal['pre_finish_date'],
-                                $weeklyGoal['real_finish_date'],
-                                $weeklyGoal['country'],
-                                $weeklyGoal['version'],
-                                $weeklyGoal['cross_week'],
-                                $weeklyGoal['process'],
-                                date('Ymd')
-                            ];
-                            $placeholders = implode(', ', array_fill(0, count($insertValues), '?'));
-                            $insertStmt = $conn->prepare("INSERT INTO daily_goals (" . implode(', ', $insertFields) . ") VALUES ($placeholders)");
-                            $insertStmt->execute($insertValues);
-                        }else{
-                            // 更新daily_goals记录
-                            $updateFields = [ 
-                            'weekly_goal',
-                            'is_new_goal',
-                            'priority',
-                            'mondayDate',
-                            'status','pre_finish_date','real_finish_date',
-                                'country','version','cross_week','process'];
-                            $updateValues = [
-                                $weeklyGoal['weekly_goal'],
-                                $weeklyGoal['is_new_goal'],
-                                $weeklyGoal['priority'],
-                                $weeklyGoal['mondayDate'],
-                                $weeklyGoal['status'],
-                                $weeklyGoal['pre_finish_date'],
-                                $weeklyGoal['real_finish_date'],
-                                $weeklyGoal['country'],$weeklyGoal['version'],$weeklyGoal['cross_week'],$weeklyGoal['process']
-                            ];
-                            $updateStmt = $conn->prepare("UPDATE daily_goals SET ". implode(' =?, ', $updateFields). " =? WHERE weekly_goals_id =? AND executor_id =?");
-                            $updateStmt->execute(array_merge($updateValues, [$id, $eid]));
-                        }
-                    }
-                }
-                
                 $conn->commit();
             } catch (Exception $e) {
                 $conn->rollBack();
@@ -458,27 +314,9 @@ try {
 
         case 'delete':
             $id = $_REQUEST['id'];
-            $conn->beginTransaction();
-            try {
-                // 删除关联日目标
-                $dailyStmt = $conn->prepare("DELETE FROM daily_goals WHERE weekly_goals_id = ?");
-                $dailyStmt->execute([$id]);
-                $dailyDeleted = $dailyStmt->rowCount();
-
-                // 删除周目标
-                $weeklyStmt = $conn->prepare("DELETE FROM weekly_goals WHERE id = ?");
-                $weeklyStmt->execute([$id]);
-                $weeklyDeleted = $weeklyStmt->rowCount();
-
-                $conn->commit();
-                echo json_encode([
-                    'deleted' => $weeklyDeleted,
-                    'related_daily_deleted' => $dailyDeleted
-                ]);
-            } catch(Exception $e) {
-                $conn->rollBack();
-                throw $e;
-            }
+            $stmt = $conn->prepare("DELETE FROM weekly_goals WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(['deleted' => $stmt->rowCount()]);
             break;
 
                 case 'batch_create':

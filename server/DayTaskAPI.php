@@ -109,8 +109,8 @@ try {
                 $allTasksToday = $task_stmt_today->fetchAll(PDO::FETCH_ASSOC);
 
                 $maxDate = max($date_array);
-                $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ? AND createdate <= ?");
-                $goal_stmt->execute([$monday_date, $executor_id, $maxDate]);
+                $goal_stmt = $conn->prepare("SELECT * FROM weekly_goals WHERE mondayDate = ? AND (executor_id = ? OR executor_id LIKE ?) AND createdate <= ?");
+                $goal_stmt->execute([$monday_date, $executor_id, '%' . $executor_id . '%', $maxDate]);
                 $allGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 // 按日期分组
@@ -155,7 +155,7 @@ try {
             // 批量查询替代循环
             $placeholders = implode(',', array_fill(0, count($idArray), '?'));
 
-            $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id IN ({$placeholders})");
+            $goal_stmt = $conn->prepare("SELECT * FROM weekly_goals WHERE mondayDate = ? AND executor_id IN ({$placeholders})");
             $goal_stmt->execute(array_merge([$week_period], $idArray));
             $allGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
 

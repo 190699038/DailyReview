@@ -152,7 +152,6 @@ function handleSync($isToday) {
                         continue;
                     }
 
-                    $daily_goals_id = 0;
                     $stmt = $conn->prepare("INSERT INTO daily_tasks_today 
                         (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate,oa_taskid)
                         VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?,?)");
@@ -165,7 +164,7 @@ function handleSync($isToday) {
                         $item['progress'] ?? 0,
                         $item['time_spent'] ?? 0,
                         $item['is_new_goal'] ?? 0,
-                        $daily_goals_id,
+                        0,
                         date('Ymd'),
                         $item['mondayDate'],
                         $item['oa_task_id']
@@ -181,7 +180,6 @@ function handleSync($isToday) {
                         continue;
                     }
 
-                    $daily_goals_id = 0;
                     $stmt = $conn->prepare("INSERT INTO daily_tasks 
                         (date, day_goal, executor_id, task_content, progress, time_spent, is_new_goal,daily_goals_id, createdate,mondayDate,oa_taskid)
                         VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?,?)");
@@ -194,7 +192,7 @@ function handleSync($isToday) {
                         $item['progress'] ?? 0,
                         $item['time_spent'] ?? 0,
                         $item['is_new_goal'] ?? 0,
-                        $daily_goals_id,
+                        0,
                         date('Ymd'),
                         $item['mondayDate'],
                         $item['oa_task_id']

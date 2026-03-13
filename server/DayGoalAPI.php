@@ -30,11 +30,9 @@ try {
                 $task_stmt->execute([$last_date, $executor_id]);
                 $dailyTasks = $task_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-
-
-                // 查询周目标
-                $goal_stmt = $conn->prepare("SELECT * FROM daily_goals WHERE mondayDate = ? AND executor_id = ?");
-                $goal_stmt->execute([$monday_date, $executor_id]);
+                // 查询周目标（从weekly_goals获取）
+                $goal_stmt = $conn->prepare("SELECT * FROM weekly_goals WHERE mondayDate = ? AND (executor_id = ? OR executor_id LIKE ?)");
+                $goal_stmt->execute([$monday_date, $executor_id, '%' . $executor_id . '%']);
                 $dailyGoals = $goal_stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 $result[] = [
@@ -51,49 +49,12 @@ try {
 
         case 'get':
             $date = $_REQUEST['date'] ?? date('Ymd');
-            $stmt = $conn->prepare("SELECT * FROM daily_goals WHERE createdate = ?");
+            $stmt = $conn->prepare("SELECT * FROM weekly_goals WHERE createdate = ?");
             $stmt->execute([$date]);
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             break;
 
-        case 'create':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                http_response_code(405);
-                echo json_encode(['error' => '仅支持POST方法']);
-                break;
-            }
-            $date = $_REQUEST['date'];
-            $executor_id = $_REQUEST['executor_id'];
-            $goal_content = $_REQUEST['goal_content'];
 
-            $stmt = $conn->prepare("INSERT INTO daily_goals (date, executor_id, goal_content) VALUES (?, ?, ?)");
-            $stmt->execute([$date, $executor_id, $goal_content]);
-            echo json_encode(['id' => $conn->lastInsertId()]);
-            break;
-
-        case 'complete':
-            $id = $_REQUEST['id'];
-            $stmt = $conn->prepare("UPDATE daily_goals SET is_completed = 1 WHERE id = ?");
-            $stmt->execute([$id]);
-            echo json_encode(['updated' => $stmt->rowCount()]);
-            break;
-
-        case 'update':
-            $id = $_POST['id'];
-            $goal_content = $_POST['goal_content'];
-            $executor_id = $_POST['executor_id'];
-
-            $stmt = $conn->prepare("UPDATE daily_goals SET goal_content = ?, executor_id = ? WHERE id = ?");
-            $stmt->execute([$goal_content, $executor_id, $id]);
-            echo json_encode(['updated' => $stmt->rowCount()]);
-            break;
-
-        case 'delete':
-            $id = $_POST['id'];
-            $stmt = $conn->prepare("DELETE FROM daily_goals WHERE id = ?");
-            $stmt->execute([$id]);
-            echo json_encode(['deleted' => $stmt->rowCount()]);
-            break;
 
         case 'get_target':
             $date =  $_REQUEST['report_date'] ?? date('Ymd');
@@ -144,19 +105,6 @@ try {
                         VALUES (?, ?, ?, ?, ?, ?, ?,?, ?,?)");
 
                 foreach ($input as $item) {
-                    //模糊查询周目标是否在目标的标准，查询daily_goals表中的字段weekly_goal like '%$item['day_goal']',返回daily_goals中的表id值
-                    // $goalCheckStmt = $conn->prepare("SELECT id FROM daily_goals WHERE executor_id = ? and weekly_goal LIKE ?");
-                    // $goalCheckStmt->execute([$item['executor_id'],"%{$item['day_goal']}%"]);
-                    // $goal = $goalCheckStmt->fetch(PDO::FETCH_ASSOC);
-                    $daily_goals_id = 0;
-                    // if ($goal) {
-                    //     $$daily_goals_id = $goal['id'];
-                    // }
-
-                    // echo('SELECT id FROM daily_goals WHERE executor_id = executor_id = '.$item['executor_id'].'  and weekly_goal LIKE %'.$item['day_goal'].'%');
-
-
-                    // var_dump($item);
                     $stmt->execute([
                         $item['date'],
                         $item['day_goal'],
@@ -165,7 +113,7 @@ try {
                         $item['progress'] ?? 0,
                         $item['time_spent'] ?? 0,
                         $item['is_new_goal'] ?? 0,
-                        $daily_goals_id,
+                        0,
                         date('Ymd'),
                         $item['mondayDate']
                     ]);
