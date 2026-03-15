@@ -13,6 +13,7 @@
       <el-menu-item index="/test-task">测试任务</el-menu-item>
       <el-menu-item index="/upgrade-record">升级记录</el-menu-item>
       <el-menu-item index="/review-record">评审记录</el-menu-item>
+      <el-menu-item index="/follow-up-report">跟进汇报</el-menu-item>
       <el-menu-item index="/system-setting">部门设置</el-menu-item>
       <div class="flex-grow" />
       <el-menu-item @click="themeDrawerVisible = true">
@@ -47,6 +48,7 @@
         <el-menu-item index="/test-task">测试任务</el-menu-item>
         <el-menu-item index="/upgrade-record">升级记录</el-menu-item>
         <el-menu-item index="/review-record">评审记录</el-menu-item>
+        <el-menu-item index="/follow-up-report">跟进汇报</el-menu-item>
         <el-menu-item index="/system-setting">部门设置</el-menu-item>
       </el-menu>
     </el-drawer>

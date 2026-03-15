@@ -24,6 +24,7 @@ export default createRouter({
         { path: 'test-task', component: TestTask },
         { path: 'upgrade-record', component: () => import('@/view/UpgradeRecord.vue') },
         { path: 'review-record', component: () => import('@/view/ReviewRecord.vue') },
+        { path: 'follow-up-report', component: () => import('@/view/FollowUpReport.vue') },
         { path: '', redirect: 'week-goal' }
       ]
     }
