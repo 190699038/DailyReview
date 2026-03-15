@@ -57,6 +57,38 @@ try {
             echo json_encode(['data' => $report]);
             break;
 
+        // 获取地区列表
+        case 'get_regions':
+            $stmt = $conn->prepare("SELECT group_code, group_name FROM project_groups WHERE category = 'Region' AND status = 1 ORDER BY sort_order DESC");
+            $stmt->execute();
+            echo json_encode(['data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            break;
+
+        // 同步S级需求（从weekly_goals获取本周S级任务，按地区分组）
+        case 'sync_s_goals':
+            $monday_date = $_GET['monday_date'] ?? '';
+            if (empty($monday_date)) {
+                http_response_code(400);
+                echo json_encode(['error' => '缺少monday_date参数']);
+                break;
+            }
+            $stmt = $conn->prepare("SELECT id, weekly_goal, executor, country, status, process FROM weekly_goals WHERE mondayDate = ? AND priority = 10 AND department_id IN (2, 3) ORDER BY country, id");
+            $stmt->execute([$monday_date]);
+            $goals = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // 按地区分组
+            $grouped = [];
+            foreach ($goals as $g) {
+                $country = $g['country'] ?: '未分类';
+                if (!isset($grouped[$country])) {
+                    $grouped[$country] = [];
+                }
+                $grouped[$country][] = $g;
+            }
+
+            echo json_encode(['data' => $goals, 'grouped' => $grouped]);
+            break;
+
         // 保存汇报（新增或更新）
         case 'save':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -75,7 +107,6 @@ try {
             $reporter = $input['reporter'] ?? '';
             $report_date = $input['report_date'] ?? '';
             $week_day = $input['week_day'] ?? '';
-            $coordination_matters = $input['coordination_matters'] ?? '';
             $status = $input['status'] ?? 0;
             $items = $input['items'] ?? [];
 
@@ -94,11 +125,11 @@ try {
 
             if ($existing) {
                 $reportId = $existing['id'];
-                $stmt = $conn->prepare("UPDATE follow_up_reports SET week_day = ?, coordination_matters = ?, status = ? WHERE id = ?");
-                $stmt->execute([$week_day, $coordination_matters, $status, $reportId]);
+                $stmt = $conn->prepare("UPDATE follow_up_reports SET week_day = ?, status = ? WHERE id = ?");
+                $stmt->execute([$week_day, $status, $reportId]);
             } else {
-                $stmt = $conn->prepare("INSERT INTO follow_up_reports (reporter, report_date, week_day, coordination_matters, status) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$reporter, $report_date, $week_day, $coordination_matters, $status]);
+                $stmt = $conn->prepare("INSERT INTO follow_up_reports (reporter, report_date, week_day, status) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$reporter, $report_date, $week_day, $status]);
                 $reportId = $conn->lastInsertId();
             }
 
@@ -107,12 +138,13 @@ try {
             $stmt->execute([$reportId]);
 
             if (!empty($items)) {
-                $stmt = $conn->prepare("INSERT INTO follow_up_report_items (report_id, category, section_title, responsible_person, section_order, content, risk_level) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmt = $conn->prepare("INSERT INTO follow_up_report_items (report_id, category, section_title, sub_title, responsible_person, section_order, content, risk_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 foreach ($items as $item) {
                     $stmt->execute([
                         $reportId,
                         $item['category'] ?? '',
                         $item['section_title'] ?? '',
+                        $item['sub_title'] ?? null,
                         $item['responsible_person'] ?? '',
                         $item['section_order'] ?? 0,
                         is_array($item['content']) ? json_encode($item['content'], JSON_UNESCAPED_UNICODE) : ($item['content'] ?? '{}'),
@@ -219,25 +251,26 @@ try {
             if ($existTarget) {
                 // 更新已有记录
                 $targetId = $existTarget['id'];
-                $stmt = $conn->prepare("UPDATE follow_up_reports SET week_day = ?, coordination_matters = ?, status = 0 WHERE id = ?");
-                $stmt->execute([$source['week_day'], $source['coordination_matters'], $targetId]);
+                $stmt = $conn->prepare("UPDATE follow_up_reports SET week_day = ?, status = 0 WHERE id = ?");
+                $stmt->execute([$source['week_day'], $targetId]);
 
                 $stmt = $conn->prepare("DELETE FROM follow_up_report_items WHERE report_id = ?");
                 $stmt->execute([$targetId]);
             } else {
-                $stmt = $conn->prepare("INSERT INTO follow_up_reports (reporter, report_date, week_day, coordination_matters, status) VALUES (?, ?, ?, ?, 0)");
-                $stmt->execute([$reporter, $target_date, $source['week_day'], $source['coordination_matters']]);
+                $stmt = $conn->prepare("INSERT INTO follow_up_reports (reporter, report_date, week_day, status) VALUES (?, ?, ?, 0)");
+                $stmt->execute([$reporter, $target_date, $source['week_day']]);
                 $targetId = $conn->lastInsertId();
             }
 
             // 复制明细
             if (!empty($sourceItems)) {
-                $stmt = $conn->prepare("INSERT INTO follow_up_report_items (report_id, category, section_title, responsible_person, section_order, content, risk_level) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmt = $conn->prepare("INSERT INTO follow_up_report_items (report_id, category, section_title, sub_title, responsible_person, section_order, content, risk_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 foreach ($sourceItems as $item) {
                     $stmt->execute([
                         $targetId,
                         $item['category'],
                         $item['section_title'],
+                        $item['sub_title'],
                         $item['responsible_person'],
                         $item['section_order'],
                         $item['content'],
@@ -295,16 +328,39 @@ try {
             // 业务事项
             if (!empty($grouped['business'])) {
                 $md .= "## 今日业务事项进展\n\n";
-                foreach ($grouped['business'] as $idx => $item) {
-                    $num = $idx + 1;
+                // 按 section_title 分组，处理地区拆分
+                $bizGrouped = [];
+                foreach ($grouped['business'] as $item) {
                     $title = $item['section_title'];
-                    $person = $item['responsible_person'] ? "（{$item['responsible_person']}）" : '';
+                    if (!isset($bizGrouped[$title])) {
+                        $bizGrouped[$title] = [];
+                    }
+                    $bizGrouped[$title][] = $item;
+                }
+                $num = 1;
+                foreach ($bizGrouped as $title => $titleItems) {
+                    $firstItem = $titleItems[0];
+                    $hasSubTitle = !empty($firstItem['sub_title']);
+                    $person = $firstItem['responsible_person'] ? "（{$firstItem['responsible_person']}）" : '';
                     $md .= "### {$num}. {$title}{$person}\n";
-                    $content = json_decode($item['content'], true) ?: [];
-                    foreach ($content as $key => $val) {
-                        $md .= "- {$key}：{$val}\n";
+
+                    if ($hasSubTitle) {
+                        // 按地区分段
+                        foreach ($titleItems as $subItem) {
+                            $md .= "\n#### {$subItem['sub_title']}\n";
+                            $content = json_decode($subItem['content'], true) ?: [];
+                            foreach ($content as $key => $val) {
+                                $md .= "- {$key}：{$val}\n";
+                            }
+                        }
+                    } else {
+                        $content = json_decode($firstItem['content'], true) ?: [];
+                        foreach ($content as $key => $val) {
+                            $md .= "- {$key}：{$val}\n";
+                        }
                     }
                     $md .= "\n";
+                    $num++;
                 }
             }
 
@@ -322,14 +378,9 @@ try {
                 }
             }
 
-            // 跨部门协调
-            $md .= "## 三、跨部门协调事项\n";
-            $coordination = $report['coordination_matters'] ?: '无';
-            $md .= "- {$coordination}\n\n";
-
             // 风险预警
             if (!empty($grouped['risk'])) {
-                $md .= "## 四、风险与异常预警\n";
+                $md .= "## 风险与异常预警\n";
                 foreach ($grouped['risk'] as $item) {
                     $content = json_decode($item['content'], true) ?: [];
                     $desc = $content['description'] ?? '';
@@ -338,7 +389,7 @@ try {
                 }
                 $md .= "\n";
             } else {
-                $md .= "## 四、风险与异常预警\n- 无\n";
+                $md .= "## 风险与异常预警\n- 无\n";
             }
 
             echo json_encode(['data' => $md]);
