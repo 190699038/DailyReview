@@ -511,6 +511,12 @@ function parseContent(text) {
     }
   }
 
+  // 解析备注（兼容文档地址/禅道地址）
+  const remarkMatch = text.match(/【(?:备注|文档地址[\/／、]*禅道地址|文档地址|禅道地址)】[：:\s]*(.+?)(?=ꔷ\s*【|$)/s)
+  if (remarkMatch) {
+    formData.value.remark = remarkMatch[1].trim()
+  }
+
   ElMessage.success('文本解析完成')
 }
 
@@ -646,6 +652,8 @@ function formatContentWithLinks(content) {
   // 再匹配剩余的纯 URL（不在 a 标签内的）
   result = result.replace(/(?<!href="|">)(https?:\/\/[^\s<]+)/g,
     '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>')
+  // 换行符转为 <br>
+  result = result.replace(/\n/g, '<br>')
   return result
 }
 
