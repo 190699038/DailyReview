@@ -732,11 +732,10 @@ const syncSGoals = async () => {
     const sSection = businessSections.value.find(s => s.section_title === 'S级需求')
     if (!sSection || !sSection.regionSplit) return
 
-    // 将weekly_goals中按country分组的数据填入regions
+    // 使用后端返回的 codeMap 做 group_code → group_name 映射
+    const codeToName = res.codeMap || {}
+
     const regionNames = Object.keys(grouped)
-    // 查找地区code到name的映射
-    const codeToName = {}
-    regionList.value.forEach(r => { codeToName[r.group_code] = r.group_name })
 
     regionNames.forEach(countryCode => {
       const regionName = codeToName[countryCode] || countryCode

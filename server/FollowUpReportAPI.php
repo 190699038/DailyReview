@@ -72,7 +72,7 @@ try {
                 echo json_encode(['error' => '缺少monday_date参数']);
                 break;
             }
-            $stmt = $conn->prepare("SELECT id, weekly_goal, executor, country, status, process FROM weekly_goals WHERE mondayDate = ? AND priority = 10 AND department_id IN (2, 3) ORDER BY country, id");
+            $stmt = $conn->prepare("SELECT id, weekly_goal, executor, country, status, process FROM weekly_goals WHERE mondayDate = ? AND priority = 10 AND department_id IN (2, 3, 16) ORDER BY country, id");
             $stmt->execute([$monday_date]);
             $goals = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -86,7 +86,15 @@ try {
                 $grouped[$country][] = $g;
             }
 
-            echo json_encode(['data' => $goals, 'grouped' => $grouped]);
+            // 获取所有 group_code → group_name 的映射
+            $mapStmt = $conn->prepare("SELECT group_code, group_name FROM project_groups WHERE status = 1");
+            $mapStmt->execute();
+            $codeMap = [];
+            foreach ($mapStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $codeMap[$row['group_code']] = $row['group_name'];
+            }
+
+            echo json_encode(['data' => $goals, 'grouped' => $grouped, 'codeMap' => $codeMap]);
             break;
 
         // 保存汇报（新增或更新）
