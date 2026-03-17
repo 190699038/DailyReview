@@ -301,23 +301,22 @@
         </el-form-item>
         <el-form-item label="进度更新">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <el-slider 
+            <!-- <el-slider 
               v-model="form.process" 
               :min="0" 
-              :max="1" 
-              :step="0.01" 
+              :max="100" 
+              :step="5" 
               :show-tooltip="false"
               style="flex: 1;"
-            />
+            /> -->
             <el-input-number 
               v-model="form.process" 
               :min="0" 
-              :max="1" 
-              :step="0.01" 
-              :precision="2"
+              :max="100" 
+              :step="5" 
               style="width: 120px;"
             />
-            <span style="color: #909399; font-size: 12px;">{{ Math.round((form.process || 0) * 100) }}%</span>
+            <span style="color: #909399; font-size: 12px;">%</span>
           </div>
         </el-form-item>
 
@@ -781,6 +780,7 @@ const showDialog = (mode, row) => {
     }
     form.value.priority = parseInt(row.priority)
     form.value.status = parseInt(row.status)
+    form.value.process = Math.round((row.process || 0) * 100)
   } else {
     form.value = {
       id: null,
@@ -853,7 +853,7 @@ const preFinshData = () =>{
 
     form.value.real_finish_date = getTodayDate()
 
-    form.value.process = 1
+    form.value.process = 100
 
 }
 
@@ -863,7 +863,8 @@ const submitForm = async () => {
         ...form.value,
         executor_id: form.value.executor_id.join('/'),
         executor: form.value.executor_id.map(id => users.value.find(u => u.id === id)?.partner_name).join('/'),
-        department_id: localStorage.getItem('department_id_cache') || 2
+        department_id: localStorage.getItem('department_id_cache') || 2,
+        process: (form.value.process || 0) / 100
       };
     if (submitData.remark === 'undefined' || submitData.remark === null || submitData.remark == '') {
       submitData.remark = '无';
